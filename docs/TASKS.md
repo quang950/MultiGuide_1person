@@ -12,7 +12,7 @@
 - [x] T-1.6 Migration đầu tiên + chạy lên Supabase; bật RLS (không policy) cho mọi bảng
 - [x] T-1.7 Seed dữ liệu demo: 1 khu, 6 POI, bản dịch vi/en/ja (cờ cấu hình bật seed)
 - [x] T-1.8 Api: `/health` (liveness) và `/health/ready` (readiness DB) — US-17, cấu hình DI (Data + Business)
-- [ ] T-1.9 Api: ExceptionHandler → ProblemDetails có `code`; Swagger; versioning `/api/v1`
+- [x] T-1.9 Api: ExceptionHandler → ProblemDetails có `code`; Swagger; versioning `/api/v1`
 - [x] T-1.10 Dockerfile multi-stage; chạy thử `docker build`
 - [x] T-1.11 GitHub Actions `ci.yml`: restore, build -warnaserror, format check, test + coverage, docker build, vulnerable scan — US-15
 - [ ] T-1.12 Bật branch protection cho main (người dùng làm tay trên GitHub)

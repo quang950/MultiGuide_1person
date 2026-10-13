@@ -1,19 +1,69 @@
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.OpenApi;
+using MultiGuide.Api.Middleware;
 using MultiGuide.Business;
 using MultiGuide.Data;
 using MultiGuide.Data.Context;
 using MultiGuide.Data.Seed;
+using MultiGuide.Domain.Constants;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container (DI configuration - T-1.8)
+// Add services to the container (DI configuration - T-1.8, T-1.9)
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+// Global Exception Handler & ProblemDetails (T-1.9 / PRD section 7)
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
+
+// Standard 422 ProblemDetails for Model Validation errors
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(e => e.Value?.Errors.Count > 0)
+            .ToDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage).ToArray()
+            );
+
+        var problem = new ProblemDetails
+        {
+            Status = StatusCodes.Status422UnprocessableEntity,
+            Title = "Unprocessable Entity",
+            Detail = "One or more validation errors occurred.",
+            Instance = context.HttpContext.Request.Path
+        };
+        problem.Extensions["code"] = ErrorCodes.ValidationError;
+        problem.Extensions["errors"] = errors;
+
+        return new UnprocessableEntityObjectResult(problem)
+        {
+            ContentTypes = { "application/problem+json" }
+        };
+    };
+});
+
+// Configure Swagger (T-1.9)
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "MultiGuide API",
+        Version = "v1",
+        Description = "Backend API cho hệ thống thuyết minh tự động đa ngôn ngữ MultiGuide (ASP.NET Core .NET 10)"
+    });
+});
 
 builder.Services.AddBusinessServices();
 builder.Services.AddDataServices(builder.Configuration);
 
 var app = builder.Build();
+
+// Use Global Exception Handler middleware early in pipeline
+app.UseExceptionHandler();
 
 // Run seeder if enabled via configuration (Seed:Enabled or Seed__Enabled)
 using (var scope = app.Services.CreateScope())
@@ -31,11 +81,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Configure Swagger
+// Configure Swagger UI
 app.UseSwagger();
 app.UseSwaggerUI(options =>
 {
     options.SwaggerEndpoint("/swagger/v1/swagger.json", "MultiGuide API v1");
+    options.RoutePrefix = "swagger";
 });
 
 app.UseHttpsRedirection();
