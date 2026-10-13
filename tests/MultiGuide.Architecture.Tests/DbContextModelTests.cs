@@ -8,7 +8,6 @@ namespace MultiGuide.Architecture.Tests;
 public class DbContextModelTests
 {
     private readonly MultiGuideDbContext _context;
-
     public DbContextModelTests()
     {
         var options = new DbContextOptionsBuilder<MultiGuideDbContext>()
@@ -100,7 +99,6 @@ public class DbContextModelTests
         Assert.NotNull(playLogIndex);
         Assert.Equal("idx_playlog_poi_started", playLogIndex.GetDatabaseName());
     }
-
     [Fact]
     public void Factory_Should_Parse_Postgres_Uri_Correctly()
     {

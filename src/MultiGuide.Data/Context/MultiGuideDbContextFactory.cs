@@ -19,8 +19,13 @@ public class MultiGuideDbContextFactory : IDesignTimeDbContextFactory<MultiGuide
     public static string GetConnectionString()
     {
         var rawConn = Environment.GetEnvironmentVariable("DATABASE_URL")
+                      ?? Environment.GetEnvironmentVariable("ConnectionStrings__Default")
                       ?? Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
-                      ?? Environment.GetEnvironmentVariable("DefaultConnection");
+                      ?? Environment.GetEnvironmentVariable("DefaultConnection")
+                      ?? ReadFromEnvFile("DATABASE_URL")
+                      ?? ReadFromEnvFile("ConnectionStrings__Default")
+                      ?? ReadFromEnvFile("ConnectionStrings__DefaultConnection")
+                      ?? ReadFromEnvFile("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(rawConn))
         {
@@ -28,6 +33,48 @@ public class MultiGuideDbContextFactory : IDesignTimeDbContextFactory<MultiGuide
         }
 
         return ConvertPostgresUriToConnectionString(rawConn);
+    }
+
+    private static string? ReadFromEnvFile(string key)
+    {
+        try
+        {
+            var searchPaths = new List<string>
+            {
+                Directory.GetCurrentDirectory(),
+                AppContext.BaseDirectory
+            };
+
+            foreach (var basePath in searchPaths)
+            {
+                var currentDir = new DirectoryInfo(basePath);
+                while (currentDir != null)
+                {
+                    var envPath = Path.Combine(currentDir.FullName, ".env");
+                    if (File.Exists(envPath))
+                    {
+                        foreach (var line in File.ReadAllLines(envPath))
+                        {
+                            var trimmed = line.Trim();
+                            if (trimmed.StartsWith('#') || !trimmed.Contains('=')) continue;
+                            var parts = trimmed.Split('=', 2);
+                            if (parts[0].Trim().Equals(key, StringComparison.OrdinalIgnoreCase))
+                            {
+                                var val = parts[1].Trim().Trim('"').Trim('\'');
+                                if (!string.IsNullOrWhiteSpace(val)) return val;
+                            }
+                        }
+                    }
+                    currentDir = currentDir.Parent;
+                }
+            }
+        }
+        catch
+        {
+            // Ignore file read exceptions in fallback
+        }
+
+        return null;
     }
 
     public static string ConvertPostgresUriToConnectionString(string rawUrl)
