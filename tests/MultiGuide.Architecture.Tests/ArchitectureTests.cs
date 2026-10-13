@@ -66,10 +66,10 @@ public class ArchitectureTests
     [Fact]
     public void Api_Phu_Thuoc_Dung_Kien_Truc()
     {
-        // Api được tham chiếu Business, Data, Domain nhưng không bị các tầng khác tham chiếu ngược lại
+        // Api chỉ phụ thuộc Business/Domain, không phụ thuộc Data implementation
         var result = Types.InAssembly(typeof(Api.AssemblyMarker).Assembly)
-            .Should()
-            .NotBeAbstract()
+            .ShouldNot()
+            .HaveDependencyOn(DataNamespace)
             .GetResult();
 
         Assert.True(result.IsSuccessful, "Api phải tuân thủ kiến trúc phân tầng.");
