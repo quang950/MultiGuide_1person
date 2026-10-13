@@ -32,7 +32,16 @@ public class MultiGuideDbContextFactory : IDesignTimeDbContextFactory<MultiGuide
             return "Host=localhost;Port=5432;Database=multiguide_dev;Username=postgres;Password=postgres";
         }
 
+        rawConn = CleanConnectionString(rawConn);
         return ConvertPostgresUriToConnectionString(rawConn);
+    }
+
+    public static string CleanConnectionString(string conn)
+    {
+        if (string.IsNullOrWhiteSpace(conn)) return conn;
+        conn = System.Text.RegularExpressions.Regex.Replace(conn, @"Password=<([^>]+)>", "Password=$1", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        conn = System.Text.RegularExpressions.Regex.Replace(conn, @"Username=<([^>]+)>", "Username=$1", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return conn;
     }
 
     private static string? ReadFromEnvFile(string key)

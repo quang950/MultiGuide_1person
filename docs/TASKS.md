@@ -9,7 +9,7 @@
 - [x] T-1.3 Domain: entity language, tour_area, poi, poi_translation, payment, access_pass, play_log (theo PRD mục 6)
 - [x] T-1.4 Data: DbContext + cấu hình EF (khóa, index, unique) cho Npgsql; chuỗi kết nối từ env
 - [x] T-1.5 Tạo project Supabase (tay, bởi người dùng): ghi ref/URL vào PROGRESS.md; tạo bucket `audio` private
-- [ ] T-1.6 Migration đầu tiên + chạy lên Supabase; bật RLS (không policy) cho mọi bảng
+- [x] T-1.6 Migration đầu tiên + chạy lên Supabase; bật RLS (không policy) cho mọi bảng
 - [ ] T-1.7 Seed dữ liệu demo: 1 khu, 6 POI, bản dịch vi/en/ja (cờ cấu hình bật seed)
 - [x] T-1.8 Api: `/health` (liveness) — US-17 (/health/ready sẽ bổ sung sau khi có DB ở T-1.4)
 - [ ] T-1.9 Api: ExceptionHandler → ProblemDetails có `code`; Swagger; versioning `/api/v1`
