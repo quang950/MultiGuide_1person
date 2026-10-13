@@ -60,3 +60,18 @@ Bộ file này giúp AI (Claude Code, Cursor, Copilot...) **nối tiếp công v
 ## 7. Khi cần mở rộng
 - Việc mới ngoài PRD → thêm vào mục "Later" của `docs/PRD.md`, rồi tạo task mới trong TASKS.md.
 - Cuối mỗi ngày: đọc PROGRESS.md, tick TASKS.md, kiểm tra CI xanh và `/health` trên Render còn chạy.
+
+## promt khi qua trang mới 
+Xin chào, tôi muốn tiếp tục phát triển dự án MultiGuide Backend (.NET 10, kiến trúc 3 lớp).
+
+BƯỚC 1 - ĐỌC VÀ HIỂU NGỮ CẢNH:
+Trước khi viết bất kỳ dòng code nào, hãy đọc kỹ các file tài liệu sau:
+1. CLAUDE.md (đọc đầu tiên để nắm quy tắc cứng của dự án).
+2. docs/PROGRESS.md và docs/TASKS.md (để biết hiện trạng và task tiếp theo).
+3. docs/ARCHITECTURE.md và docs/ERD.md (để nắm kiến trúc 3 lớp và mô hình thực thể).
+4. docs/DECISIONS.md (các quyết định đã chốt, không đề xuất thay đổi).
+
+BƯỚC 2 - TÓM TẮT & LÊN KẾ HOẠCH:
+- Chạy `git status` và `git log --oneline -5` để kiểm tra repo.
+- Báo cáo cho tôi: Dự án vừa hoàn thành task nào? Task tiếp theo cần làm là gì?
+- Lên kế hoạch chi tiết cho task tiếp theo đó và CHỜ TÔI XÁC NHẬN rồi mới tiến hành code.
