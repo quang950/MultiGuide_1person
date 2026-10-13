@@ -6,7 +6,7 @@
 ## Ngày 1 — Nền móng + CI + deploy /health
 - [x] T-1.1 Tạo solution 3 lớp: Api, Business, Data, Domain + tham chiếu đúng chiều (Api→Business←Data, →Domain)
 - [x] T-1.2 Tạo test projects: Business.Tests, Architecture.Tests (NetArchTest kiểm quy tắc phụ thuộc), Integration.Tests
-- [ ] T-1.3 Domain: entity language, tour_area, poi, poi_translation, payment, access_pass, play_log (theo PRD mục 6)
+- [x] T-1.3 Domain: entity language, tour_area, poi, poi_translation, payment, access_pass, play_log (theo PRD mục 6)
 - [ ] T-1.4 Data: DbContext + cấu hình EF (khóa, index, unique) cho Npgsql; chuỗi kết nối từ env
 - [ ] T-1.5 Tạo project Supabase (tay, bởi người dùng): ghi ref/URL vào PROGRESS.md; tạo bucket `audio` private
 - [ ] T-1.6 Migration đầu tiên + chạy lên Supabase; bật RLS (không policy) cho mọi bảng
