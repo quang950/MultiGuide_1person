@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi;
+using MultiGuide.Api.Auth;
 using MultiGuide.Api.Middleware;
 using MultiGuide.Business;
 using MultiGuide.Data;
@@ -46,7 +47,7 @@ builder.Services.Configure<ApiBehaviorOptions>(options =>
     };
 });
 
-// Configure Swagger (T-1.9)
+// Configure Swagger (T-1.9, T-2.1)
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -55,8 +56,24 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1",
         Description = "Backend API cho hệ thống thuyết minh tự động đa ngôn ngữ MultiGuide (ASP.NET Core .NET 10)"
     });
+
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Nhập Supabase JWT access token (ví dụ: 'Bearer <token>')"
+    });
+
+    options.AddSecurityRequirement(document => new()
+    {
+        [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+    });
 });
 
+builder.Services.AddSupabaseJwtAuthentication(builder.Configuration);
 builder.Services.AddBusinessServices();
 builder.Services.AddDataServices(builder.Configuration);
 
@@ -91,6 +108,7 @@ app.UseSwaggerUI(options =>
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 // Health check endpoints (US-17 / T-1.8)

@@ -21,7 +21,7 @@
 - [x] **Mốc cuối ngày 1:** `/health` chạy qua HTTPS trên onrender.com, CI xanh
 
 ## Ngày 2 — Admin: Auth + CRUD + audio
-- [ ] T-2.1 Cấu hình xác thực JWT Supabase (issuer, khóa) + policy role=admin trên `/admin/*` — US-09
+- [x] T-2.1 Cấu hình xác thực JWT Supabase (issuer, khóa) + policy role=admin trên `/admin/*` — US-09
 - [ ] T-2.2 Tạo user admin trên Supabase Dashboard, gán app_metadata role=admin; thử gọi bằng token thật
 - [ ] T-2.3 Business: interface Repository + `AdminContentService` cho tour_area; Data: repository — US-10
 - [ ] T-2.4 Api: CRUD `/admin/areas` (code unique, giá > 0, xóa mềm) + unit test Service
