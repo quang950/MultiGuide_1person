@@ -19,13 +19,13 @@ Backend (REST API) cho hệ thống thuyết minh tự động đa ngôn ngữ: 
 Nếu sắp hết ngữ cảnh/quota: dừng ở ranh giới task, làm đủ 4 bước trên, ghi rõ phần dang dở vào PROGRESS.md.
 
 ## Stack
-ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Render (free, Docker), GitHub Actions, xUnit + NetArchTest + Testcontainers.
+ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Google Gemini 2.5 Flash (Google AI Studio Free Tier), Render (free, Docker), GitHub Actions, xUnit + NetArchTest + Testcontainers.
 
 ## Kiến trúc 3 lớp (không được vi phạm)
 - `MultiGuide.Api` (Presentation): Controller, DTO, middleware, DI. **Không** chứa nghiệp vụ, **không** dùng DbContext.
-- `MultiGuide.Business`: Service + **mọi interface** (IXxxRepository, IPaymentGateway, IFileStorage, IClock). **Không** biết EF Core/Supabase/HTTP.
-- `MultiGuide.Data`: DbContext, migration, Repository, SupabaseFileStorage, MockPaymentGateway. **Không** chứa nghiệp vụ.
-- `MultiGuide.Domain`: Entity, enum, hằng số, exception. Không phụ thuộc tầng nào.
+- `MultiGuide.Business`: Service + **mọi interface** (IXxxRepository, IPaymentGateway, IFileStorage, IAiService, IClock). **Không** biết EF Core/Supabase/HTTP.
+- `MultiGuide.Data`: DbContext, migration, Repository, SupabaseFileStorage, MockPaymentGateway, GeminiAiService. **Không** chứa nghiệp vụ.
+- `MultiGuide.Domain`: Entity, enum, hằng số, exception. Không phụ thuộc tầng nào. POI hỗ trợ `image_url` nullable để hiển thị ảnh hiện vật.
 - Phụ thuộc: Api → Business ← Data; cả hai → Domain. Có NetArchTest kiểm tra trong CI.
 
 ## Quy tắc cứng
@@ -34,7 +34,7 @@ ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Re
 - Thời gian lưu UTC (`timestamptz`), trả ISO 8601 có `Z`.
 - Lỗi trả ProblemDetails kèm trường `code` (xem PRD mục 7).
 - Migration chỉ thêm (tương thích ngược), chạy trong pipeline, **không** tự chạy khi API khởi động.
-- Secret chỉ ở biến môi trường/GitHub Secrets. **Không commit** `.env`, key Supabase, connection string.
+- Secret chỉ ở biến môi trường/GitHub Secrets. **Không commit** `.env`, key Supabase, key Gemini, connection string.
 - Mọi bảng bật RLS không policy; bucket Storage để private.
 - Không thêm tính năng ngoài PRD. Việc nằm ngoài phạm vi → ghi vào mục "Later" của `docs/PRD.md`, hỏi người dùng.
 - Mỗi lượt chỉ làm **một task** trong TASKS.md, trừ khi người dùng yêu cầu khác.

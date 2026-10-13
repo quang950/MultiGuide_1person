@@ -27,10 +27,11 @@ Api → Business ← Data; Api, Business, Data → Domain. Business **không** t
 | IAreaRepository, IPoiRepository, ITranslationRepository, IPaymentRepository, IAccessPassRepository, IPlayLogRepository | `*Repository` (EF Core) | Truy cập DB |
 | IFileStorage | SupabaseFileStorage | Upload, Delete, CreateSignedUrl (private bucket) |
 | IPaymentGateway | MockPaymentGateway | Kết quả cấu hình bằng `Payment__MockResult` |
+| IAiService | GeminiAiService | Gọi Google Gemini 2.5 Flash REST API (Free tier) sinh tóm tắt lịch sử POI |
 | IClock | SystemClock | Giúp test thời gian |
 
 ## Service (Business)
-AreaService · PassService · GeoService · ContentService · AdminContentService · AnalyticsService
+AreaService · PassService · GeoService · ContentService · AdminContentService · AnalyticsService · AiService
 
 ## Xác thực / phân quyền
 - Middleware (Api): JWT Supabase hợp lệ + role=admin → `/admin/*`; token AccessPass → băm SHA-256 tra DB, còn hạn, chưa thu hồi → PassContext(pass_id, area_id).

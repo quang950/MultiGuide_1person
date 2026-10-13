@@ -43,6 +43,7 @@ erDiagram
         double lng "Kinh độ điểm POI"
         double trigger_radius_m "Bán kính kích hoạt phát audio (mặc định 30m)"
         int priority "Độ ưu tiên phát khi chồng lấn (0-100)"
+        string image_url "Đường dẫn ảnh chụp hiện vật / di tích (nullable)"
         boolean is_active "Trạng thái hoạt động (xóa mềm)"
         timestamptz created_at "Thời điểm tạo (UTC)"
         timestamptz updated_at "Thời điểm cập nhật (UTC)"
@@ -138,6 +139,7 @@ erDiagram
 | `lng` | `double precision` | NO | - | Kinh độ thực tế điểm POI. |
 | `trigger_radius_m` | `double precision` | NO | `30` | Bán kính kích hoạt phát âm thanh (5m - 200m). |
 | `priority` | `integer` | NO | `0` | Độ ưu tiên (0 - 100) khi du khách đứng giữa nhiều POI. |
+| `image_url` | `varchar(500)` | YES | `NULL` | Đường dẫn ảnh chụp hiện vật / di tích phục vụ hiển thị FE. |
 | `is_active` | `boolean` | NO | `true` | Xóa mềm. |
 | `created_at` | `timestamptz` | NO | `NOW()` | Thời gian tạo (UTC). |
 | `updated_at` | `timestamptz` | NO | `NOW()` | Thời gian cập nhật (UTC). |

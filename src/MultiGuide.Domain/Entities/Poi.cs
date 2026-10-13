@@ -8,6 +8,7 @@ public class Poi
     public double Lng { get; set; }
     public double TriggerRadiusM { get; set; } = 30;
     public int Priority { get; set; } = 0;
+    public string? ImageUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

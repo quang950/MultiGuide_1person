@@ -32,7 +32,7 @@ Khách du lịch quốc tế thiếu hướng dẫn viên đúng ngôn ngữ; th
 | Stack            | ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Render, GitHub Actions |
 | Tìm POI gần      | Server stateless: nhận lat/lng, trả POI trong bán kính; tính Haversine trong Service                |
 
-**Ngoài phạm vi MVP:** thanh toán thật, AI dịch/TTS, offline pack, dashboard, owner portal, upload ảnh, QR tự sinh, PostGIS, bản đồ (thuộc FE), quản lý tài khoản admin (làm trên Supabase Dashboard).
+**Ngoài phạm vi MVP:** thanh toán thật, offline pack, dashboard, owner portal, QR tự sinh, PostGIS, bản đồ (thuộc FE), quản lý tài khoản admin (làm trên Supabase Dashboard). **Tính năng mở rộng (Bonus):** Tích hợp Google Gemini 2.5 Flash (Free tier qua Google AI Studio) hỗ trợ Admin sinh tóm tắt lịch sử/câu chuyện cho POI; hỗ trợ `image_url` cho hiện vật di tích.
 
 ### 1.4 Actor
 
@@ -93,6 +93,7 @@ Acceptance Criteria chi tiết, mã lỗi và phân quyền của từng endpoin
 | E4       | US-12  | CRUD bản dịch                                                      | Must        |
 | E4       | US-13  | Tải audio mp3 cho bản dịch lên Supabase Storage                    | Must        |
 | E4       | US-14  | Sinh QR cho khu (PNG)                                              | Could       |
+| E4       | US-19  | Sinh tóm tắt lịch sử cho POI bằng Gemini AI (Google AI Studio Free) | Could       |
 | E5       | US-15  | CI mỗi PR/push, branch protection                                  | Must        |
 | E5       | US-16  | CD: merge main → migration → deploy hook Render → smoke test       | Must        |
 | E5       | US-17  | Health check: /health (liveness) và /health/ready (kiểm tra DB)    | Must        |
@@ -269,7 +270,7 @@ Backend là **modular monolith 3 lớp** gồm 3 project chính và 1 project d�
 |-----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
 | language        | **code** PK, name, is_active                                                                                                                                                          | (MVP)   |
 | tour_area       | **id** uuid PK, code (unique), name, center_lat, center_lng, radius_m, price_usd numeric(10,2), pass_ttl_hours (mặc định 24), is_active                                               | (MVP)   |
-| poi             | **id** uuid PK, area_id FK, lat, lng, trigger_radius_m (mặc định 30), priority, is_active, created_at, updated_at. Index (area_id, is_active) và (lat, lng)                           | (MVP)   |
+| poi             | **id** uuid PK, area_id FK, lat, lng, trigger_radius_m (mặc định 30), priority, image_url nullable, is_active, created_at, updated_at. Index (area_id, is_active) và (lat, lng) | (MVP)   |
 | poi_translation | **id** PK, poi_id FK, language_code FK, title, description, audio_path nullable (đường dẫn trong bucket), audio_duration_sec nullable, updated_at. **Unique (poi_id, language_code)** | (MVP)   |
 | payment         | **id** PK, area_id FK, amount, currency, provider, provider_ref, idempotency_key **unique**, status (pending/succeeded/failed), created_at                                            | (MVP)   |
 | access_pass     | **id** PK, area_id FK, payment_id FK unique, token_hash (SHA-256) **unique**, issued_at, expires_at, status (active/revoked)                                                          | (MVP)   |
@@ -321,6 +322,7 @@ Tài khoản admin nằm trong **auth.users của Supabase**, không có bảng 
 | US-12     | CRUD /admin/pois/{id}/translations   | Admin                                        | Tối đa 1 bản dịch cho mỗi (poi_id, language_code) (trùng → 409 TRANSLATION_EXISTS); title ≤ 200 ký tự                                                                                                                                                                                                                       |
 | US-13     | POST /admin/translations/{id}/audio  | Admin                                        | Chỉ mp3, kiểm tra **magic bytes** (ID3 hoặc frame sync), tối đa 10 MB; upload qua IFileStorage vào bucket private; thay audio thì xóa file cũ                                                                                                                                                                               |
 | US-14     | GET /admin/areas/{id}/qr             | Admin                                        | Trả PNG chứa URL {PUBLIC_WEB_URL}/a/{code} (Could)                                                                                                                                                                                                                                                                          |
+| US-19     | POST /admin/pois/{id}/generate-story | Admin                                        | Gọi Google Gemini 2.5 Flash (Free tier) sinh tóm tắt lịch sử (150-200 từ) cho POI dựa trên tên điểm và khu vực; trả về text hoặc lưu nháp bản dịch (Could)                                                                                                                                                                        |
 | US-17     | GET /health, /health/ready           | Public                                       | /health luôn 200 nếu process sống; /health/ready kiểm tra kết nối DB, 503 nếu lỗi                                                                                                                                                                                                                                           |
 
 **Bảng mã lỗi** (ProblemDetails, trường code):
