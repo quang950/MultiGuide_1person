@@ -61,17 +61,23 @@ Bộ file này giúp AI (Claude Code, Cursor, Copilot...) **nối tiếp công v
 - Việc mới ngoài PRD → thêm vào mục "Later" của `docs/PRD.md`, rồi tạo task mới trong TASKS.md.
 - Cuối mỗi ngày: đọc PROGRESS.md, tick TASKS.md, kiểm tra CI xanh và `/health` trên Render còn chạy.
 
-## promt khi qua trang mới 
+
+# promt khi qua trang mới
 Xin chào, tôi muốn tiếp tục phát triển dự án MultiGuide Backend (.NET 10, kiến trúc 3 lớp).
 
-BƯỚC 1 - ĐỌC VÀ HIỂU NGỮ CẢNH:
+BƯỚC 1 — ĐỌC VÀ NẮM NGỮ CẢNH DỰ ÁN (BẮT BUỘC):
 Trước khi viết bất kỳ dòng code nào, hãy đọc kỹ các file tài liệu sau:
-1. CLAUDE.md (đọc đầu tiên để nắm quy tắc cứng của dự án).
-2. docs/PROGRESS.md và docs/TASKS.md (để biết hiện trạng và task tiếp theo).
-3. docs/ARCHITECTURE.md và docs/ERD.md (để nắm kiến trúc 3 lớp và mô hình thực thể).
-4. docs/DECISIONS.md (các quyết định đã chốt, không đề xuất thay đổi).
+1. CLAUDE.md (Quy tắc cứng và kiến trúc 3 lớp).
+2. docs/PROGRESS.md và docs/TASKS.md (Hiện trạng dự án và danh sách việc).
+3. docs/DECISIONS.md (Các quyết định công nghệ đã chốt, không đề xuất thay đổi).
+4. docs/ARCHITECTURE.md và docs/ERD.md (Cấu trúc 3 lớp và thiết kế bảng CSDL).
 
-BƯỚC 2 - TÓM TẮT & LÊN KẾ HOẠCH:
-- Chạy `git status` và `git log --oneline -5` để kiểm tra repo.
-- Báo cáo cho tôi: Dự án vừa hoàn thành task nào? Task tiếp theo cần làm là gì?
-- Lên kế hoạch chi tiết cho task tiếp theo đó và CHỜ TÔI XÁC NHẬN rồi mới tiến hành code.
+BƯỚC 2 — KIỂM TRA HIỆN TRẠNG & TÌM FILE LIÊN QUAN ĐẾN TASK TIẾP THEO:
+1. Chạy `git status` và `git log --oneline -5`.
+2. Kiểm tra `docs/TASKS.md` để xác định chính xác task tiếp theo cần làm (hiện tại là T-1.4: Xây dựng DbContext + cấu hình EF Core Npgsql trong MultiGuide.Data).
+3. Đọc các file code hiện có liên quan trực tiếp đến task này (ví dụ: các entity trong `src/MultiGuide.Domain/Entities/`, project `MultiGuide.Data`).
+
+BƯỚC 3 — ĐỀ XUẤT KẾ HOẠCH & CHỜ XÁC NHẬN:
+- Tóm tắt cho tôi: Đang ở task nào? Việc dở là gì?
+- Trình bày kế hoạch thực hiện chi tiết cho task đó (các file sẽ tạo/sửa, cấu hình DbSet, Fluent API, quan hệ, index).
+- DỪNG LẠI VÀ CHỜ TÔI XÁC NHẬN trước khi tiến hành viết code.
