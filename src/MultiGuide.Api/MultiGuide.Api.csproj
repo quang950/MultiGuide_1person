@@ -13,7 +13,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MultiGuide.Business\MultiGuide.Business.csproj" />
-    <ProjectReference Include="..\MultiGuide.Data\MultiGuide.Data.csproj" />
     <ProjectReference Include="..\MultiGuide.Domain\MultiGuide.Domain.csproj" />
   </ItemGroup>
 
