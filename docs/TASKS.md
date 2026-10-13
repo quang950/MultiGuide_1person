@@ -15,10 +15,10 @@
 - [x] T-1.9 Api: ExceptionHandler → ProblemDetails có `code`; Swagger; versioning `/api/v1`
 - [x] T-1.10 Dockerfile multi-stage; chạy thử `docker build`
 - [x] T-1.11 GitHub Actions `ci.yml`: restore, build -warnaserror, format check, test + coverage, docker build, vulnerable scan — US-15
-- [ ] T-1.12 Bật branch protection cho main (người dùng làm tay trên GitHub)
-- [ ] T-1.13 Tạo Web Service Render từ Dockerfile + biến môi trường; lấy Deploy Hook (người dùng làm tay)
-- [ ] T-1.14 `cd.yml` bản đầu: gọi deploy hook + smoke test /health — US-16 (bản đầu)
-- [ ] **Mốc cuối ngày 1:** `/health` chạy qua HTTPS trên onrender.com, CI xanh
+- [x] T-1.12 Bật branch protection cho main (người dùng làm tay trên GitHub)
+- [x] T-1.13 Tạo Web Service Render từ Dockerfile + biến môi trường; lấy Deploy Hook (người dùng làm tay)
+- [x] T-1.14 `cd.yml` bản đầu: gọi deploy hook + smoke test /health — US-16 (bản đầu)
+- [x] **Mốc cuối ngày 1:** `/health` chạy qua HTTPS trên onrender.com, CI xanh
 
 ## Ngày 2 — Admin: Auth + CRUD + audio
 - [ ] T-2.1 Cấu hình xác thực JWT Supabase (issuer, khóa) + policy role=admin trên `/admin/*` — US-09
