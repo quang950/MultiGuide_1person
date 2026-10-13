@@ -13,8 +13,21 @@ public static class DependencyInjection
                       ?? configuration["DATABASE_URL"]
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
+        var useInMemory = configuration["USE_IN_MEMORY_DB"] == "true"
+                          || Environment.GetEnvironmentVariable("USE_IN_MEMORY_DB") == "true";
+
+        if (useInMemory)
+        {
+            var dbName = configuration["IN_MEMORY_DB_NAME"] ?? "MultiGuide_InMemory";
+            services.AddDbContext<MultiGuideDbContext>(options =>
+            {
+                options.UseInMemoryDatabase(dbName);
+            });
+            return services;
+        }
+
         var connectionString = !string.IsNullOrWhiteSpace(rawConn)
-            ? MultiGuideDbContextFactory.ConvertPostgresUriToConnectionString(rawConn)
+            ? MultiGuideDbContextFactory.ConvertPostgresUriToConnectionString(MultiGuideDbContextFactory.CleanConnectionString(rawConn))
             : MultiGuideDbContextFactory.GetConnectionString();
 
         services.AddDbContext<MultiGuideDbContext>(options =>

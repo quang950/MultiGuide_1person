@@ -66,12 +66,27 @@ public class ArchitectureTests
     [Fact]
     public void Api_Phu_Thuoc_Dung_Kien_Truc()
     {
-        // Api chỉ phụ thuộc Business/Domain, không phụ thuộc Data implementation
+        // Các thành phần trong Api (Controllers, Middlewares...) không được phụ thuộc Data implementation (ngoại trừ Composition Root Program cấu hình DI)
         var result = Types.InAssembly(typeof(Api.AssemblyMarker).Assembly)
+            .That()
+            .DoNotHaveName("Program")
             .ShouldNot()
             .HaveDependencyOn(DataNamespace)
             .GetResult();
 
-        Assert.True(result.IsSuccessful, "Api phải tuân thủ kiến trúc phân tầng.");
+        Assert.True(result.IsSuccessful, "Api (ngoại trừ Composition Root Program) không được phụ thuộc Data.");
+    }
+
+    [Fact]
+    public void Api_Controllers_Khong_Phu_Thuoc_Data_Va_DbContext()
+    {
+        var result = Types.InAssembly(typeof(Api.AssemblyMarker).Assembly)
+            .That()
+            .ResideInNamespace("MultiGuide.Api.Controllers")
+            .ShouldNot()
+            .HaveDependencyOnAny(DataNamespace, "Microsoft.EntityFrameworkCore")
+            .GetResult();
+
+        Assert.True(result.IsSuccessful, "Controllers không được phụ thuộc trực tiếp Data hoặc DbContext.");
     }
 }
