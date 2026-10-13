@@ -1,25 +1,24 @@
-# Architecture & Technical Decisions
+# DECISIONS — các quyết định đã chốt
 
-## ADR-001: Target Framework Selection (.NET 10.0)
-- **Quyết định**: Sử dụng `net10.0` làm target framework xuyên suốt toàn bộ solution.
-- **Lý do**: Máy môi trường cài sẵn .NET SDK `10.0.401`. Thư viện ORM `Pomelo.EntityFrameworkCore.MySql` phiên bản 9.0.0 và `Testcontainers.MySql` phiên bản 4.16.0 tương thích hoàn toàn trên nền tảng này mà không phát sinh lỗi cảnh báo hoặc xung đột phụ thuộc.
+> Đã chốt thì không đề xuất lại. Muốn đổi → hỏi người dùng, ghi lý do mới vào cuối file.
 
-## ADR-002: Token Query String cho Media Endpoints
-- **Quyết định**: Cho phép truyền token qua query string `?access_token=` duy nhất tại các endpoint `/api/v1/media/*`, song song với `Authorization: Bearer <token>`.
-- **Lý do**: Các thẻ HTML tiêu chuẩn (`<audio src="...">` và `<img src="...">`) trên trình duyệt không cho phép tùy biến HTTP header `Authorization`. Đồng thời, middleware ghi log request bắt buộc loại bỏ hoàn toàn query string để đảm bảo bí mật token không bị rò rỉ vào hệ thống log tập trung.
+| # | Quyết định | Lý do |
+|---|---|---|
+| D1 | ASP.NET Core 3 lớp, setup lại từ đầu | Quen .NET; 3 lớp rõ cho môn học |
+| D2 | CSDL = Supabase Postgres (EF Core + Npgsql), kết nối qua **Session pooler** | Render không dùng được kết nối trực tiếp IPv6 của Supabase |
+| D3 | Admin dùng **Supabase Auth**; API chỉ kiểm JWT + claim role=admin | Bỏ hash mật khẩu, khóa tài khoản; MVP 1 role |
+| D4 | Audio lưu **Supabase Storage** bucket private, trả **signed URL** (1 giờ) | Đĩa Render free không bền; tránh lộ nội dung trả phí |
+| D5 | **Bỏ VisitorSession**; `POST /areas/{code}/passes` tạo payment + pass; ngôn ngữ do FE truyền `?lang` | Giảm bảng và endpoint |
+| D6 | Idempotency đơn giản: unique(idempotency_key), trùng → 409 | Thanh toán chỉ là mock |
+| D7 | 1 role `admin` | MVP |
+| D8 | Geofence: server stateless, tính **Haversine** trong Service; debounce/cooldown ở FE; không lưu tọa độ | 6 POI, dễ test, riêng tư |
+| D9 | Deploy: Render free (Docker) + **Deploy Hook** từ GitHub Actions + smoke test | HTTPS sẵn, có CD thật |
+| D10 | Migration chạy trong pipeline (EF bundle), chỉ thêm | Rollback code an toàn |
+| D11 | Test: xUnit unit (Business), NetArchTest, 1–2 Testcontainers Postgres; coverage Business ≥ 60% | Chứng minh 3 lớp |
+| D12 | Cắt khỏi MVP: upload ảnh, content-status, rate limit nhiều tầng, correlation id, request_hash, PostGIS, QR là Could | 4 ngày, 1 người |
+| D13 | Rate limit chỉ cho `POST /areas/{code}/passes`: 5 req/phút/IP | Đăng nhập admin do Supabase xử lý |
+| D14 | Test client FE: Leaflet, deploy Vercel, bấm bản đồ để giả lập vị trí | Test geofence không cần GPS |
+| D15 | Dùng .NET 10 (LTS), net10.0; ghim SDK bằng global.json | Máy dev chỉ có SDK 9/10
 
-## ADR-003: Rate Limiting cho Endpoint Thanh toán (/payments)
-- **Quyết định**: Áp dụng giới hạn tần suất 5 request/phút theo IP client đối với endpoint `/api/v1/payments`.
-- **Lý do**: Pipeline RateLimiter của ASP.NET Core chạy trước khi đọc và bind Request Body (`session_id`), do đó việc giới hạn theo IP là phương án khả thi và ngăn ngừa tấn công DoS hiệu quả nhất. Bật cấu hình `ForwardedHeaders` để nhận diện chính xác IP client qua Caddy reverse proxy.
-
-## ADR-004: Xoay Token khi Replay Idempotent Payment
-- **Quyết định**: Khi nhận request thanh toán lặp lại (cùng `session_id` và `Idempotency-Key`, trạng thái `succeeded`), hệ thống sinh token mới ngẫu nhiên 32 bytes, cập nhật `token_hash` vào bảng `AccessPass`, giữ nguyên `expires_at` và trả về token mới.
-- **Lý do**: Cơ sở dữ liệu chỉ lưu SHA-256 hash của token để đảm bảo an toàn, không thể giải mã token cũ. Khách hàng gặp sự cố rớt mạng sau khi trừ tiền vẫn lấy lại được token hợp lệ để sử dụng dịch vụ mà không bị thu tiền lần thứ hai.
-
-## ADR-005: Chiến lược Xóa (Soft Delete vs Hard Delete)
-- **Quyết định**: `TourArea` và `Poi` chỉ xóa mềm thông qua cờ `is_active = false`. `PoiTranslation` được phép xóa cứng (hard delete).
-- **Lý do**: `TourArea` và `Poi` được tham chiếu bởi các bảng lịch sử (VisitorSession, Poi, PlayLog). Ngược lại, `PoiTranslation` không có bảng nào khóa ngoại trỏ tới nên xóa cứng an toàn và giải phóng dung lượng.
-
-## ADR-006: Lưu trữ và Thu hồi File Âm thanh
-- **Quyết định**: Khi xóa bản dịch hoặc cập nhật file âm thanh mới, file audio cũ trên ổ đĩa được chuyển sang thư mục con `_deleted/` thay vì xóa vĩnh viễn ngay lập tức.
-- **Lý do**: Chống mất mát dữ liệu do thao tác nhầm lẫn từ phía Admin và phục vụ mục đích kiểm toán/phục hồi khi cần thiết.
+## Thứ tự cắt nếu trễ
+US-14 (QR) → US-04 (/passes/current) → US-08 (play-log) → integration test.

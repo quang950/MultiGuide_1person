@@ -1,37 +1,14 @@
-## Build and binary output
-[Bb]in/
-[Oo]bj/
-[Ll]og/
-[Ll]ogs/
-
-## Visual Studio / Rider / VS Code
+bin/
+obj/
 .vs/
-.vscode/
 .idea/
 *.user
-*.suo
-*.userosscache
-*.sln.docstates
-
-## Test and coverage
-TestResults/
-*.trx
-coverage/
-*.cobertura.xml
-
-## Environment and secrets
 .env
-.env.local
-*.local
-*.pfx
-*.key
-
-## OS files
-.DS_Store
-Thumbs.db
-
-## Storage / Uploads
-storage/
-media/
-_deleted/
-scratch/
+.env.*
+!.env.example
+TestResults/
+coverage/
+*.log
+publish/
+reports/coverage/
+reports/logs/

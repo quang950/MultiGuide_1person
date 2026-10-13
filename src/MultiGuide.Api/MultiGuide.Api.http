@@ -1,0 +1,6 @@
+@MultiGuide.Api_HostAddress = http://localhost:5267
+
+GET {{MultiGuide.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
