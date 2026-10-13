@@ -12,3 +12,5 @@ coverage/
 publish/
 reports/coverage/
 reports/logs/
+
+reports/
