@@ -8,6 +8,7 @@ public static class DependencyInjection
     public static IServiceCollection AddBusinessServices(this IServiceCollection services)
     {
         services.AddScoped<IAdminContentService, AdminContentService>();
+        services.AddScoped<IAreaService, AreaService>();
         return services;
     }
 }

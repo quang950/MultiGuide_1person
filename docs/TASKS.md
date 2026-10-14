@@ -34,7 +34,7 @@
 - [x] **Mốc cuối ngày 2:** admin tạo được khu/POI/bản dịch/audio qua Swagger trên Render
 
 ## Ngày 3 — Luồng khách
-- [ ] T-3.1 `GET /areas/{code}` kèm danh sách ngôn ngữ (404 AREA_NOT_FOUND) — US-01
+- [x] T-3.1 `GET /areas/{code}` kèm danh sách ngôn ngữ (404 AREA_NOT_FOUND) — US-01
 - [ ] T-3.2 `IPaymentGateway` + `MockPaymentGateway` (kết quả cấu hình được)
 - [ ] T-3.3 `PassService`: sinh token 32 byte CSPRNG, lưu SHA-256, hạn theo pass_ttl_hours; unit test
 - [ ] T-3.4 `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02
