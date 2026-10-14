@@ -6,7 +6,7 @@
 Backend (REST API) cho hệ thống thuyết minh tự động đa ngôn ngữ: khách quét QR → trả phí mock → nhận AccessPass → gửi tọa độ → nhận POI gần + audio đúng ngôn ngữ. Đồ án môn Công nghệ phần mềm, **làm một mình trong 4 ngày**. Chỉ làm Backend; web test client (Leaflet, Vercel) chỉ để kiểm thử.
 
 ## Bắt đầu phiên làm việc (BẮT BUỘC)
-1. Đọc `docs/PROGRESS.md` (đang làm gì) và `docs/TASKS.md` (việc kế tiếp).
+1. Đọc `docs/PROGRESS.md` (đang làm gì),docs/ARCHITECTURE.md (kiến trúc 3 lớp và các thông tin liên quan), và `docs/TASKS.md` (việc kế tiếp).
 2. Chạy `git status` và `git log --oneline -5`.
 3. Tóm tắt cho người dùng: đang ở task nào, việc dở là gì, bước kế tiếp. **Chờ xác nhận rồi mới code.**
 4. Cần chi tiết thì đọc thêm: `docs/PRD.md` (yêu cầu + API), `docs/ARCHITECTURE.md` (3 lớp), `docs/DECISIONS.md` (đã chốt, đừng đề xuất lại).
