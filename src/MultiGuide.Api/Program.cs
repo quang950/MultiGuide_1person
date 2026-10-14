@@ -8,6 +8,33 @@ using MultiGuide.Data.Context;
 using MultiGuide.Data.Seed;
 using MultiGuide.Domain.Constants;
 
+// Load .env file for local development if present
+var searchDir = new DirectoryInfo(Directory.GetCurrentDirectory());
+while (searchDir != null)
+{
+    var envFilePath = Path.Combine(searchDir.FullName, ".env");
+    if (File.Exists(envFilePath))
+    {
+        foreach (var line in File.ReadAllLines(envFilePath))
+        {
+            var trimmed = line.Trim();
+            if (string.IsNullOrWhiteSpace(trimmed) || trimmed.StartsWith('#')) continue;
+            var sep = trimmed.IndexOf('=');
+            if (sep > 0)
+            {
+                var k = trimmed[..sep].Trim();
+                var v = trimmed[(sep + 1)..].Trim();
+                if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(k)))
+                {
+                    Environment.SetEnvironmentVariable(k, v);
+                }
+            }
+        }
+        break;
+    }
+    searchDir = searchDir.Parent;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container (DI configuration - T-1.8, T-1.9)

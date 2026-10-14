@@ -18,7 +18,7 @@ public static class JwtAuthenticationExtensions
         var jwtSecret = configuration["Supabase:JwtSecret"] ?? configuration["Supabase__JwtSecret"];
         var issuer = configuration["Supabase:JwtIssuer"] ?? configuration["Supabase__JwtIssuer"];
 
-        if (string.IsNullOrWhiteSpace(issuer))
+        if (string.IsNullOrWhiteSpace(issuer) || issuer.Contains("<project-ref>"))
         {
             var supabaseUrl = configuration["Supabase:Url"] ?? configuration["Supabase__Url"];
             if (!string.IsNullOrWhiteSpace(supabaseUrl))
@@ -46,7 +46,7 @@ public static class JwtAuthenticationExtensions
                 ClockSkew = TimeSpan.FromMinutes(1)
             };
 
-            if (!string.IsNullOrWhiteSpace(jwtSecret))
+            if (!string.IsNullOrWhiteSpace(jwtSecret) && !jwtSecret.StartsWith("<"))
             {
                 tokenValidationParameters.ValidateIssuerSigningKey = true;
                 tokenValidationParameters.IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret));
