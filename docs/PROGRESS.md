@@ -2,10 +2,10 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-3.2)
-- **Đang làm:** Sẵn sàng làm Task T-3.3: `PassService` (sinh token 32 byte CSPRNG, lưu SHA-256, hạn theo pass_ttl_hours).
-- **Vừa xong:** T-3.2: Định nghĩa `IPaymentGateway` và `PaymentRequest`/`PaymentResult` trong tầng Business (`MultiGuide.Business.Payments`); hiện thực `MockPaymentGateway` trong tầng Data (`MultiGuide.Data.Payments`) cho phép cấu hình kết quả thanh toán linh hoạt qua `Payment:MockResult`/`Payment__MockResult` ("success"/"failed"); đăng ký DI; bổ sung 11 unit tests trong `MockPaymentGatewayTests`; nâng test suite lên 176/176 xanh lá (88 Business, 73 Integration, 15 Architecture); `dotnet build -warnaserror` 0 warning 0 error.
-- **Bước kế tiếp:** T-3.3: `PassService`: sinh token 32 byte CSPRNG, lưu SHA-256, hạn theo pass_ttl_hours; unit test.
+## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-3.3)
+- **Đang làm:** Sẵn sàng làm Task T-3.4: `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02.
+- **Vừa xong:** T-3.3: Triển khai `PassService`, `IClock`/`SystemClock`, `IPaymentRepository`/`PaymentRepository`, `IAccessPassRepository`/`AccessPassRepository` chuẩn 3 lớp; sinh token 32 byte CSPRNG, lưu hash SHA-256 (64 hex), hạn theo `pass_ttl_hours`, bắt trùng `IdempotencyKey` $\rightarrow$ 409 `DUPLICATE_REQUEST`, thanh toán thất bại $\rightarrow$ 402 `PAYMENT_FAILED`; viết 12 unit tests trong `PassServiceTests`; test suite đạt 188/188 xanh lá (100 Business, 73 Integration, 15 Architecture); `dotnet build -warnaserror` 0 warning 0 error.
+- **Bước kế tiếp:** T-3.4: `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02 (API endpoint & integration tests).
 - **Đang vướng:** không
 - **Lưu ý cho Ngày 3:** Luồng khách quét QR vào khu, mua vé AccessPass, dò POI nearby qua tọa độ GPS và nhận Signed URL audio tương ứng.
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
@@ -18,6 +18,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 14/10 — Hoàn thành T-3.3: Triển khai `PassService` sinh token 32-byte CSPRNG, băm SHA-256 lưu DB, tính `ExpiresAt = UtcNow + pass_ttl_hours`, kiểm tra IdempotencyKey trùng lặp (409) và cổng từ chối (402); tạo interface và repository cho `Payment` & `AccessPass`; thêm 12 unit tests trong `PassServiceTests`; test suite đạt 188/188 tests xanh lá.
 - 14/10 — Hoàn thành T-3.2: Định nghĩa interface `IPaymentGateway`, `PaymentRequest`, `PaymentResult` trong tầng Business độc lập; hiện thực `MockPaymentGateway` trong tầng Data hỗ trợ cấu hình kết quả (success/failed/failure/default) qua `Payment:MockResult` / `Payment__MockResult`; đăng ký DI; bổ sung 11 unit tests trong `MockPaymentGatewayTests`; toàn bộ 176/176 tests xanh lá.
 - 14/10 — Hoàn thành T-3.1: Triển khai endpoint Public `GET /areas/{code}` (và `/api/v1/areas/{code}`) (US-01) kèm DTO `AreaDetailResponse`, interface `IAreaRepository.GetSupportedLanguagesAsync`, `IAreaService` và `AreaService` chuẩn 3 lớp; viết 8 unit tests và 4 integration tests bao quát các trường hợp mã không tồn tại, khu bị tắt, lọc ngôn ngữ/POI active; test suite đạt 165/165 test xanh lá.
 - 14/10 — Hoàn thành T-2.10 & MỐC CUỐI NGÀY 2: Tạo script sinh 18 file audio MP3 bằng Microsoft Edge Neural TTS cho 6 POI × 3 ngôn ngữ (vi, en, ja), upload lên Supabase Storage bucket `audio` và cập nhật `audio_path` cho 18/18 bản dịch trong CSDL; kiểm thử signed URL stream audio 200 OK; toàn bộ Ngày 2 đã hoàn thành 100%.

@@ -46,6 +46,8 @@ public static class DependencyInjection
         services.AddScoped<IPoiRepository, PoiRepository>();
         services.AddScoped<ITranslationRepository, TranslationRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+        services.AddScoped<IAccessPassRepository, AccessPassRepository>();
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
         services.Configure<SupabaseStorageOptions>(options =>
