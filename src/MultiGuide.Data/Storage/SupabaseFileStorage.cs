@@ -161,7 +161,8 @@ public class SupabaseFileStorage : IFileStorage
             throw new AppException(ErrorCodes.StorageError, "Phản hồi signed URL từ Supabase không hợp lệ.", 500);
         }
 
-        if (Uri.TryCreate(signedPath, UriKind.Absolute, out var absoluteUri))
+        if (Uri.TryCreate(signedPath, UriKind.Absolute, out var absoluteUri) &&
+            (absoluteUri.Scheme == Uri.UriSchemeHttp || absoluteUri.Scheme == Uri.UriSchemeHttps))
         {
             return absoluteUri.ToString();
         }

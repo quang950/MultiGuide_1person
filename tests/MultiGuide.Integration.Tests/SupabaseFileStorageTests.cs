@@ -229,4 +229,21 @@ public class SupabaseFileStorageTests
         Assert.Equal(ErrorCodes.StorageError, ex.Code);
         Assert.Equal(500, ex.StatusCode);
     }
+
+    [Fact]
+    public async Task CreateSignedUrlAsync_KhiSupabaseTraVeUrlTuyetDoi_TraVeNguyenGoc()
+    {
+        // Arrange
+        var (storage, handler) = CreateStorage();
+        handler.Handler = _ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{\"signedURL\": \"https://cdn.supabase.co/audio/pois/1/vi.mp3?token=123\"}", Encoding.UTF8, "application/json")
+        };
+
+        // Act
+        var result = await storage.CreateSignedUrlAsync("pois/1/vi.mp3", TimeSpan.FromHours(1));
+
+        // Assert
+        Assert.Equal("https://cdn.supabase.co/audio/pois/1/vi.mp3?token=123", result);
+    }
 }
