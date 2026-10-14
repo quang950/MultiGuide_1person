@@ -67,4 +67,13 @@ public class AreaRepository : IAreaRepository
 
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<IReadOnlyList<Language>> GetSupportedLanguagesAsync(Guid areaId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Languages
+            .AsNoTracking()
+            .Where(l => l.IsActive && l.Translations.Any(t => t.Poi != null && t.Poi.AreaId == areaId && t.Poi.IsActive))
+            .OrderBy(l => l.Name)
+            .ToListAsync(cancellationToken);
+    }
 }
