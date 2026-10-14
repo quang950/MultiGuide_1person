@@ -13,6 +13,10 @@ public interface IPoiRepository
         int pageSize,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Poi>> GetActiveByAreaIdAsync(
+        Guid areaId,
+        CancellationToken cancellationToken = default);
+
     Task<Poi> AddAsync(Poi poi, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(Poi poi, CancellationToken cancellationToken = default);

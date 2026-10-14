@@ -40,8 +40,8 @@
 - [x] T-3.4 `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02
 - [x] T-3.5 Rate limit 5 req/phút/IP cho endpoint trên (429 RATE_LIMITED)
 - [x] T-3.6 Middleware AccessPass: 401 PASS_MISSING, 403 PASS_INVALID/PASS_EXPIRED; gắn PassContext — US-03
-- [ ] T-3.7 `GeoService`: bounding box + Haversine + within_trigger + sắp xếp; unit test nhiều trường hợp biên — US-05
-- [ ] T-3.8 `GET /pois/nearby` (lọc theo khu của pass, radius mặc định 100/tối đa 500, validate lat/lng, kèm image_url) — US-05
+- [x] T-3.7 `GeoService`: bounding box + Haversine + within_trigger + sắp xếp; unit test nhiều trường hợp biên — US-05
+- [x] T-3.8 `GET /pois/nearby` (lọc theo khu của pass, radius mặc định 100/tối đa 500, validate lat/lng, kèm image_url) — US-05
 - [ ] T-3.9 `ContentService`: fallback lang → en → vi; unit test đủ các nhánh — US-06
 - [ ] T-3.10 `GET /pois/{id}?lang` + signed URL audio (1 giờ), kèm image_url, PASS_AREA_MISMATCH — US-06, US-07
 - [ ] T-3.11 `POST /play-logs` (pass từ token, listened_sec 0–6 giờ) — US-08 **(Cắt)**

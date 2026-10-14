@@ -51,6 +51,15 @@ public class PoiRepository : IPoiRepository
         return (items, total);
     }
 
+    public async Task<IReadOnlyList<Poi>> GetActiveByAreaIdAsync(Guid areaId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Pois
+            .AsNoTracking()
+            .Include(p => p.Translations)
+            .Where(p => p.AreaId == areaId && p.IsActive)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<Poi> AddAsync(Poi poi, CancellationToken cancellationToken = default)
     {
         await _context.Pois.AddAsync(poi, cancellationToken);
