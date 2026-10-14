@@ -16,3 +16,6 @@ reports/logs/
 reports/
 ~$*
 *.html
+*.docx
+*.mp3
+scripts/audio/
