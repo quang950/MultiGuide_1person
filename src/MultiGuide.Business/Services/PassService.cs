@@ -138,4 +138,33 @@ public class PassService : IPassService
             PriceUsd = area.PriceUsd
         };
     }
+
+    public async Task<PassContext> ValidateTokenAsync(string token, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            throw new UnauthorizedException(ErrorCodes.PassMissing, "Token truy cập không được để trống.");
+        }
+
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(token.Trim()));
+        var tokenHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+
+        var pass = await _accessPassRepository.GetByTokenHashAsync(tokenHash, cancellationToken);
+        if (pass == null || pass.Status == AccessPassStatus.Revoked)
+        {
+            throw new ForbiddenException(ErrorCodes.PassInvalid, "Token truy cập không hợp lệ hoặc đã bị thu hồi.");
+        }
+
+        if (pass.ExpiresAt <= _clock.UtcNow)
+        {
+            throw new ForbiddenException(ErrorCodes.PassExpired, "Token truy cập đã hết hạn.");
+        }
+
+        return new PassContext
+        {
+            PassId = pass.Id,
+            AreaId = pass.AreaId,
+            ExpiresAt = pass.ExpiresAt
+        };
+    }
 }

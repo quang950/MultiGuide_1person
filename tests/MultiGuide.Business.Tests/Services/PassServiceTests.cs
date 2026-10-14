@@ -288,4 +288,91 @@ public class PassServiceTests
         var expectedHash = Convert.ToHexString(expectedHashBytes).ToLowerInvariant();
         Assert.Equal(expectedHash, savedPass.TokenHash);
     }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task ValidateTokenAsync_TokenRong_NemUnauthorizedException(string? token)
+    {
+        var ex = await Assert.ThrowsAsync<UnauthorizedException>(() => _service.ValidateTokenAsync(token!));
+        Assert.Equal(ErrorCodes.PassMissing, ex.Code);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_KhongTimThayToken_NemForbiddenException_PassInvalid()
+    {
+        _accessPassRepoMock.Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccessPass?)null);
+
+        var ex = await Assert.ThrowsAsync<ForbiddenException>(() => _service.ValidateTokenAsync("invalid-token-123"));
+        Assert.Equal(ErrorCodes.PassInvalid, ex.Code);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_TokenBiRevoked_NemForbiddenException_PassInvalid()
+    {
+        var revokedPass = new AccessPass
+        {
+            Id = Guid.NewGuid(),
+            AreaId = Guid.NewGuid(),
+            TokenHash = "somehash",
+            ExpiresAt = _fixedNow.AddHours(5),
+            Status = AccessPassStatus.Revoked
+        };
+
+        _accessPassRepoMock.Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(revokedPass);
+
+        var ex = await Assert.ThrowsAsync<ForbiddenException>(() => _service.ValidateTokenAsync("revoked-token-123"));
+        Assert.Equal(ErrorCodes.PassInvalid, ex.Code);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_TokenHetHan_NemForbiddenException_PassExpired()
+    {
+        var expiredPass = new AccessPass
+        {
+            Id = Guid.NewGuid(),
+            AreaId = Guid.NewGuid(),
+            TokenHash = "somehash",
+            ExpiresAt = _fixedNow.AddMinutes(-1), // Đã hết hạn so với _fixedNow
+            Status = AccessPassStatus.Active
+        };
+
+        _accessPassRepoMock.Setup(r => r.GetByTokenHashAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(expiredPass);
+
+        var ex = await Assert.ThrowsAsync<ForbiddenException>(() => _service.ValidateTokenAsync("expired-token-123"));
+        Assert.Equal(ErrorCodes.PassExpired, ex.Code);
+    }
+
+    [Fact]
+    public async Task ValidateTokenAsync_TokenHopLe_TraVePassContext()
+    {
+        var passId = Guid.NewGuid();
+        var areaId = Guid.NewGuid();
+        var rawToken = "my-valid-token-123";
+        var hashBytes = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+        var tokenHash = Convert.ToHexString(hashBytes).ToLowerInvariant();
+
+        var validPass = new AccessPass
+        {
+            Id = passId,
+            AreaId = areaId,
+            TokenHash = tokenHash,
+            ExpiresAt = _fixedNow.AddHours(12),
+            Status = AccessPassStatus.Active
+        };
+
+        _accessPassRepoMock.Setup(r => r.GetByTokenHashAsync(tokenHash, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(validPass);
+
+        var context = await _service.ValidateTokenAsync(rawToken);
+
+        Assert.NotNull(context);
+        Assert.Equal(passId, context.PassId);
+        Assert.Equal(areaId, context.AreaId);
+        Assert.Equal(_fixedNow.AddHours(12), context.ExpiresAt);
+    }
 }

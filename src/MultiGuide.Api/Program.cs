@@ -141,6 +141,8 @@ app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseAccessPass();
+
 // Health check endpoints (US-17 / T-1.8)
 // Liveness probe
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));

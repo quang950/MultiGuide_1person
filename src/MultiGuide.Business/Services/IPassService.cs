@@ -11,4 +11,9 @@ public interface IPassService
     /// Mua và cấp mới AccessPass cho khách tham quan với tính idempotent (US-02).
     /// </summary>
     Task<CreatePassResponse> CreatePassAsync(CreatePassRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Xác thực AccessPass token, kiểm tra hạn và trạng thái thu hồi (US-03).
+    /// </summary>
+    Task<PassContext> ValidateTokenAsync(string token, CancellationToken cancellationToken = default);
 }
