@@ -19,3 +19,6 @@ reports/
 *.docx
 *.mp3
 scripts/audio/
+test_client/
+__pycache__/
+scripts/__pycache__/
