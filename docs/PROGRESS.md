@@ -2,10 +2,10 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.1)
-- **Đang làm:** Sẵn sàng thực hiện Task T-2.2 (Tạo user admin trên Supabase Dashboard, gán app_metadata role=admin; thử gọi bằng token thật)
-- **Vừa xong:** T-2.1 (Cấu hình xác thực JWT Supabase + policy role=admin trên `/admin/*` — US-09): Cài đặt `Microsoft.AspNetCore.Authentication.JwtBearer` 10.0.12, triển khai `AdminRoleRequirement` + `AdminRoleHandler` (hỗ trợ cả claim `role` và Supabase `app_metadata.role`), chuẩn hóa 401 (`AUTH_REQUIRED`) và 403 (`FORBIDDEN`) qua `ProblemDetailsAuthorizationMiddlewareResultHandler`, cấu hình Swagger UI Bearer security, bổ sung `AdminAuthTests` (31/31 tests xanh 100%).
-- **Bước kế tiếp:** T-2.2 (Tạo user admin trên Supabase Dashboard, gán app_metadata role=admin; thử gọi bằng token thật)
+## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.2)
+- **Đang làm:** Sẵn sàng bước sang Task T-2.3 (Business: interface Repository + `AdminContentService` cho tour_area; Data: repository — US-10)
+- **Vừa xong:** T-2.2: Tạo tài khoản admin `quanghi176@gmail.com` trên Supabase Dashboard, gán `app_metadata.role = "admin"` thành công, kiểm tra xác thực qua Supabase Auth API trả về JWT access token thật chuẩn ES256 (ECC P-256).
+- **Bước kế tiếp:** T-2.3 (Business: interface Repository + `AdminContentService` cho tour_area; Data: repository — US-10)
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
  
@@ -13,9 +13,11 @@
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
 - Supabase project ref: xbrfdxtmnhdcozblyilo (URL: https://xbrfdxtmnhdcozblyilo.supabase.co, Region: Singapore, Bucket: audio)
 - Tên khu + 6 POI: Văn Miếu - Quốc Tử Giám (`van-mieu`); 6 POI: Cổng Văn Miếu, Khuê Văn Các, Giếng Thiên Quang & Vườn Bia Tiến Sĩ, Cổng Đại Thành & Sân Đại Bái, Điện Đại Thành, Nhà Thái Học
-- Cách xác thực JWT Supabase (JWKS / JWT secret): HS256 JWT Secret (`Supabase__JwtSecret`) kèm dự phòng JWKS (`Supabase__JwtIssuer`)
+- Cách xác thực JWT Supabase (JWKS / JWT secret): ECC P-256 (JWKS qua `Supabase__JwtIssuer`) kèm hỗ trợ HS256 (`Supabase__JwtSecret`)
+- Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 14/10 — Hoàn thành T-2.2: Tạo user admin `quanghi176@gmail.com` trên Supabase Dashboard, gán `app_metadata` role=admin qua SQL, xác thực và lấy token thật thành công qua Auth API.
 - 14/10 — Hoàn thành T-2.1: Cấu hình xác thực JWT Supabase và policy role=admin trên `/admin/*` (US-09), triển khai AdminRoleRequirement, AdminRoleHandler, ProblemDetailsAuthorizationMiddlewareResultHandler (401 AUTH_REQUIRED, 403 FORBIDDEN), cấu hình Swagger UI Bearer, hoàn thiện bộ 6 integration tests trong AdminAuthTests; test suite nâng lên 31/31 xanh.
 - 13/10 — Hoàn thành mốc Ngày 1 (T-1.12, T-1.13, T-1.14): Kích hoạt branch protection cho `main`, tạo Web Service `multiguide-1person` trên Render (Singapore), kết nối DB Supabase, tự động seed 6 POI Văn Miếu, kiểm tra `/health`, `/health/ready` và `/swagger` qua HTTPS thành công; tạo workflow `.github/workflows/cd.yml` tự động gọi Deploy Hook và smoke test.
 - 13/10 — Hoàn thành T-1.9: Tạo `AppException` và các exception dẫn xuất (`NotFoundException`, `ValidationException`, `ConflictException`, `UnauthorizedException`, `ForbiddenException`, `PaymentRequiredException`), hằng số `ErrorCodes` trong `MultiGuide.Domain`; triển khai `GlobalExceptionHandler` trong `MultiGuide.Api` ghi đè `ProblemDetails` kèm trường mở rộng `code`, xử lý validation 422 tự động, BaseApiController `/api/v1`, OpenAPI Swagger UI v1, bổ sung integration tests `ExceptionHandlerTests` (25/25 tests xanh).
