@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using MultiGuide.Api.Middleware;
 using MultiGuide.Business.DTOs.Client;
 using MultiGuide.Business.Services;
 using MultiGuide.Domain.Constants;
@@ -47,11 +49,13 @@ public class AreasController : BaseApiController
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>AccessPass mới kèm AccessToken plaintext duy nhất</returns>
     [HttpPost("{code}/passes")]
+    [EnableRateLimiting(RateLimitingExtensions.PassCreationPolicy)]
     [ProducesResponseType(typeof(CreatePassResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status402PaymentRequired)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status422UnprocessableEntity)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
     public async Task<ActionResult<CreatePassResponse>> CreatePass(
         string code,
         [FromHeader(Name = "Idempotency-Key")] string? idempotencyKey,

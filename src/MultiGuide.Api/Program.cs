@@ -101,6 +101,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 builder.Services.AddSupabaseJwtAuthentication(builder.Configuration);
+builder.Services.AddApiRateLimiting();
 builder.Services.AddBusinessServices();
 builder.Services.AddDataServices(builder.Configuration);
 
@@ -134,6 +135,8 @@ app.UseSwaggerUI(options =>
 });
 
 app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
