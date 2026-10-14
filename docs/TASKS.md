@@ -37,7 +37,7 @@
 - [x] T-3.1 `GET /areas/{code}` kèm danh sách ngôn ngữ (404 AREA_NOT_FOUND) — US-01
 - [x] T-3.2 `IPaymentGateway` + `MockPaymentGateway` (kết quả cấu hình được)
 - [x] T-3.3 `PassService`: sinh token 32 byte CSPRNG, lưu SHA-256, hạn theo pass_ttl_hours; unit test
-- [ ] T-3.4 `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02
+- [x] T-3.4 `POST /areas/{code}/passes`: Idempotency-Key, 201/402/409/422 — US-02
 - [ ] T-3.5 Rate limit 5 req/phút/IP cho endpoint trên (429 RATE_LIMITED)
 - [ ] T-3.6 Middleware AccessPass: 401 PASS_MISSING, 403 PASS_INVALID/PASS_EXPIRED; gắn PassContext — US-03
 - [ ] T-3.7 `GeoService`: bounding box + Haversine + within_trigger + sắp xếp; unit test nhiều trường hợp biên — US-05
