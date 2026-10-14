@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MultiGuide.Business.DTOs.Admin;
+using MultiGuide.Business.Storage;
 using MultiGuide.Data.Context;
 using MultiGuide.Domain.Constants;
 using MultiGuide.Domain.Entities;
@@ -25,6 +26,18 @@ public class AdminTranslationsControllerTests : IClassFixture<WebApplicationFact
 
     private readonly WebApplicationFactory<Program> _factory;
     private readonly HttpClient _client;
+
+    public class FakeFileStorage : IFileStorage
+    {
+        public Task<string> UploadAsync(Stream content, string path, string contentType, CancellationToken cancellationToken = default) =>
+            Task.FromResult(path);
+
+        public Task DeleteAsync(string path, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+
+        public Task<string> CreateSignedUrlAsync(string path, TimeSpan expiresIn, CancellationToken cancellationToken = default) =>
+            Task.FromResult($"https://fake-storage.local/{path}?signed=true");
+    }
 
     public AdminTranslationsControllerTests(WebApplicationFactory<Program> factory)
     {
@@ -47,6 +60,13 @@ public class AdminTranslationsControllerTests : IClassFixture<WebApplicationFact
                     options.Configuration = null;
                     options.ConfigurationManager = null!;
                 });
+
+                var storageDescriptors = services.Where(d => d.ServiceType == typeof(IFileStorage)).ToList();
+                foreach (var d in storageDescriptors)
+                {
+                    services.Remove(d);
+                }
+                services.AddSingleton<IFileStorage, FakeFileStorage>();
             });
         });
 
@@ -298,5 +318,168 @@ public class AdminTranslationsControllerTests : IClassFixture<WebApplicationFact
         var response = await SendAsync(HttpMethod.Get, $"/api/v1/admin/pois/{poiB.Id}/translations/{created.Id}", token: token);
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    private async Task<HttpResponseMessage> SendAudioFileAsync(
+        string url,
+        byte[]? fileBytes,
+        string fileName = "audio.mp3",
+        string contentType = "audio/mpeg",
+        string? token = null)
+    {
+        var message = new HttpRequestMessage(HttpMethod.Post, url);
+        if (token != null)
+        {
+            message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        }
+
+        var formData = new MultipartFormDataContent();
+        if (fileBytes != null)
+        {
+            var fileContent = new ByteArrayContent(fileBytes);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            formData.Add(fileContent, "file", fileName);
+        }
+
+        message.Content = formData;
+        return await _client.SendAsync(message);
+    }
+
+    [Fact]
+    public async Task UploadAudio_AdminToken_Id3HopLe_TraVe200VaCapNhatAudioPath()
+    {
+        var token = GenerateJwt("admin");
+        var poi = await CreatePoiAsync(token, "khu-audio-id3");
+
+        var createTrans = await SendAsync(HttpMethod.Post, $"/api/v1/admin/pois/{poi.Id}/translations",
+            new CreateTranslationRequest { LanguageCode = "vi", Title = "Bản dịch audio", Description = "Mô tả" }, token);
+        var trans = (await createTrans.Content.ReadFromJsonAsync<TranslationResponse>())!;
+
+        // MP3 có header ID3
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x00, 0x01 };
+
+        // Test cả route chuẩn /admin/translations/{id}/audio và route versioned /api/v1/admin/translations/{id}/audio
+        var response = await SendAudioFileAsync($"/admin/translations/{trans.Id}/audio", mp3Bytes, "audio.mp3", "audio/mpeg", token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var updated = (await response.Content.ReadFromJsonAsync<TranslationResponse>())!;
+        Assert.Equal(trans.Id, updated.Id);
+        Assert.Equal($"pois/{poi.Id}/vi.mp3", updated.AudioPath);
+
+        // Verify route /api/v1/admin/translations/{id}/audio cũng hoạt động
+        var responseV1 = await SendAudioFileAsync($"/api/v1/admin/translations/{trans.Id}/audio", mp3Bytes, "audio.mp3", "audio/mpeg", token);
+        Assert.Equal(HttpStatusCode.OK, responseV1.StatusCode);
+    }
+
+    [Fact]
+    public async Task UploadAudio_FrameSync_HopLe_TraVe200()
+    {
+        var token = GenerateJwt("admin");
+        var poi = await CreatePoiAsync(token, "khu-audio-framesync");
+
+        var createTrans = await SendAsync(HttpMethod.Post, $"/api/v1/admin/pois/{poi.Id}/translations",
+            new CreateTranslationRequest { LanguageCode = "en", Title = "English", Description = "Desc" }, token);
+        var trans = (await createTrans.Content.ReadFromJsonAsync<TranslationResponse>())!;
+
+        // MP3 header frame sync: 0xFF 0xFB
+        var mp3Bytes = new byte[] { 0xFF, 0xFB, 0x90, 0x44, 0x00, 0x01 };
+        var response = await SendAudioFileAsync($"/admin/translations/{trans.Id}/audio", mp3Bytes, "audio.mp3", "audio/mpeg", token);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var updated = (await response.Content.ReadFromJsonAsync<TranslationResponse>())!;
+        Assert.Equal($"pois/{poi.Id}/en.mp3", updated.AudioPath);
+    }
+
+    [Fact]
+    public async Task UploadAudio_KhongToken_TraVe401()
+    {
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03 };
+        var response = await SendAudioFileAsync($"/admin/translations/{Guid.NewGuid()}/audio", mp3Bytes, token: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.AuthRequired, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task UploadAudio_UserKhongPhaiAdmin_TraVe403()
+    {
+        var userToken = GenerateJwt("user");
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03 };
+        var response = await SendAudioFileAsync($"/admin/translations/{Guid.NewGuid()}/audio", mp3Bytes, token: userToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.Forbidden, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task UploadAudio_SaiMagicBytes_TraVe422()
+    {
+        var token = GenerateJwt("admin");
+        var poi = await CreatePoiAsync(token, "khu-audio-badmagic");
+
+        var createTrans = await SendAsync(HttpMethod.Post, $"/api/v1/admin/pois/{poi.Id}/translations",
+            new CreateTranslationRequest { LanguageCode = "vi", Title = "Tiêu đề", Description = "Mô tả" }, token);
+        var trans = (await createTrans.Content.ReadFromJsonAsync<TranslationResponse>())!;
+
+        // Giả lập file WAV RIFF hoặc text
+        var fakeBytes = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00 };
+        var response = await SendAudioFileAsync($"/admin/translations/{trans.Id}/audio", fakeBytes, "fake.mp3", "audio/mpeg", token);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.ValidationError, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task UploadAudio_FileQua10MB_TraVe422()
+    {
+        var token = GenerateJwt("admin");
+        var poi = await CreatePoiAsync(token, "khu-audio-toolarge");
+
+        var createTrans = await SendAsync(HttpMethod.Post, $"/api/v1/admin/pois/{poi.Id}/translations",
+            new CreateTranslationRequest { LanguageCode = "vi", Title = "Tiêu đề", Description = "Mô tả" }, token);
+        var trans = (await createTrans.Content.ReadFromJsonAsync<TranslationResponse>())!;
+
+        // 10 MB + 10 bytes
+        var largeBytes = new byte[10 * 1024 * 1024 + 10];
+        largeBytes[0] = 0x49; largeBytes[1] = 0x44; largeBytes[2] = 0x33; // valid ID3 but too large
+
+        var response = await SendAudioFileAsync($"/admin/translations/{trans.Id}/audio", largeBytes, "large.mp3", "audio/mpeg", token);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.ValidationError, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task UploadAudio_KhongCoFileHoacRong_TraVe422()
+    {
+        var token = GenerateJwt("admin");
+        var poi = await CreatePoiAsync(token, "khu-audio-empty");
+
+        var createTrans = await SendAsync(HttpMethod.Post, $"/api/v1/admin/pois/{poi.Id}/translations",
+            new CreateTranslationRequest { LanguageCode = "vi", Title = "Tiêu đề", Description = "Mô tả" }, token);
+        var trans = (await createTrans.Content.ReadFromJsonAsync<TranslationResponse>())!;
+
+        // Gửi form không kèm file
+        var response = await SendAudioFileAsync($"/admin/translations/{trans.Id}/audio", fileBytes: null, token: token);
+
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.ValidationError, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task UploadAudio_TranslationKhongTonTai_TraVe404()
+    {
+        var token = GenerateJwt("admin");
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03 };
+        var response = await SendAudioFileAsync($"/admin/translations/{Guid.NewGuid()}/audio", mp3Bytes, token: token);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var json = await response.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(ErrorCodes.NotFound, json.GetProperty("code").GetString());
     }
 }

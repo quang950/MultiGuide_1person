@@ -21,4 +21,11 @@ public interface IAdminContentService
     Task<TranslationResponse> CreateTranslationAsync(Guid poiId, CreateTranslationRequest request, CancellationToken cancellationToken = default);
     Task<TranslationResponse> UpdateTranslationAsync(Guid poiId, Guid id, UpdateTranslationRequest request, CancellationToken cancellationToken = default);
     Task DeleteTranslationAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default);
+
+    Task<TranslationResponse> UploadTranslationAudioAsync(
+        Guid translationId,
+        Stream audioStream,
+        long contentLength,
+        string? contentType,
+        CancellationToken cancellationToken = default);
 }

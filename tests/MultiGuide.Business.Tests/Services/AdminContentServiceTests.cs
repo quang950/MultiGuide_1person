@@ -2,6 +2,7 @@ using Moq;
 using MultiGuide.Business.DTOs.Admin;
 using MultiGuide.Business.Repositories;
 using MultiGuide.Business.Services;
+using MultiGuide.Business.Storage;
 using MultiGuide.Domain.Constants;
 using MultiGuide.Domain.Entities;
 using MultiGuide.Domain.Exceptions;
@@ -20,7 +21,8 @@ public class AdminContentServiceTests
             _areaRepoMock.Object,
             new Mock<IPoiRepository>().Object,
             new Mock<ITranslationRepository>().Object,
-            new Mock<ILanguageRepository>().Object);
+            new Mock<ILanguageRepository>().Object,
+            new Mock<IFileStorage>().Object);
     }
 
     [Fact]

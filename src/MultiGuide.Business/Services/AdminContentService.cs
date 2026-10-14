@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using MultiGuide.Business.DTOs.Admin;
 using MultiGuide.Business.Repositories;
+using MultiGuide.Business.Storage;
 using MultiGuide.Domain.Constants;
 using MultiGuide.Domain.Entities;
 using MultiGuide.Domain.Exceptions;
@@ -14,22 +15,26 @@ public class AdminContentService : IAdminContentService
     private const int DefaultPageSize = 20;
     private const int MaxTitleLength = 200;
     private const int MaxLanguageCodeLength = 10;
+    private const long MaxAudioSizeBytes = 10 * 1024 * 1024; // 10 MB
 
     private readonly IAreaRepository _areaRepository;
     private readonly IPoiRepository _poiRepository;
     private readonly ITranslationRepository _translationRepository;
     private readonly ILanguageRepository _languageRepository;
+    private readonly IFileStorage _fileStorage;
 
     public AdminContentService(
         IAreaRepository areaRepository,
         IPoiRepository poiRepository,
         ITranslationRepository translationRepository,
-        ILanguageRepository languageRepository)
+        ILanguageRepository languageRepository,
+        IFileStorage fileStorage)
     {
         _areaRepository = areaRepository;
         _poiRepository = poiRepository;
         _translationRepository = translationRepository;
         _languageRepository = languageRepository;
+        _fileStorage = fileStorage;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -322,7 +327,113 @@ public class AdminContentService : IAdminContentService
     public async Task DeleteTranslationAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default)
     {
         var translation = await GetTranslationOfPoiAsync(poiId, id, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(translation.AudioPath))
+        {
+            await _fileStorage.DeleteAsync(translation.AudioPath, cancellationToken);
+        }
         await _translationRepository.DeleteAsync(translation, cancellationToken);
+    }
+
+    public async Task<TranslationResponse> UploadTranslationAudioAsync(
+        Guid translationId,
+        Stream audioStream,
+        long contentLength,
+        string? contentType,
+        CancellationToken cancellationToken = default)
+    {
+        var translation = await _translationRepository.GetByIdAsync(translationId, cancellationToken);
+        if (translation == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy bản dịch với mã định danh '{translationId}'.");
+        }
+
+        if (audioStream == null)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "File audio không được để trống.");
+        }
+
+        if (!audioStream.CanSeek)
+        {
+            var ms = new MemoryStream();
+            await audioStream.CopyToAsync(ms, cancellationToken);
+            audioStream = ms;
+            contentLength = ms.Length;
+        }
+
+        ValidateAudioStream(audioStream, contentLength);
+
+        var storagePath = $"pois/{translation.PoiId}/{translation.LanguageCode}.mp3";
+
+        // Xóa file cũ nếu đã tồn tại và khác đường dẫn mới (tránh file mồ côi)
+        if (!string.IsNullOrWhiteSpace(translation.AudioPath) &&
+            !string.Equals(translation.AudioPath, storagePath, StringComparison.OrdinalIgnoreCase))
+        {
+            await _fileStorage.DeleteAsync(translation.AudioPath, cancellationToken);
+        }
+
+        var uploadedPath = await _fileStorage.UploadAsync(
+            audioStream,
+            storagePath,
+            string.IsNullOrWhiteSpace(contentType) ? "audio/mpeg" : contentType,
+            cancellationToken);
+
+        translation.AudioPath = uploadedPath;
+        translation.UpdatedAt = DateTime.UtcNow;
+
+        await _translationRepository.UpdateAsync(translation, cancellationToken);
+        return MapToResponse(translation);
+    }
+
+    private static void ValidateAudioStream(Stream audioStream, long contentLength)
+    {
+        if (contentLength <= 0)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "File audio không được để trống.");
+        }
+
+        if (contentLength > MaxAudioSizeBytes)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, $"Dung lượng file audio vượt quá giới hạn tối đa 10 MB ({MaxAudioSizeBytes} bytes).");
+        }
+
+        byte[] header = new byte[4];
+        audioStream.Position = 0;
+        int bytesRead = audioStream.Read(header, 0, header.Length);
+        audioStream.Position = 0;
+
+        if (bytesRead < 3 || !IsValidMp3Header(header, bytesRead))
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "File không phải định dạng MP3 hợp lệ (sai magic bytes). Yêu cầu ID3 tag hoặc MPEG Frame Sync.");
+        }
+    }
+
+    private static bool IsValidMp3Header(byte[] header, int length)
+    {
+        if (length < 3)
+        {
+            return false;
+        }
+
+        // 1. ID3v2 tag: "ID3" (0x49 0x44 0x33)
+        if (header[0] == 0x49 && header[1] == 0x44 && header[2] == 0x33)
+        {
+            return true;
+        }
+
+        // 2. MPEG Audio Frame Sync:
+        // Byte 0 = 0xFF
+        // Byte 1: Bits 7..5 = 111 (Frame sync -> (b1 & 0xE0) == 0xE0)
+        //         Bits 2..1 = 01 (Layer III -> (b1 & 0x06) == 0x02)
+        if (header[0] == 0xFF && (header[1] & 0xE0) == 0xE0)
+        {
+            var layerBits = header[1] & 0x06;
+            if (layerBits == 0x02) // Layer III (MP3)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private async Task EnsurePoiExistsAsync(Guid poiId, CancellationToken cancellationToken)

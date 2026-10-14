@@ -2,6 +2,7 @@ using Moq;
 using MultiGuide.Business.DTOs.Admin;
 using MultiGuide.Business.Repositories;
 using MultiGuide.Business.Services;
+using MultiGuide.Business.Storage;
 using MultiGuide.Domain.Constants;
 using MultiGuide.Domain.Entities;
 using MultiGuide.Domain.Exceptions;
@@ -13,6 +14,7 @@ public class AdminContentServiceTranslationTests
     private readonly Mock<IPoiRepository> _poiRepoMock = new();
     private readonly Mock<ITranslationRepository> _translationRepoMock = new();
     private readonly Mock<ILanguageRepository> _languageRepoMock = new();
+    private readonly Mock<IFileStorage> _fileStorageMock = new();
     private readonly AdminContentService _service;
 
     public AdminContentServiceTranslationTests()
@@ -21,7 +23,8 @@ public class AdminContentServiceTranslationTests
             new Mock<IAreaRepository>().Object,
             _poiRepoMock.Object,
             _translationRepoMock.Object,
-            _languageRepoMock.Object);
+            _languageRepoMock.Object,
+            _fileStorageMock.Object);
     }
 
     private void SetupPoi(Guid poiId) =>
@@ -297,5 +300,175 @@ public class AdminContentServiceTranslationTests
 
         await Assert.ThrowsAsync<NotFoundException>(() => _service.DeleteTranslationAsync(poiId, id));
         _translationRepoMock.Verify(r => r.DeleteAsync(It.IsAny<PoiTranslation>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task DeleteTranslationAsync_CoAudio_XoaFileKhoiStorageVaXoaDB()
+    {
+        var poiId = Guid.NewGuid();
+        var id = Guid.NewGuid();
+        var translation = new PoiTranslation
+        {
+            Id = id,
+            PoiId = poiId,
+            LanguageCode = "vi",
+            AudioPath = "pois/p1/vi.mp3"
+        };
+        SetupPoi(poiId);
+        _translationRepoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        await _service.DeleteTranslationAsync(poiId, id);
+
+        _fileStorageMock.Verify(s => s.DeleteAsync("pois/p1/vi.mp3", It.IsAny<CancellationToken>()), Times.Once);
+        _translationRepoMock.Verify(r => r.DeleteAsync(translation, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_HopLe_Id3Tag_UploadThanhCong()
+    {
+        var translationId = Guid.NewGuid();
+        var poiId = Guid.NewGuid();
+        var translation = new PoiTranslation
+        {
+            Id = translationId,
+            PoiId = poiId,
+            LanguageCode = "vi",
+            Title = "Khuê Văn Các",
+            AudioPath = null
+        };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+        _fileStorageMock.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stream _, string p, string _, CancellationToken _) => p);
+
+        // ID3 tag header
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
+        using var stream = new MemoryStream(mp3Bytes);
+
+        var result = await _service.UploadTranslationAudioAsync(translationId, stream, mp3Bytes.Length, "audio/mpeg");
+
+        Assert.Equal(translationId, result.Id);
+        Assert.Equal($"pois/{poiId}/vi.mp3", result.AudioPath);
+        _fileStorageMock.Verify(s => s.UploadAsync(stream, $"pois/{poiId}/vi.mp3", "audio/mpeg", It.IsAny<CancellationToken>()), Times.Once);
+        _fileStorageMock.Verify(s => s.DeleteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _translationRepoMock.Verify(r => r.UpdateAsync(translation, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_HopLe_FrameSync_UploadThanhCong()
+    {
+        var translationId = Guid.NewGuid();
+        var poiId = Guid.NewGuid();
+        var translation = new PoiTranslation
+        {
+            Id = translationId,
+            PoiId = poiId,
+            LanguageCode = "en",
+            Title = "Khue Van Pavilion"
+        };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+        _fileStorageMock.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stream _, string p, string _, CancellationToken _) => p);
+
+        // MPEG-1 Layer 3 Frame Sync header: 0xFF 0xFB
+        var mp3Bytes = new byte[] { 0xFF, 0xFB, 0x90, 0x44, 0x00, 0x00 };
+        using var stream = new MemoryStream(mp3Bytes);
+
+        var result = await _service.UploadTranslationAudioAsync(translationId, stream, mp3Bytes.Length, "audio/mpeg");
+
+        Assert.Equal(translationId, result.Id);
+        Assert.Equal($"pois/{poiId}/en.mp3", result.AudioPath);
+        _fileStorageMock.Verify(s => s.UploadAsync(stream, $"pois/{poiId}/en.mp3", "audio/mpeg", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_DaCoAudioCu_XoaAudioCuVaCapNhatMoi()
+    {
+        var translationId = Guid.NewGuid();
+        var poiId = Guid.NewGuid();
+        var oldAudioPath = "pois/old/old_file.mp3";
+        var translation = new PoiTranslation
+        {
+            Id = translationId,
+            PoiId = poiId,
+            LanguageCode = "vi",
+            AudioPath = oldAudioPath
+        };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+        _fileStorageMock.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stream _, string p, string _, CancellationToken _) => p);
+
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03, 0x00, 0x00 };
+        using var stream = new MemoryStream(mp3Bytes);
+
+        var result = await _service.UploadTranslationAudioAsync(translationId, stream, mp3Bytes.Length, "audio/mpeg");
+
+        _fileStorageMock.Verify(s => s.DeleteAsync(oldAudioPath, It.IsAny<CancellationToken>()), Times.Once);
+        _fileStorageMock.Verify(s => s.UploadAsync(stream, $"pois/{poiId}/vi.mp3", "audio/mpeg", It.IsAny<CancellationToken>()), Times.Once);
+        Assert.Equal($"pois/{poiId}/vi.mp3", result.AudioPath);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_SaiMagicBytes_NemValidationException()
+    {
+        var translationId = Guid.NewGuid();
+        var translation = new PoiTranslation { Id = translationId, PoiId = Guid.NewGuid(), LanguageCode = "vi" };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        // Header giả mạo (ví dụ file văn bản "Hello" hoặc file WAV "RIFF")
+        var fakeBytes = new byte[] { 0x52, 0x49, 0x46, 0x46, 0x00, 0x00 };
+        using var stream = new MemoryStream(fakeBytes);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.UploadTranslationAudioAsync(translationId, stream, fakeBytes.Length, "audio/mpeg"));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+        _fileStorageMock.Verify(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_FileQua10MB_NemValidationException()
+    {
+        var translationId = Guid.NewGuid();
+        var translation = new PoiTranslation { Id = translationId, PoiId = Guid.NewGuid(), LanguageCode = "vi" };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03 };
+        using var stream = new MemoryStream(mp3Bytes);
+        long over10Mb = (10 * 1024 * 1024) + 1;
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.UploadTranslationAudioAsync(translationId, stream, over10Mb, "audio/mpeg"));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_FileRong_NemValidationException()
+    {
+        var translationId = Guid.NewGuid();
+        var translation = new PoiTranslation { Id = translationId, PoiId = Guid.NewGuid(), LanguageCode = "vi" };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        using var stream = new MemoryStream();
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.UploadTranslationAudioAsync(translationId, stream, 0, "audio/mpeg"));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+    }
+
+    [Fact]
+    public async Task UploadTranslationAudioAsync_BaoDichKhongTonTai_NemNotFound()
+    {
+        var translationId = Guid.NewGuid();
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync((PoiTranslation?)null);
+
+        var mp3Bytes = new byte[] { 0x49, 0x44, 0x33, 0x03 };
+        using var stream = new MemoryStream(mp3Bytes);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            _service.UploadTranslationAudioAsync(translationId, stream, mp3Bytes.Length, "audio/mpeg"));
+
+        Assert.Equal(ErrorCodes.NotFound, ex.Code);
     }
 }
