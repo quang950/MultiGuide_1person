@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiGuide.Business.Payments;
 using MultiGuide.Business.Repositories;
 using MultiGuide.Business.Storage;
 using MultiGuide.Data.Context;
+using MultiGuide.Data.Payments;
 using MultiGuide.Data.Repositories;
 using MultiGuide.Data.Storage;
 
@@ -44,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<IPoiRepository, PoiRepository>();
         services.AddScoped<ITranslationRepository, TranslationRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
+        services.AddScoped<IPaymentGateway, MockPaymentGateway>();
 
         services.Configure<SupabaseStorageOptions>(options =>
         {
