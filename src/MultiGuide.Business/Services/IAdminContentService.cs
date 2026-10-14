@@ -15,4 +15,10 @@ public interface IAdminContentService
     Task<PoiResponse> CreatePoiAsync(CreatePoiRequest request, CancellationToken cancellationToken = default);
     Task<PoiResponse> UpdatePoiAsync(Guid id, UpdatePoiRequest request, CancellationToken cancellationToken = default);
     Task DeletePoiAsync(Guid id, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<TranslationResponse>> GetTranslationsAsync(Guid poiId, CancellationToken cancellationToken = default);
+    Task<TranslationResponse> GetTranslationByIdAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default);
+    Task<TranslationResponse> CreateTranslationAsync(Guid poiId, CreateTranslationRequest request, CancellationToken cancellationToken = default);
+    Task<TranslationResponse> UpdateTranslationAsync(Guid poiId, Guid id, UpdateTranslationRequest request, CancellationToken cancellationToken = default);
+    Task DeleteTranslationAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default);
 }

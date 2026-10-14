@@ -40,6 +40,8 @@ public static class DependencyInjection
 
         services.AddScoped<IAreaRepository, AreaRepository>();
         services.AddScoped<IPoiRepository, PoiRepository>();
+        services.AddScoped<ITranslationRepository, TranslationRepository>();
+        services.AddScoped<ILanguageRepository, LanguageRepository>();
 
         return services;
     }

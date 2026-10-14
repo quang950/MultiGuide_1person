@@ -12,14 +12,24 @@ public class AdminContentService : IAdminContentService
     private static readonly Regex CodeRegex = new(@"^[a-z0-9-]+$", RegexOptions.Compiled);
     private const int MaxPageSize = 100;
     private const int DefaultPageSize = 20;
+    private const int MaxTitleLength = 200;
+    private const int MaxLanguageCodeLength = 10;
 
     private readonly IAreaRepository _areaRepository;
     private readonly IPoiRepository _poiRepository;
+    private readonly ITranslationRepository _translationRepository;
+    private readonly ILanguageRepository _languageRepository;
 
-    public AdminContentService(IAreaRepository areaRepository, IPoiRepository poiRepository)
+    public AdminContentService(
+        IAreaRepository areaRepository,
+        IPoiRepository poiRepository,
+        ITranslationRepository translationRepository,
+        ILanguageRepository languageRepository)
     {
         _areaRepository = areaRepository;
         _poiRepository = poiRepository;
+        _translationRepository = translationRepository;
+        _languageRepository = languageRepository;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -242,6 +252,129 @@ public class AdminContentService : IAdminContentService
         IsActive = poi.IsActive,
         CreatedAt = poi.CreatedAt,
         UpdatedAt = poi.UpdatedAt
+    };
+
+    public async Task<IReadOnlyList<TranslationResponse>> GetTranslationsAsync(Guid poiId, CancellationToken cancellationToken = default)
+    {
+        await EnsurePoiExistsAsync(poiId, cancellationToken);
+
+        var translations = await _translationRepository.GetByPoiIdAsync(poiId, cancellationToken);
+        return translations.Select(MapToResponse).ToList();
+    }
+
+    public async Task<TranslationResponse> GetTranslationByIdAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default)
+    {
+        var translation = await GetTranslationOfPoiAsync(poiId, id, cancellationToken);
+        return MapToResponse(translation);
+    }
+
+    public async Task<TranslationResponse> CreateTranslationAsync(Guid poiId, CreateTranslationRequest request, CancellationToken cancellationToken = default)
+    {
+        var languageCode = (request.LanguageCode ?? string.Empty).Trim().ToLowerInvariant();
+        if (languageCode.Length == 0 || languageCode.Length > MaxLanguageCodeLength)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, $"Mã ngôn ngữ (language_code) là bắt buộc và tối đa {MaxLanguageCodeLength} ký tự.");
+        }
+
+        ValidateTranslationText(request.Title, request.Description);
+
+        await EnsurePoiExistsAsync(poiId, cancellationToken);
+
+        var language = await _languageRepository.GetByCodeAsync(languageCode, cancellationToken);
+        if (language == null || !language.IsActive)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, $"Ngôn ngữ '{languageCode}' không tồn tại hoặc đã bị tắt.");
+        }
+
+        if (await _translationRepository.ExistsAsync(poiId, languageCode, cancellationToken))
+        {
+            throw new ConflictException(ErrorCodes.TranslationExists, $"POI '{poiId}' đã có bản dịch cho ngôn ngữ '{languageCode}'.");
+        }
+
+        var translation = new PoiTranslation
+        {
+            Id = Guid.NewGuid(),
+            PoiId = poiId,
+            LanguageCode = languageCode,
+            Title = request.Title.Trim(),
+            Description = request.Description.Trim(),
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        var created = await _translationRepository.AddAsync(translation, cancellationToken);
+        return MapToResponse(created);
+    }
+
+    public async Task<TranslationResponse> UpdateTranslationAsync(Guid poiId, Guid id, UpdateTranslationRequest request, CancellationToken cancellationToken = default)
+    {
+        var translation = await GetTranslationOfPoiAsync(poiId, id, cancellationToken);
+
+        ValidateTranslationText(request.Title, request.Description);
+
+        translation.Title = request.Title.Trim();
+        translation.Description = request.Description.Trim();
+        translation.UpdatedAt = DateTime.UtcNow;
+
+        await _translationRepository.UpdateAsync(translation, cancellationToken);
+        return MapToResponse(translation);
+    }
+
+    public async Task DeleteTranslationAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default)
+    {
+        var translation = await GetTranslationOfPoiAsync(poiId, id, cancellationToken);
+        await _translationRepository.DeleteAsync(translation, cancellationToken);
+    }
+
+    private async Task EnsurePoiExistsAsync(Guid poiId, CancellationToken cancellationToken)
+    {
+        var poi = await _poiRepository.GetByIdAsync(poiId, cancellationToken);
+        if (poi == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{poiId}'.");
+        }
+    }
+
+    private async Task<PoiTranslation> GetTranslationOfPoiAsync(Guid poiId, Guid id, CancellationToken cancellationToken)
+    {
+        await EnsurePoiExistsAsync(poiId, cancellationToken);
+
+        var translation = await _translationRepository.GetByIdAsync(id, cancellationToken);
+        if (translation == null || translation.PoiId != poiId)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy bản dịch '{id}' của POI '{poiId}'.");
+        }
+
+        return translation;
+    }
+
+    private static void ValidateTranslationText(string? title, string? description)
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Tiêu đề (title) là bắt buộc.");
+        }
+
+        if (title.Trim().Length > MaxTitleLength)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, $"Tiêu đề (title) không được vượt quá {MaxTitleLength} ký tự.");
+        }
+
+        if (string.IsNullOrWhiteSpace(description))
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Mô tả (description) là bắt buộc.");
+        }
+    }
+
+    private static TranslationResponse MapToResponse(PoiTranslation translation) => new()
+    {
+        Id = translation.Id,
+        PoiId = translation.PoiId,
+        LanguageCode = translation.LanguageCode,
+        Title = translation.Title,
+        Description = translation.Description,
+        AudioPath = translation.AudioPath,
+        AudioDurationSec = translation.AudioDurationSec,
+        UpdatedAt = translation.UpdatedAt
     };
 
     private static void ValidateCreateRequest(CreateAreaRequest request)

@@ -16,7 +16,11 @@ public class AdminContentServicePoiTests
 
     public AdminContentServicePoiTests()
     {
-        _service = new AdminContentService(_areaRepoMock.Object, _poiRepoMock.Object);
+        _service = new AdminContentService(
+            _areaRepoMock.Object,
+            _poiRepoMock.Object,
+            new Mock<ITranslationRepository>().Object,
+            new Mock<ILanguageRepository>().Object);
     }
 
     private static CreatePoiRequest ValidCreate(Guid areaId) => new()
