@@ -21,10 +21,6 @@ public class SupabaseFileStorage : IFileStorage
     private readonly SupabaseStorageOptions _options;
     private readonly ILogger<SupabaseFileStorage> _logger;
 
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
 
     public SupabaseFileStorage(
         HttpClient httpClient,
@@ -123,9 +119,43 @@ public class SupabaseFileStorage : IFileStorage
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        var signResult = JsonSerializer.Deserialize<SignedUrlResponse>(responseBody, JsonOptions);
+        string? signedPath = null;
 
-        var signedPath = signResult?.SignedUrl;
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            var root = doc.RootElement;
+
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("signedURL", out var elem) ||
+                    root.TryGetProperty("signedUrl", out elem) ||
+                    root.TryGetProperty("SignedURL", out elem) ||
+                    root.TryGetProperty("SignedUrl", out elem) ||
+                    root.TryGetProperty("url", out elem))
+                {
+                    signedPath = elem.GetString();
+                }
+                else
+                {
+                    foreach (var prop in root.EnumerateObject())
+                    {
+                        if (prop.Name.Equals("signedURL", StringComparison.OrdinalIgnoreCase) ||
+                            prop.Name.Equals("signedUrl", StringComparison.OrdinalIgnoreCase))
+                        {
+                            signedPath = prop.Value.GetString();
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Không thể parse JSON phản hồi từ Supabase Storage: {ResponseBody}", responseBody);
+            throw new AppException(ErrorCodes.StorageError, "Phản hồi signed URL từ Supabase không hợp lệ.", 500);
+        }
+
         if (string.IsNullOrWhiteSpace(signedPath))
         {
             throw new AppException(ErrorCodes.StorageError, "Phản hồi signed URL từ Supabase không hợp lệ.", 500);
@@ -182,10 +212,5 @@ public class SupabaseFileStorage : IFileStorage
         }
 
         return clean;
-    }
-
-    private class SignedUrlResponse
-    {
-        public string? SignedUrl { get; set; }
     }
 }
