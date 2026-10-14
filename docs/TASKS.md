@@ -23,7 +23,7 @@
 ## Ngày 2 — Admin: Auth + CRUD + audio
 - [x] T-2.1 Cấu hình xác thực JWT Supabase (issuer, khóa) + policy role=admin trên `/admin/*` — US-09
 - [x] T-2.2 Tạo user admin trên Supabase Dashboard, gán app_metadata role=admin; thử gọi bằng token thật
-- [ ] T-2.3 Business: interface Repository + `AdminContentService` cho tour_area; Data: repository — US-10
+- [x] T-2.3 Business: interface Repository + `AdminContentService` cho tour_area; Data: repository — US-10
 - [ ] T-2.4 Api: CRUD `/admin/areas` (code unique, giá > 0, xóa mềm) + unit test Service
 - [ ] T-2.5 CRUD `/admin/pois` (validate lat/lng, trigger_radius_m 5–200, priority 0–100, image_url nullable, phân trang, lọc theo khu) — US-11
 - [ ] T-2.6 CRUD `/admin/pois/{id}/translations` (unique poi+lang → 409 TRANSLATION_EXISTS, title ≤ 200) — US-12

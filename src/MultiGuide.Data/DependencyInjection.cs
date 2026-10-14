@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MultiGuide.Business.Repositories;
 using MultiGuide.Data.Context;
+using MultiGuide.Data.Repositories;
 
 namespace MultiGuide.Data;
 
@@ -23,17 +25,20 @@ public static class DependencyInjection
             {
                 options.UseInMemoryDatabase(dbName);
             });
-            return services;
+        }
+        else
+        {
+            var connectionString = !string.IsNullOrWhiteSpace(rawConn)
+                ? MultiGuideDbContextFactory.ConvertPostgresUriToConnectionString(MultiGuideDbContextFactory.CleanConnectionString(rawConn))
+                : MultiGuideDbContextFactory.GetConnectionString();
+
+            services.AddDbContext<MultiGuideDbContext>(options =>
+            {
+                options.UseNpgsql(connectionString);
+            });
         }
 
-        var connectionString = !string.IsNullOrWhiteSpace(rawConn)
-            ? MultiGuideDbContextFactory.ConvertPostgresUriToConnectionString(MultiGuideDbContextFactory.CleanConnectionString(rawConn))
-            : MultiGuideDbContextFactory.GetConnectionString();
-
-        services.AddDbContext<MultiGuideDbContext>(options =>
-        {
-            options.UseNpgsql(connectionString);
-        });
+        services.AddScoped<IAreaRepository, AreaRepository>();
 
         return services;
     }

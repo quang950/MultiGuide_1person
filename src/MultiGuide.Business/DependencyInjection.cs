@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using MultiGuide.Business.Services;
 
 namespace MultiGuide.Business;
 
@@ -6,7 +7,7 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddBusinessServices(this IServiceCollection services)
     {
-        // Business services will be registered here as they are developed
+        services.AddScoped<IAdminContentService, AdminContentService>();
         return services;
     }
 }
