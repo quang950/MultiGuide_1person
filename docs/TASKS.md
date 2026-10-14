@@ -27,7 +27,7 @@
 - [x] T-2.4 Api: CRUD `/admin/areas` (code unique, giá > 0, xóa mềm) + unit test Service
 - [x] T-2.5 CRUD `/admin/pois` (validate lat/lng, trigger_radius_m 5–200, priority 0–100, image_url nullable, phân trang, lọc theo khu) — US-11
 - [x] T-2.6 CRUD `/admin/pois/{id}/translations` (unique poi+lang → 409 TRANSLATION_EXISTS, title ≤ 200) — US-12
-- [ ] T-2.7 Business: `IFileStorage` (Upload, Delete, CreateSignedUrl); Data: `SupabaseFileStorage`
+- [x] T-2.7 Business: `IFileStorage` (Upload, Delete, CreateSignedUrl); Data: `SupabaseFileStorage`
 - [ ] T-2.8 `POST /admin/translations/{id}/audio`: kiểm magic bytes mp3, ≤ 10 MB, thay audio thì xóa file cũ — US-13
 - [ ] T-2.9 Unit test: validate upload (sai magic bytes, quá 10 MB), trùng bản dịch
 - [ ] T-2.10 Nạp audio mp3 thật cho 6 POI × 3 ngôn ngữ (người dùng chuẩn bị file)

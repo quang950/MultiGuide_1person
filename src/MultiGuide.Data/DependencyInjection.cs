@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MultiGuide.Business.Repositories;
+using MultiGuide.Business.Storage;
 using MultiGuide.Data.Context;
 using MultiGuide.Data.Repositories;
+using MultiGuide.Data.Storage;
 
 namespace MultiGuide.Data;
 
@@ -42,6 +44,26 @@ public static class DependencyInjection
         services.AddScoped<IPoiRepository, PoiRepository>();
         services.AddScoped<ITranslationRepository, TranslationRepository>();
         services.AddScoped<ILanguageRepository, LanguageRepository>();
+
+        services.Configure<SupabaseStorageOptions>(options =>
+        {
+            options.Url = configuration["Supabase:Url"]
+                ?? configuration["Supabase__Url"]
+                ?? Environment.GetEnvironmentVariable("Supabase__Url")
+                ?? string.Empty;
+
+            options.ServiceRoleKey = configuration["Supabase:ServiceRoleKey"]
+                ?? configuration["Supabase__ServiceRoleKey"]
+                ?? Environment.GetEnvironmentVariable("Supabase__ServiceRoleKey")
+                ?? string.Empty;
+
+            options.AudioBucket = configuration["Supabase:AudioBucket"]
+                ?? configuration["Supabase__AudioBucket"]
+                ?? Environment.GetEnvironmentVariable("Supabase__AudioBucket")
+                ?? "audio";
+        });
+
+        services.AddHttpClient<IFileStorage, SupabaseFileStorage>();
 
         return services;
     }

@@ -2,12 +2,12 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.6)
-- **Đang làm:** Sẵn sàng bước sang Task T-2.7 (Business: `IFileStorage`; Data: `SupabaseFileStorage`)
-- **Vừa xong:** T-2.6: `ITranslationRepository`/`ILanguageRepository` + bản cài EF Core, DTO bản dịch, mở rộng `AdminContentService` (title bắt buộc ≤ 200, description bắt buộc, language_code phải tồn tại và đang bật, trùng (poi, lang) → 409 `TRANSLATION_EXISTS`, bản dịch phải thuộc đúng POI), `AdminTranslationsController` tại `/api/v1/admin/pois/{poiId}/translations`; 124/124 test xanh.
-- **Bước kế tiếp:** T-2.7: Business: `IFileStorage` (Upload, Delete, CreateSignedUrl); Data: `SupabaseFileStorage`
+## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.7)
+- **Đang làm:** Sẵn sàng bước sang Task T-2.8 (`POST /admin/translations/{id}/audio`)
+- **Vừa xong:** T-2.7: Interface `IFileStorage` (Upload, Delete, CreateSignedUrl) trong tầng Business độc lập hoàn toàn với HTTP; `SupabaseFileStorage` trong tầng Data giao tiếp REST API qua `HttpClient` sử dụng ServiceRoleKey; cấu hình DI; 136/136 test xanh (10 test cho `SupabaseFileStorage`, 15 NetArchTest, 72 Business test, 39 Integration test khác).
+- **Bước kế tiếp:** T-2.8: `POST /admin/translations/{id}/audio`: kiểm magic bytes mp3, ≤ 10 MB, thay audio thì xóa file cũ — US-13
 - **Đang vướng:** không
-- **Lưu ý cho T-2.8:** xóa bản dịch hiện là xóa cứng (không bảng nào tham chiếu `poi_translation`); khi có `IFileStorage` cần xóa luôn file audio của bản dịch (nếu có `audio_path`) để không mồ côi file trong bucket.
+- **Lưu ý cho T-2.8:** Sử dụng `IFileStorage` để upload mp3 vào private bucket `audio`, xóa file audio cũ khi thay thế hoặc khi xóa bản dịch.
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
  
 ## Giá trị cần ghi khi có (không ghi secret)
@@ -18,6 +18,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 14/10 — Hoàn thành T-2.7: Xây dựng interface `IFileStorage` (Upload, Delete, CreateSignedUrl) trong tầng Business độc lập; hiện thực `SupabaseFileStorage` trong tầng Data gọi Supabase Storage REST API qua `HttpClient` với ServiceRoleKey; cấu hình DI và thêm 10 bài test (`SupabaseFileStorageTests`), suite test đạt 136/136 bài test xanh (kể cả NetArchTest).
 - 14/10 — Hoàn thành T-2.6: CRUD bản dịch POI (US-12) đủ 3 lớp; thêm 24 unit test + 10 integration test.
 - 14/10 — Hoàn thành T-2.5: CRUD `/admin/pois` (US-11) đủ 3 lớp, query phân trang dùng `page` + `page_size` theo PRD; thêm 18 unit test + 7 integration test.
 - 14/10 — Hoàn thành T-2.4: Tạo `AdminAreasController` (/admin/areas và /api/v1/admin/areas), bảo vệ bằng policy role=admin, hỗ trợ GET, POST, PUT, DELETE (xóa mềm). Viết 4 integration tests trong `AdminAreasControllerTests` kiểm thử trọn vẹn luồng CRUD, bắt trùng mã 409 DUPLICATE_REQUEST, validate 422 VALIDATION_ERROR và 401/403 (toàn bộ 56/56 bài test xanh).

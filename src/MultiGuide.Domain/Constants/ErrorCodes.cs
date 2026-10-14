@@ -31,5 +31,6 @@ public static class ErrorCodes
     public const string RateLimited = "RATE_LIMITED";
 
     // 500
+    public const string StorageError = "STORAGE_ERROR";
     public const string InternalError = "INTERNAL_ERROR";
 }
