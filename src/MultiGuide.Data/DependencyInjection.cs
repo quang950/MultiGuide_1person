@@ -39,6 +39,7 @@ public static class DependencyInjection
         }
 
         services.AddScoped<IAreaRepository, AreaRepository>();
+        services.AddScoped<IPoiRepository, PoiRepository>();
 
         return services;
     }

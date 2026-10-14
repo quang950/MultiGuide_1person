@@ -16,7 +16,7 @@ public class AdminContentServiceTests
     public AdminContentServiceTests()
     {
         _areaRepoMock = new Mock<IAreaRepository>();
-        _service = new AdminContentService(_areaRepoMock.Object);
+        _service = new AdminContentService(_areaRepoMock.Object, new Mock<IPoiRepository>().Object);
     }
 
     [Fact]

@@ -2,10 +2,10 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.4)
-- **Đang làm:** Sẵn sàng bước sang Task T-2.5 (CRUD `/admin/pois` — US-11)
-- **Vừa xong:** T-2.4: Triển khai `AdminAreasController` tại route `/admin/areas` và `/api/v1/admin/areas` kế thừa `AdminBaseController` (CRUD đầy đủ: GET all, GET by id, POST, PUT, DELETE xóa mềm), bổ sung 4 integration tests bao quát luồng CRUD và phân quyền; toàn bộ 56/56 bài test xanh.
-- **Bước kế tiếp:** T-2.5: CRUD `/admin/pois` (validate lat/lng, trigger_radius_m 5–200, priority 0–100, image_url nullable, phân trang, lọc theo khu) — US-11
+## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.5)
+- **Đang làm:** Sẵn sàng bước sang Task T-2.6 (CRUD `/admin/pois/{id}/translations` — US-12)
+- **Vừa xong:** T-2.5: `IPoiRepository`/`PoiRepository`, DTO POI + `PagedResponse<T>`, mở rộng `AdminContentService` (validate lat/lng, trigger_radius_m 5–200, priority 0–100, image_url ≤ 500 nullable, kiểm tra khu tồn tại, phân trang page/page_size ≤ 100, lọc theo khu/trạng thái, xóa mềm), `AdminPoisController`; 90/90 test xanh.
+- **Bước kế tiếp:** T-2.6: CRUD `/admin/pois/{id}/translations` (unique poi+lang → 409 TRANSLATION_EXISTS, title ≤ 200) — US-12
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
  
@@ -17,6 +17,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 14/10 — Hoàn thành T-2.5: CRUD `/admin/pois` (US-11) đủ 3 lớp, query phân trang dùng `page` + `page_size` theo PRD; thêm 18 unit test + 7 integration test.
 - 14/10 — Hoàn thành T-2.4: Tạo `AdminAreasController` (/admin/areas và /api/v1/admin/areas), bảo vệ bằng policy role=admin, hỗ trợ GET, POST, PUT, DELETE (xóa mềm). Viết 4 integration tests trong `AdminAreasControllerTests` kiểm thử trọn vẹn luồng CRUD, bắt trùng mã 409 DUPLICATE_REQUEST, validate 422 VALIDATION_ERROR và 401/403 (toàn bộ 56/56 bài test xanh).
 - 14/10 — Hoàn thành T-2.3: Định nghĩa interface `IAreaRepository`, DTOs và hiện thực `AdminContentService` trong tầng Business với đầy đủ validation và logic xóa mềm; hiện thực `AreaRepository` trong tầng Data bằng EF Core; bổ sung 21 unit tests trong `AdminContentServiceTests`.
 - 14/10 — Hoàn thành T-2.2: Tạo user admin `quanghi176@gmail.com` trên Supabase Dashboard, gán `app_metadata` role=admin qua SQL, xác thực và lấy token thật thành công qua Auth API.

@@ -10,11 +10,16 @@ namespace MultiGuide.Business.Services;
 public class AdminContentService : IAdminContentService
 {
     private static readonly Regex CodeRegex = new(@"^[a-z0-9-]+$", RegexOptions.Compiled);
-    private readonly IAreaRepository _areaRepository;
+    private const int MaxPageSize = 100;
+    private const int DefaultPageSize = 20;
 
-    public AdminContentService(IAreaRepository areaRepository)
+    private readonly IAreaRepository _areaRepository;
+    private readonly IPoiRepository _poiRepository;
+
+    public AdminContentService(IAreaRepository areaRepository, IPoiRepository poiRepository)
     {
         _areaRepository = areaRepository;
+        _poiRepository = poiRepository;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -95,6 +100,149 @@ public class AdminContentService : IAdminContentService
         area.IsActive = false;
         await _areaRepository.UpdateAsync(area, cancellationToken);
     }
+
+    public async Task<PagedResponse<PoiResponse>> GetPoisAsync(Guid? areaId, bool? isActive, int page = 1, int pageSize = DefaultPageSize, CancellationToken cancellationToken = default)
+    {
+        if (page < 1)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Trang (page) phải lớn hơn hoặc bằng 1.");
+        }
+
+        if (pageSize < 1 || pageSize > MaxPageSize)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, $"Kích thước trang (page_size) phải nằm trong khoảng [1, {MaxPageSize}].");
+        }
+
+        var (items, total) = await _poiRepository.GetPagedAsync(areaId, isActive, page, pageSize, cancellationToken);
+
+        return new PagedResponse<PoiResponse>
+        {
+            Items = items.Select(MapToResponse).ToList(),
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = total
+        };
+    }
+
+    public async Task<PoiResponse> GetPoiByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var poi = await _poiRepository.GetByIdAsync(id, cancellationToken);
+        if (poi == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{id}'.");
+        }
+
+        return MapToResponse(poi);
+    }
+
+    public async Task<PoiResponse> CreatePoiAsync(CreatePoiRequest request, CancellationToken cancellationToken = default)
+    {
+        ValidatePoiFields(request.Lat, request.Lng, request.TriggerRadiusM, request.Priority, request.ImageUrl);
+
+        var area = await _areaRepository.GetByIdAsync(request.AreaId, cancellationToken);
+        if (area == null)
+        {
+            throw new NotFoundException(ErrorCodes.AreaNotFound, $"Không tìm thấy khu với mã định danh '{request.AreaId}'.");
+        }
+
+        var now = DateTime.UtcNow;
+        var poi = new Poi
+        {
+            Id = Guid.NewGuid(),
+            AreaId = request.AreaId,
+            Lat = request.Lat,
+            Lng = request.Lng,
+            TriggerRadiusM = request.TriggerRadiusM,
+            Priority = request.Priority,
+            ImageUrl = NormalizeImageUrl(request.ImageUrl),
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        var created = await _poiRepository.AddAsync(poi, cancellationToken);
+        return MapToResponse(created);
+    }
+
+    public async Task<PoiResponse> UpdatePoiAsync(Guid id, UpdatePoiRequest request, CancellationToken cancellationToken = default)
+    {
+        var poi = await _poiRepository.GetByIdAsync(id, cancellationToken);
+        if (poi == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{id}'.");
+        }
+
+        ValidatePoiFields(request.Lat, request.Lng, request.TriggerRadiusM, request.Priority, request.ImageUrl);
+
+        poi.Lat = request.Lat;
+        poi.Lng = request.Lng;
+        poi.TriggerRadiusM = request.TriggerRadiusM;
+        poi.Priority = request.Priority;
+        poi.ImageUrl = NormalizeImageUrl(request.ImageUrl);
+        poi.IsActive = request.IsActive;
+        poi.UpdatedAt = DateTime.UtcNow;
+
+        await _poiRepository.UpdateAsync(poi, cancellationToken);
+        return MapToResponse(poi);
+    }
+
+    public async Task DeletePoiAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var poi = await _poiRepository.GetByIdAsync(id, cancellationToken);
+        if (poi == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{id}'.");
+        }
+
+        poi.IsActive = false;
+        poi.UpdatedAt = DateTime.UtcNow;
+        await _poiRepository.UpdateAsync(poi, cancellationToken);
+    }
+
+    private static void ValidatePoiFields(double lat, double lng, double triggerRadiusM, int priority, string? imageUrl)
+    {
+        if (double.IsNaN(lat) || lat is < -90 or > 90)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Vĩ độ (lat) phải nằm trong khoảng [-90, 90].");
+        }
+
+        if (double.IsNaN(lng) || lng is < -180 or > 180)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Kinh độ (lng) phải nằm trong khoảng [-180, 180].");
+        }
+
+        if (double.IsNaN(triggerRadiusM) || triggerRadiusM is < 5 or > 200)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Bán kính kích hoạt (trigger_radius_m) phải nằm trong khoảng [5, 200].");
+        }
+
+        if (priority is < 0 or > 100)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Độ ưu tiên (priority) phải nằm trong khoảng [0, 100].");
+        }
+
+        if (imageUrl != null && imageUrl.Trim().Length > 500)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Đường dẫn ảnh (image_url) không được vượt quá 500 ký tự.");
+        }
+    }
+
+    private static string? NormalizeImageUrl(string? imageUrl) =>
+        string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim();
+
+    private static PoiResponse MapToResponse(Poi poi) => new()
+    {
+        Id = poi.Id,
+        AreaId = poi.AreaId,
+        Lat = poi.Lat,
+        Lng = poi.Lng,
+        TriggerRadiusM = poi.TriggerRadiusM,
+        Priority = poi.Priority,
+        ImageUrl = poi.ImageUrl,
+        IsActive = poi.IsActive,
+        CreatedAt = poi.CreatedAt,
+        UpdatedAt = poi.UpdatedAt
+    };
 
     private static void ValidateCreateRequest(CreateAreaRequest request)
     {
