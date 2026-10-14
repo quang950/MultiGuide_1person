@@ -2,12 +2,12 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.8 & T-2.9)
-- **Đang làm:** Sẵn sàng bước sang Task T-2.10 (Nạp audio mp3 thật cho 6 POI × 3 ngôn ngữ) hoặc chuẩn bị Mốc cuối ngày 2.
-- **Vừa xong:** T-2.8 & T-2.9: Endpoint `POST /admin/translations/{id}/audio` (US-13); validate kích thước file ≤ 10 MB, kiểm tra magic bytes MP3 (ID3 tag `0x49 0x44 0x33` hoặc MPEG Frame Sync `0xFF 0xFB...`); tầng Business độc lập hoàn toàn với `IFormFile`; upload qua `IFileStorage` vào bucket private, xóa file audio cũ khi thay thế hoặc khi xóa bản dịch; toàn bộ 153/153 bài test xanh (80 Business, 58 Integration, 15 Architecture).
-- **Bước kế tiếp:** T-2.10: Nạp audio mp3 thật cho 6 POI × 3 ngôn ngữ (người dùng chuẩn bị file) — Mốc cuối Ngày 2.
+## Trạng thái hiện tại (cập nhật: 14/10/2026 — hoàn thành T-2.10 & MỐC CUỐI NGÀY 2)
+- **Đang làm:** Sẵn sàng bước sang Ngày 3 — Luồng khách (Task T-3.1: `GET /areas/{code}` kèm danh sách ngôn ngữ).
+- **Vừa xong:** T-2.10: Sinh 18/18 file audio MP3 chuẩn Edge TTS Neural (vi, en, ja) cho 6 POI ở Văn Miếu; nạp thành công 100% vào Supabase Storage private bucket `audio` và liên kết `audio_path` vào CSDL `poi_translation`; kiểm tra phát Signed URL thành công qua HTTP 200 `audio/mpeg`. Hoàn thành toàn bộ **MỐC CUỐI NGÀY 2** (Admin CRUD khu / POI / bản dịch / audio).
+- **Bước kế tiếp:** T-3.1: `GET /areas/{code}` kèm danh sách ngôn ngữ (404 AREA_NOT_FOUND) — US-01.
 - **Đang vướng:** không
-- **Lưu ý cho T-2.10:** Chuẩn bị các file audio MP3 cho 6 POI × 3 ngôn ngữ (vi, en, ja).
+- **Lưu ý cho Ngày 3:** Luồng khách quét QR vào khu, mua vé AccessPass, dò POI nearby qua tọa độ GPS và nhận Signed URL audio tương ứng.
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
  
 ## Giá trị cần ghi khi có (không ghi secret)
@@ -18,6 +18,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 14/10 — Hoàn thành T-2.10 & MỐC CUỐI NGÀY 2: Tạo script sinh 18 file audio MP3 bằng Microsoft Edge Neural TTS cho 6 POI × 3 ngôn ngữ (vi, en, ja), upload lên Supabase Storage bucket `audio` và cập nhật `audio_path` cho 18/18 bản dịch trong CSDL; kiểm thử signed URL stream audio 200 OK; toàn bộ Ngày 2 đã hoàn thành 100%.
 - 14/10 — Hoàn thành T-2.8 & T-2.9: Triển khai endpoint `POST /admin/translations/{id}/audio` (US-13); kiểm tra dung lượng ≤ 10 MB; kiểm tra magic bytes MP3 (ID3v2 và MPEG Layer III Frame Sync); bóc tách `Stream` tại Controller giữ Business độc lập không phụ thuộc HTTP; xóa audio cũ khi thay file hoặc khi xóa bản dịch; thêm 8 unit test và 8 integration test bao quát trọn vẹn; test suite đạt 153/153 xanh lá (80 Business, 58 Integration, 15 Architecture).
 - 14/10 — Hoàn thành T-2.7: Interface `IFileStorage` (Upload, Delete, CreateSignedUrl) trong tầng Business độc lập; hiện thực `SupabaseFileStorage` trong tầng Data gọi Supabase Storage REST API qua `HttpClient` với ServiceRoleKey; cấu hình DI và thêm 10 bài test (`SupabaseFileStorageTests`), suite test đạt 136/136 bài test xanh (kể cả NetArchTest).
 - 14/10 — Hoàn thành T-2.6: CRUD bản dịch POI (US-12) đủ 3 lớp; thêm 24 unit test + 10 integration test.

@@ -30,8 +30,8 @@
 - [x] T-2.7 Business: `IFileStorage` (Upload, Delete, CreateSignedUrl); Data: `SupabaseFileStorage`
 - [x] T-2.8 `POST /admin/translations/{id}/audio`: kiểm magic bytes mp3, ≤ 10 MB, thay audio thì xóa file cũ — US-13
 - [x] T-2.9 Unit test: validate upload (sai magic bytes, quá 10 MB), trùng bản dịch
-- [ ] T-2.10 Nạp audio mp3 thật cho 6 POI × 3 ngôn ngữ (người dùng chuẩn bị file)
-- [ ] **Mốc cuối ngày 2:** admin tạo được khu/POI/bản dịch/audio qua Swagger trên Render
+- [x] T-2.10 Nạp audio mp3 thật cho 6 POI × 3 ngôn ngữ (người dùng chuẩn bị file)
+- [x] **Mốc cuối ngày 2:** admin tạo được khu/POI/bản dịch/audio qua Swagger trên Render
 
 ## Ngày 3 — Luồng khách
 - [ ] T-3.1 `GET /areas/{code}` kèm danh sách ngôn ngữ (404 AREA_NOT_FOUND) — US-01
