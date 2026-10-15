@@ -414,12 +414,6 @@ function renderPoisOnMap(pois) {
     }).addTo(poiMarkersLayer);
   });
 }
-      fillColor: '#f59e0b',
-      fillOpacity: 0.05,
-      weight: 1
-    }).addTo(poiMarkersLayer);
-  });
-}
 
 // ==========================================
 // 5. Lấy danh sách POI Lân Cận (US-05)
