@@ -16,6 +16,8 @@ reports/logs/
 reports/
 ~$*
 *.html
+!client/**/*.html
+!client/*.html
 *.docx
 *.mp3
 scripts/audio/
