@@ -2,15 +2,21 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH TASK T-4.4: TÍCH HỢP GEMINI AI)
-- **Đang làm:** Chuẩn bị Task T-4.2 (Testcontainers Postgres).
-- **Vừa xong:** Hoàn thành trọn vẹn **Task T-4.4 — Tích hợp Google Gemini AI sinh tóm tắt lịch sử POI (US-19)**:
-  - **Tầng Business:** Định nghĩa interface `IAiService`, DTOs `AiSummaryResponse`, `GenerateAiSummaryRequest`, mở rộng `IAdminContentService` và `AdminContentService` với phương thức `GeneratePoiSummaryAsync` (tự động nhận diện POI, Khu vực, ngôn ngữ và gọi dịch vụ AI).
-  - **Tầng Data:** Hiện thực `GeminiAiService` kết nối tới Google AI Studio REST API (`models/gemini-2.5-flash:generateContent`), prompt kỹ thuật chuẩn hướng dẫn viên thuyết minh, xử lý mã hóa Unicode tiếng Việt (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`), cơ chế fallback bản thảo mô phỏng an toàn khi chưa cấu hình key. Đăng ký DI thông qua `AddHttpClient<IAiService, GeminiAiService>()`.
-  - **Tầng Presentation (Api):** Bổ sung endpoint `POST /admin/pois/{id}/ai-summary` và alias `POST /admin/pois/{id}/generate-story` trong `AdminPoisController`, bảo vệ nghiêm ngặt bằng policy `role = admin`.
-  - **Kiểm thử tự động:** Thêm 5 unit tests trong `AdminContentServiceAiSummaryTests`, 5 unit tests trong `GeminiAiServiceTests`, và 4 integration tests trong `AdminPoisControllerTests`.
-  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **311/311 XANH LÁ (100%)** (151 Business, 142 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** Line Coverage và **98.96%** Branch Coverage; `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Triển khai Task T-4.2 — Integration test với Testcontainers Postgres (kiểm thử luồng mua vé + nearby trên container PostgreSQL thật).
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH TOÀN BỘ NGÀY 1, 2, 3 VÀ 4 — 100% CÁC TASK HOÀN TẤT)
+- **Đang làm:** Tất cả các task Ngày 1, Ngày 2, Ngày 3, Ngày 4 (kể cả 2 task nâng cao T-4.2 và T-4.4) đã hoàn thành xuất sắc 100%!
+- **Vừa xong:** Hoàn thành trọn vẹn **Task T-4.2 — Integration test với Testcontainers Postgres**:
+  - Tích hợp package `Testcontainers.PostgreSql` (v4.16.0) vào dự án kiểm thử `MultiGuide.Integration.Tests`.
+  - Khởi tạo container PostgreSQL 16 thật (`postgres:16-alpine`) độc lập và tự động qua Docker.
+  - Tự động thực thi toàn bộ EF Core Migrations trên PostgreSQL thật để tạo bảng, quan hệ và khóa ngoại.
+  - Nạp dữ liệu seed chuẩn (Khu Văn Miếu, Ngôn ngữ, POIs) qua `DbSeeder`.
+  - Kiểm thử end-to-end trọn vẹn luồng:
+    1. `POST /areas/van-mieu/passes` kèm header `Idempotency-Key` -> Cấp vé 201 Created.
+    2. Xác minh trực tiếp trong CSDL PostgreSQL: Payment ghi nhận `Succeeded`, AccessPass lưu chính xác chuỗi SHA-256 hash của AccessToken, quan hệ khóa ngoại toàn vẹn.
+    3. `GET /pois/nearby` truyền `Bearer <AccessToken>` trên PostgreSQL container -> Trả về 200 OK với danh sách POI, cờ `within_trigger` và tính toán khoảng cách Haversine chính xác.
+    4. Kiểm tra Idempotency trên PostgreSQL thật: Gửi lại cùng `Idempotency-Key` -> Trả về 409 Conflict với mã lỗi chuẩn `DUPLICATE_REQUEST`.
+    5. Kiểm tra bảo mật AccessPass trên PostgreSQL thật: Truy vấn với token không hợp lệ -> Trả về 403 Forbidden với mã lỗi chuẩn `PASS_INVALID`.
+  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **314/314 XANH LÁ (100%)** (151 Business, 145 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** Line Coverage và **98.96%** Branch Coverage (vượt xa ngưỡng yêu cầu 60%); `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
+- **Bước kế tiếp:** Sẵn sàng cho người dùng nghiệm thu, demo và đẩy code lên remote repository.
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
 
@@ -23,6 +29,7 @@
 - Model Gemini AI: `gemini-2.5-flash` (Google AI Studio Free Tier)
 
 ## Lịch sử
+- 15/10 — Hoàn thành Task T-4.2: Tích hợp Testcontainers PostgreSQL 16 (`PostgresIntegrationTests`), kiểm thử luồng mua vé, xác minh trực tiếp trong database, kiểm thử idempotency và truy vấn POI lân cận với token hash SHA-256 trên container PostgreSQL thật. Nâng tổng số bài test lên 314/314 tests xanh lá (100%). Hoàn thành 100% toàn bộ kế hoạch 4 Ngày của dự án!
 - 15/10 — Hoàn thành Task T-4.4 (US-19): Triển khai `IAiService` trong Business, `GeminiAiService` trong Data gọi Google AI Studio REST API, endpoint `POST /admin/pois/{id}/ai-summary` trong `AdminPoisController` (phân quyền admin); bổ sung 14 bài test nâng tổng test suite lên 311/311 tests xanh lá (100%).
 - 15/10 — Hoàn thành Cụm 3 (T-4.8, T-4.9, T-4.10): Biên soạn tài liệu `README.md` chuyên sâu, kịch bản thuyết trình demo 5 phút `docs/DEMO_SCRIPT.md`, bộ 5 sơ đồ UML/Mermaid báo cáo đồ án `docs/REPORT_DIAGRAMS.md`.
 - 15/10 — Hoàn thành T-4.6 & T-4.7: Hoàn thiện pipeline CD `cd.yml` (migration bundle Session Pooler, deploy hook, smoke test `/health/ready` 3 phút); xây dựng kịch bản k6 `load_test_k6.js` & runner `run_load_test.py`, đo tải thành công trên Render đạt 12.96 req/s, 0% lỗi, xuất báo cáo `docs/LOAD_TEST_RESULTS.md`.

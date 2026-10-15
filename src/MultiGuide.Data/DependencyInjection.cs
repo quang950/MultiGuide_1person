@@ -21,8 +21,10 @@ public static class DependencyInjection
                       ?? configuration["DATABASE_URL"]
                       ?? Environment.GetEnvironmentVariable("DATABASE_URL");
 
-        var useInMemory = configuration["USE_IN_MEMORY_DB"] == "true"
-                          || Environment.GetEnvironmentVariable("USE_IN_MEMORY_DB") == "true";
+        var inMemorySetting = configuration["USE_IN_MEMORY_DB"];
+        var useInMemory = !string.IsNullOrWhiteSpace(inMemorySetting)
+            ? string.Equals(inMemorySetting, "true", StringComparison.OrdinalIgnoreCase)
+            : string.Equals(Environment.GetEnvironmentVariable("USE_IN_MEMORY_DB"), "true", StringComparison.OrdinalIgnoreCase);
 
         if (useInMemory)
         {
