@@ -278,17 +278,22 @@ function initMap() {
 
   poiMarkersLayer = L.layerGroup().addTo(map);
 
-  // User Marker Icon
+  // User Marker Icon với hiệu ứng radar pulse
   const userIcon = L.divIcon({
     className: 'user-pin-container',
     html: `
-      <div style="
-        width: 24px; height: 24px;
-        background: #06b6d4;
-        border: 3px solid #ffffff;
-        border-radius: 50%;
-        box-shadow: 0 0 12px rgba(6,182,212,0.8);
-      "></div>
+      <div style="position: relative;">
+        <div class="user-pin-pulse"></div>
+        <div style="
+          width: 24px; height: 24px;
+          background: #06b6d4;
+          border: 3px solid #ffffff;
+          border-radius: 50%;
+          box-shadow: 0 0 14px rgba(6,182,212,0.9);
+          position: relative;
+          z-index: 2;
+        "></div>
+      </div>
     `,
     iconSize: [24, 24],
     iconAnchor: [12, 12]
@@ -341,43 +346,74 @@ function updateUserPosition(lat, lng) {
   fetchNearbyPois();
 }
 
+// Hàm sinh SVG Icon theo từng loại danh lam di tích
+function getPoiIconSvg(title) {
+  const t = (title || '').toLowerCase();
+  if (t.includes('khuê văn') || t.includes('khue van')) {
+    // Khuê Văn Các (Lầu sao Khuê cửa tròn cổ kính)
+    return `<svg viewBox="0 0 24 24"><path d="M12 2l-8 4v2h16V6l-8-4zm-6 8h12v1H6v-1zm2 3a4 4 0 108 0 4 4 0 00-8 0zm4-2a2 2 0 110 4 2 2 0 010-4zm-7 7h18v3H3v-3z"/></svg>`;
+  }
+  if (t.includes('cổng') || t.includes('cong') || t.includes('môn') || t.includes('mon')) {
+    // Cổng tam quan cổ / Khải hoàn môn
+    return `<svg viewBox="0 0 24 24"><path d="M2 19h20v2H2v-2zm2-2V9h2v8H4zm6 0V9h4v8h-4zm8 0V9h2v8h-2zM1 7l3.5-3h15L23 7h-2.5L19 5.5H5L3.5 7H1zm6 4h2V9H7v2zm8 0h2V9h-2v2z"/></svg>`;
+  }
+  if (t.includes('bia') || t.includes('giếng') || t.includes('tiến sĩ')) {
+    // Bia tiến sĩ rùa đá
+    return `<svg viewBox="0 0 24 24"><path d="M7 2h10v12H7V2zm2 2v8h6V4H9zm-5 13a4 4 0 014-4h8a4 4 0 014 4v3H4v-3zm3 1a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"/></svg>`;
+  }
+  if (t.includes('thái học') || t.includes('thai hoc')) {
+    // Trường Quốc Tử Giám - Nhà Thái Học
+    return `<svg viewBox="0 0 24 24"><path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zM3.45 13.5L12 18.16l8.55-4.66v3.84L12 22l-8.55-4.66v-3.84z"/></svg>`;
+  }
+  // Điện thờ / Đại Bái / Tượng Khổng Tử
+  return `<svg viewBox="0 0 24 24"><path d="M12 3L2 9h20L12 3zm-7 8v8h14v-8h-2v6H7v-6H5zm4 0h6v4H9v-4zm-7 10h18v2H2v-2z"/></svg>`;
+}
+
 function renderPoisOnMap(pois) {
   poiMarkersLayer.clearLayers();
 
   pois.forEach(poi => {
-    // Marker icon cho POI
+    const iconSvg = getPoiIconSvg(poi.title);
+
+    // Marker biểu tượng công trình lịch sử
     const poiIcon = L.divIcon({
-      className: 'poi-map-pin',
+      className: 'poi-map-pin-container',
       html: `
-        <div id="poi-pin-${poi.id}" style="
-          width: 20px; height: 20px;
-          background: #f59e0b;
-          border: 2px solid #ffffff;
-          border-radius: 50%;
-          box-shadow: 0 0 8px rgba(0,0,0,0.4);
-          transition: all 0.3s;
-        "></div>
+        <div id="poi-marker-${poi.id}" class="poi-custom-marker" title="${poi.title}">
+          <div class="poi-radar-ring"></div>
+          <div class="poi-icon-bubble">
+            ${iconSvg}
+          </div>
+          <div class="poi-title-label">${poi.title || 'Điểm di tích'}</div>
+        </div>
       `,
-      iconSize: [20, 20],
-      iconAnchor: [10, 10]
+      iconSize: [44, 60],
+      iconAnchor: [22, 22]
     });
 
     const m = L.marker([poi.lat, poi.lng], { icon: poiIcon }).addTo(poiMarkersLayer);
 
     m.bindPopup(`
-      <div style="font-family: var(--font-family); color: #0f172a; padding: 4px;">
-        <h4 style="margin: 0 0 4px 0; font-size: 1rem;">${poi.title || 'Điểm tham quan'}</h4>
-        <p style="margin: 0 0 8px 0; font-size: 0.8rem; color: #64748b;">Bán kính kích hoạt: ${poi.triggerRadiusM || 30}m</p>
+      <div style="font-family: var(--font-family); color: #0f172a; padding: 6px; min-width: 180px;">
+        <h4 style="margin: 0 0 4px 0; font-size: 1rem; color: #0f172a;">${poi.title || 'Điểm tham quan'}</h4>
+        <p style="margin: 0 0 8px 0; font-size: 0.8rem; color: #64748b;">Bán kính kích hoạt: <b>${poi.triggerRadiusM || 30}m</b></p>
         <button onclick="window.playPoiAudio('${poi.id}')" style="
-          background: #0284c7; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%;
+          background: linear-gradient(135deg, #0284c7, #0369a1); color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; box-shadow: 0 2px 8px rgba(2,132,199,0.4);
         ">Nghe thuyết minh</button>
       </div>
     `);
 
-    // Vẽ thêm vòng tròn trigger của POI
+    // Vòng tròn bán kính kích hoạt mờ mờ trên bản đồ
     L.circle([poi.lat, poi.lng], {
       radius: poi.triggerRadiusM || 30,
-      color: '#f59e0b',
+      color: '#d97706',
+      fillColor: '#d97706',
+      fillOpacity: 0.06,
+      weight: 1,
+      dashArray: '3, 6'
+    }).addTo(poiMarkersLayer);
+  });
+}
       fillColor: '#f59e0b',
       fillOpacity: 0.05,
       weight: 1
@@ -470,17 +506,19 @@ function renderNearbyGrid(pois) {
 }
 
 function updatePoiMarkersHighlight(nearbyPois) {
+  // Reset tất cả các marker về trạng thái bình thường
+  document.querySelectorAll('.poi-custom-marker').forEach(el => {
+    el.classList.remove('active-trigger');
+  });
+
+  // Kích hoạt phát sáng cho các POI nằm trong vùng trigger
   nearbyPois.forEach(p => {
-    const pinEl = document.getElementById(`poi-pin-${p.id}`);
-    if (pinEl) {
+    const markerEl = document.getElementById(`poi-marker-${p.id}`);
+    if (markerEl) {
       if (p.withinTrigger) {
-        pinEl.style.background = '#10b981';
-        pinEl.style.boxShadow = '0 0 14px #10b981';
-        pinEl.className = 'trigger-pulse';
+        markerEl.classList.add('active-trigger');
       } else {
-        pinEl.style.background = '#f59e0b';
-        pinEl.style.boxShadow = '0 0 8px rgba(0,0,0,0.4)';
-        pinEl.className = '';
+        markerEl.classList.remove('active-trigger');
       }
     }
   });
