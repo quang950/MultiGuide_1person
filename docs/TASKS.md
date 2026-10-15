@@ -51,7 +51,7 @@
 - [x] **Mốc cuối ngày 3:** gọi tuần tự được: areas → passes → nearby → pois/{id} trên Render
 
 ## Ngày 4 — Test, test client, hoàn thiện
-- [ ] T-4.1 Coverage Business ≥ 60% (bổ sung unit test còn thiếu); CI fail khi dưới ngưỡng
+- [x] T-4.1 Coverage Business ≥ 60% (bổ sung unit test còn thiếu); CI fail khi dưới ngưỡng
 - [ ] T-4.2 Integration test (Testcontainers Postgres): luồng pass + nearby — **(Cắt nếu trễ)**
 - [ ] T-4.3 Web test client Leaflet (1 trang): nhập khu, mua pass, bấm bản đồ giả lập vị trí, hiện POI trong bán kính, nút Nghe
 - [ ] T-4.4 Tích hợp Gemini AI (Google AI Studio Free): `IAiService` + `GeminiAiService` sinh tóm tắt lịch sử POI cho Admin — US-19 **(Cắt)**

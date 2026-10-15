@@ -23,6 +23,8 @@ jobs:
       - run: dotnet format MultiGuide.sln --verify-no-changes --no-restore
       - name: Test + coverage
         run: dotnet test MultiGuide.sln -c Release --no-build --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      - name: Kiểm tra ngưỡng Code Coverage Business (>= 60%)
+        run: python scripts/check_coverage.py --min-coverage 60.0 --dir ./TestResults
       - uses: actions/upload-artifact@v4
         if: always()
         with:
