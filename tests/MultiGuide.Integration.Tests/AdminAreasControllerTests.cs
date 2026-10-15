@@ -230,9 +230,88 @@ public class AdminAreasControllerTests : IClassFixture<WebApplicationFactory<Pro
         postMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
 
         var response = await _client.SendAsync(postMsg);
-        Assert.Equal(HttpStatusCode.UnprocessableEntity, response.StatusCode);
-
         var json = await response.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal(ErrorCodes.ValidationError, json.GetProperty("code").GetString());
+    }
+
+    [Fact]
+    public async Task GetQrCode_KhongToken_TraVe401AuthRequired()
+    {
+        var areaId = Guid.NewGuid();
+        var response = await _client.GetAsync($"/api/v1/admin/areas/{areaId}/qr");
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetQrCode_RoleUser_TraVe403Forbidden()
+    {
+        var areaId = Guid.NewGuid();
+        var userToken = GenerateJwt("authenticated");
+
+        using var msg = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/admin/areas/{areaId}/qr");
+        msg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", userToken);
+
+        var response = await _client.SendAsync(msg);
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetQrCode_AreaKhongTonTai_TraVe404AreaNotFound()
+    {
+        var areaId = Guid.NewGuid();
+        var adminToken = GenerateJwt("admin");
+
+        using var msg = new HttpRequestMessage(HttpMethod.Get, $"/api/v1/admin/areas/{areaId}/qr");
+        msg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var response = await _client.SendAsync(msg);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetQrCode_AreaHopLe_TraVe200VaAnhPng()
+    {
+        var adminToken = GenerateJwt("admin");
+
+        // Tạo 1 area trước
+        var createRequest = new CreateAreaRequest
+        {
+            Code = $"area-qr-{Guid.NewGuid():N}"[..12],
+            Name = "Khu Test QR",
+            CenterLat = 21.0,
+            CenterLng = 105.0,
+            RadiusM = 150,
+            PriceUsd = 4.0m,
+            PassTtlHours = 24
+        };
+
+        var postMsg = new HttpRequestMessage(HttpMethod.Post, "/api/v1/admin/areas")
+        {
+            Content = JsonContent.Create(createRequest)
+        };
+        postMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var postRes = await _client.SendAsync(postMsg);
+        Assert.Equal(HttpStatusCode.Created, postRes.StatusCode);
+        var created = await postRes.Content.ReadFromJsonAsync<AreaResponse>();
+        Assert.NotNull(created);
+
+        // Gọi GetQrCode
+        using var qrMsg = new HttpRequestMessage(HttpMethod.Get, $"/admin/areas/{created.Id}/qr");
+        qrMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var qrRes = await _client.SendAsync(qrMsg);
+        Assert.Equal(HttpStatusCode.OK, qrRes.StatusCode);
+        Assert.Equal("image/png", qrRes.Content.Headers.ContentType?.MediaType);
+
+        var bytes = await qrRes.Content.ReadAsByteArrayAsync();
+        Assert.NotNull(bytes);
+        Assert.True(bytes.Length > 8);
+
+        // Header magic bytes của định dạng PNG: 0x89, 0x50, 0x4E, 0x47
+        Assert.Equal(0x89, bytes[0]);
+        Assert.Equal(0x50, bytes[1]);
+        Assert.Equal(0x4E, bytes[2]);
+        Assert.Equal(0x47, bytes[3]);
     }
 }

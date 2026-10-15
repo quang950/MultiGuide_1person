@@ -3,10 +3,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using MultiGuide.Business.Payments;
 using MultiGuide.Business.Repositories;
+using MultiGuide.Business.Services;
 using MultiGuide.Business.Storage;
 using MultiGuide.Data.Context;
 using MultiGuide.Data.Payments;
 using MultiGuide.Data.Repositories;
+using MultiGuide.Data.Services;
 using MultiGuide.Data.Storage;
 
 namespace MultiGuide.Data;
@@ -50,6 +52,7 @@ public static class DependencyInjection
         services.AddScoped<IAccessPassRepository, AccessPassRepository>();
         services.AddScoped<IPlayLogRepository, PlayLogRepository>();
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
+        services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
 
         services.Configure<SupabaseStorageOptions>(options =>
         {

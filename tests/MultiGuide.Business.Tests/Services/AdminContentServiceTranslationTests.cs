@@ -24,7 +24,8 @@ public class AdminContentServiceTranslationTests
             _poiRepoMock.Object,
             _translationRepoMock.Object,
             _languageRepoMock.Object,
-            _fileStorageMock.Object);
+            _fileStorageMock.Object,
+            new Mock<IQrCodeGenerator>().Object);
     }
 
     private void SetupPoi(Guid poiId) =>

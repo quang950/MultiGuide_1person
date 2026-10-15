@@ -12,17 +12,20 @@ namespace MultiGuide.Business.Tests.Services;
 public class AdminContentServiceTests
 {
     private readonly Mock<IAreaRepository> _areaRepoMock;
+    private readonly Mock<IQrCodeGenerator> _qrCodeGeneratorMock;
     private readonly AdminContentService _service;
 
     public AdminContentServiceTests()
     {
         _areaRepoMock = new Mock<IAreaRepository>();
+        _qrCodeGeneratorMock = new Mock<IQrCodeGenerator>();
         _service = new AdminContentService(
             _areaRepoMock.Object,
             new Mock<IPoiRepository>().Object,
             new Mock<ITranslationRepository>().Object,
             new Mock<ILanguageRepository>().Object,
-            new Mock<IFileStorage>().Object);
+            new Mock<IFileStorage>().Object,
+            _qrCodeGeneratorMock.Object);
     }
 
     [Fact]
@@ -336,5 +339,46 @@ public class AdminContentServiceTests
 
         Assert.False(existing.IsActive);
         _areaRepoMock.Verify(r => r.UpdateAsync(It.Is<TourArea>(a => !a.IsActive), It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GenerateAreaQrCodeAsync_AreaKhongTonTai_NemNotFoundException()
+    {
+        var id = Guid.NewGuid();
+        _areaRepoMock
+            .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((TourArea?)null);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() =>
+            _service.GenerateAreaQrCodeAsync(id));
+
+        Assert.Equal(ErrorCodes.AreaNotFound, ex.Code);
+    }
+
+    [Fact]
+    public async Task GenerateAreaQrCodeAsync_AreaTonTai_GoiQrGeneratorVaTraVePngBytes()
+    {
+        var id = Guid.NewGuid();
+        var area = new TourArea
+        {
+            Id = id,
+            Code = "van-mieu",
+            Name = "Văn Miếu",
+            IsActive = true
+        };
+
+        var fakeBytes = new byte[] { 0x89, 0x50, 0x4E, 0x47 };
+        _areaRepoMock
+            .Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(area);
+
+        _qrCodeGeneratorMock
+            .Setup(g => g.GeneratePng("https://test.app/a/van-mieu", 20))
+            .Returns(fakeBytes);
+
+        var (bytes, fileName) = await _service.GenerateAreaQrCodeAsync(id, "https://test.app/");
+
+        Assert.Equal(fakeBytes, bytes);
+        Assert.Equal("van-mieu-qr.png", fileName);
     }
 }

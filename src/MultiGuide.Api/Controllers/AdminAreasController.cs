@@ -54,6 +54,30 @@ public class AdminAreasController : AdminBaseController
     }
 
     /// <summary>
+    /// Xuất mã QR dạng ảnh PNG trỏ tới URL trang mua vé của khu tham quan (US-14).
+    /// </summary>
+    /// <param name="id">Mã định danh khu (UUID)</param>
+    /// <param name="configuration">Cấu hình ứng dụng</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet("{id:guid}/qr")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK, "image/png")]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetQrCode(
+        Guid id,
+        [FromServices] IConfiguration configuration,
+        CancellationToken cancellationToken = default)
+    {
+        var publicWebUrl = configuration["PublicWebUrl"]
+            ?? configuration["PUBLIC_WEB_URL"]
+            ?? Environment.GetEnvironmentVariable("PUBLIC_WEB_URL");
+
+        var (pngBytes, fileName) = await _adminContentService.GenerateAreaQrCodeAsync(id, publicWebUrl, cancellationToken);
+        return File(pngBytes, "image/png", fileName);
+    }
+
+    /// <summary>
     /// Tạo mới một khu tham quan du lịch.
     /// </summary>
     /// <param name="request">Thông tin khu cần tạo</param>

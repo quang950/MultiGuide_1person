@@ -9,6 +9,7 @@ public interface IAdminContentService
     Task<AreaResponse> CreateAreaAsync(CreateAreaRequest request, CancellationToken cancellationToken = default);
     Task<AreaResponse> UpdateAreaAsync(Guid id, UpdateAreaRequest request, CancellationToken cancellationToken = default);
     Task DeleteAreaAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<(byte[] PngBytes, string FileName)> GenerateAreaQrCodeAsync(Guid areaId, string? publicWebUrl = null, CancellationToken cancellationToken = default);
 
     Task<PagedResponse<PoiResponse>> GetPoisAsync(Guid? areaId, bool? isActive, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
     Task<PoiResponse> GetPoiByIdAsync(Guid id, CancellationToken cancellationToken = default);

@@ -22,19 +22,22 @@ public class AdminContentService : IAdminContentService
     private readonly ITranslationRepository _translationRepository;
     private readonly ILanguageRepository _languageRepository;
     private readonly IFileStorage _fileStorage;
+    private readonly IQrCodeGenerator _qrCodeGenerator;
 
     public AdminContentService(
         IAreaRepository areaRepository,
         IPoiRepository poiRepository,
         ITranslationRepository translationRepository,
         ILanguageRepository languageRepository,
-        IFileStorage fileStorage)
+        IFileStorage fileStorage,
+        IQrCodeGenerator qrCodeGenerator)
     {
         _areaRepository = areaRepository;
         _poiRepository = poiRepository;
         _translationRepository = translationRepository;
         _languageRepository = languageRepository;
         _fileStorage = fileStorage;
+        _qrCodeGenerator = qrCodeGenerator;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -114,6 +117,28 @@ public class AdminContentService : IAdminContentService
 
         area.IsActive = false;
         await _areaRepository.UpdateAsync(area, cancellationToken);
+    }
+
+    public async Task<(byte[] PngBytes, string FileName)> GenerateAreaQrCodeAsync(
+        Guid areaId,
+        string? publicWebUrl = null,
+        CancellationToken cancellationToken = default)
+    {
+        var area = await _areaRepository.GetByIdAsync(areaId, cancellationToken);
+        if (area == null)
+        {
+            throw new NotFoundException(ErrorCodes.AreaNotFound, $"Không tìm thấy khu với mã định danh '{areaId}'.");
+        }
+
+        var baseUrl = !string.IsNullOrWhiteSpace(publicWebUrl)
+            ? publicWebUrl.TrimEnd('/')
+            : "https://multiguide.app";
+
+        var targetUrl = $"{baseUrl}/a/{area.Code}";
+        var pngBytes = _qrCodeGenerator.GeneratePng(targetUrl);
+        var fileName = $"{area.Code}-qr.png";
+
+        return (pngBytes, fileName);
     }
 
     public async Task<PagedResponse<PoiResponse>> GetPoisAsync(Guid? areaId, bool? isActive, int page = 1, int pageSize = DefaultPageSize, CancellationToken cancellationToken = default)

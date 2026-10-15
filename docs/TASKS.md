@@ -46,8 +46,8 @@
 - [x] T-3.10 `GET /pois/{id}?lang` + signed URL audio (1 giờ), kèm image_url, PASS_AREA_MISMATCH — US-06, US-07
 - [x] T-3.11 `POST /play-logs` (pass từ token, listened_sec 0–6 giờ) — US-08
 - [x] T-3.12 `GET /passes/current` — US-04
-- [ ] T-3.13 `GET /admin/areas/{id}/qr` (PNG, URL `{PUBLIC_WEB_URL}/a/{code}`) — US-14 **(Cắt)**
-- [ ] T-3.14 Kiểm tra: không có chỗ nào log/ lưu lat, lng, token
+- [x] T-3.13 `GET /admin/areas/{id}/qr` (PNG, URL `{PUBLIC_WEB_URL}/a/{code}`) — US-14
+- [x] T-3.14 Kiểm tra: không có chỗ nào log/ lưu lat, lng, token
 - [ ] **Mốc cuối ngày 3:** gọi tuần tự được: areas → passes → nearby → pois/{id} trên Render
 
 ## Ngày 4 — Test, test client, hoàn thiện

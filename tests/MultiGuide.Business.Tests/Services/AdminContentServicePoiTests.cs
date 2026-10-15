@@ -22,7 +22,8 @@ public class AdminContentServicePoiTests
             _poiRepoMock.Object,
             new Mock<ITranslationRepository>().Object,
             new Mock<ILanguageRepository>().Object,
-            new Mock<IFileStorage>().Object);
+            new Mock<IFileStorage>().Object,
+            new Mock<IQrCodeGenerator>().Object);
     }
 
     private static CreatePoiRequest ValidCreate(Guid areaId) => new()

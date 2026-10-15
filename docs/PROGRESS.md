@@ -2,12 +2,15 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-3.11 & T-3.12)
-- **Đang làm:** Sẵn sàng làm Task T-3.13 (Sinh QR code khu) hoặc T-3.14 (Rà soát bảo mật không lưu/log toạ độ lat, lng và token) & Mốc cuối Ngày 3.
-- **Vừa xong:** T-3.11 & T-3.12: Triển khai endpoint `GET /passes/current` (US-04) trong `PassesController` và `PassService.GetCurrentPassAsync`; triển khai endpoint `POST /play-logs` (US-08) trong `PlayLogsController`, `IPlayLogService` & `PlayLogService`, `IPlayLogRepository` & `PlayLogRepository` với đầy đủ validation (listened_sec 0-21600s, kiểm tra POI active và đúng khu vực của pass); bổ sung 13 unit tests trong `PlayLogServiceTests` và `PassServiceTests`; bổ sung 12 integration tests trong `PassCurrentEndpointsTests` và `PlayLogsEndpointsTests`; toàn bộ test suite đạt 277/277 XANH LÁ (140 Business, 122 Integration, 15 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
-- **Bước kế tiếp:** T-3.13 (GET /admin/areas/{id}/qr) hoặc T-3.14 (Audit bảo mật lat/lng/token) & Mốc cuối Ngày 3.
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-3.13 & T-3.14)
+- **Đang làm:** Sẵn sàng cho Mốc cuối Ngày 3: Kiểm thử luồng khách tuần tự hoàn chỉnh (areas → passes → nearby → pois/{id} → play-logs).
+- **Vừa xong:** T-3.13 & T-3.14:
+  - T-3.13: Triển khai endpoint `GET /admin/areas/{id}/qr` (US-14) xuất mã QR ảnh PNG dạng `image/png` dẫn tới link `{PUBLIC_WEB_URL}/a/{code}` thông qua `IQrCodeGenerator` và thư viện `QRCoder` (`PngByteQRCode` không phụ thuộc GDI+); bổ sung 2 unit tests trong `AdminContentServiceTests` và 4 integration tests trong `AdminAreasControllerTests`.
+  - T-3.14: Rà soát bảo mật & quyền riêng tư toàn diện (Codebase & DB Audit: không lưu tọa độ GPS vào CSDL, không log tọa độ `lat`, `lng` và raw token ra log/console, `access_passes` chỉ lưu `token_hash`); tạo bộ kiểm tra kiến trúc tự động `SecurityPrivacyArchitectureTests` (3 bài test mới) khóa vĩnh viễn quy tắc trong CI.
+  - Toàn bộ test suite đạt 286/286 XANH LÁ (142 Business, 126 Integration, 18 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
+- **Bước kế tiếp:** Mốc cuối Ngày 3: Kiểm thử luồng tuần tự hoàn chỉnh: areas → passes → nearby → pois/{id}.
 - **Đang vướng:** không
-- **Lưu ý cho Ngày 3:** Luồng khách quét QR vào khu, mua vé AccessPass, dò POI nearby qua tọa độ GPS và nhận Signed URL audio tương ứng; kiểm tra hạn vé và ghi log lượt nghe.
+- **Lưu ý cho Ngày 3:** Đã hoàn thành 100% tất cả các Task từ T-3.1 đến T-3.14 của Ngày 3!
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
  
 ## Giá trị cần ghi khi có (không ghi secret)
@@ -18,6 +21,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 15/10 — Hoàn thành T-3.13 & T-3.14: Triển khai `GET /admin/areas/{id}/qr` (US-14) trả về ảnh PNG mã QR qua `IQrCodeGenerator` & `QRCoder`; rà soát bảo mật & quyền riêng tư không log/lưu `lat, lng, token`, tạo `SecurityPrivacyArchitectureTests`; toàn bộ 286/286 tests xanh lá.
 - 15/10 — Hoàn thành T-3.11 & T-3.12: Triển khai `PassesController` (`GET /passes/current`), `PlayLogsController` (`POST /play-logs`), `PlayLogService`, `PlayLogRepository`; bổ sung 13 unit tests và 12 integration tests; toàn bộ 277/277 tests xanh lá.
 - 15/10 — Hoàn thành T-3.9 & T-3.10: Triển khai `ContentService` (fallback ngôn ngữ lang → en → vi, bắt 404 POI_CONTENT_NOT_FOUND, 403 PASS_AREA_MISMATCH, sinh Signed URL 1 giờ qua IFileStorage), `IPoiRepository.GetWithTranslationsByIdAsync`, endpoint `GET /pois/{id}?lang` bảo vệ bằng `[RequireAccessPass]`; bổ sung 10 unit tests và 9 integration tests; toàn bộ 252/252 tests xanh lá.
 - 15/10 — Hoàn thành T-3.7 & T-3.8: Triển khai `GeoService` (Haversine distance, Bounding box, cờ within_trigger, sắp xếp Priority/Distance), `PoiService`, `IPoiRepository.GetActiveByAreaIdAsync` và endpoint `GET /pois/nearby` (US-05) bảo vệ bằng `[RequireAccessPass]`; bổ sung 10 unit tests và 10 integration tests; toàn bộ 233/233 tests xanh lá.
