@@ -2,10 +2,10 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-3.7 & T-3.8)
-- **Đang làm:** Sẵn sàng làm Task T-3.9 & T-3.10: `ContentService` (fallback ngôn ngữ) & endpoint `GET /pois/{id}?lang` kèm Signed URL audio (US-06, US-07).
-- **Vừa xong:** T-3.7 & T-3.8: Triển khai `IGeoService` & `GeoService` (Stateless: Bounding Box, công thức khoảng cách Haversine làm tròn 1m, cờ `within_trigger`, sắp xếp ưu tiên Priority giảm dần rồi Distance tăng dần); triển khai `IPoiService` & `PoiService` và bổ sung `GetActiveByAreaIdAsync` vào `IPoiRepository`; xây dựng endpoint `GET /pois/nearby` (US-05) bảo vệ bởi `[RequireAccessPass]`, validate tọa độ lat/lng và bán kính radius (1-500m), không lưu/log toạ độ; viết 10 unit tests trong `GeoServiceTests` và 10 integration tests trong `NearbyPoiEndpointsTests`; test suite đạt 233/233 xanh lá (117 Business, 101 Integration, 15 Architecture); `dotnet build -warnaserror` 0 warning 0 error.
-- **Bước kế tiếp:** T-3.9 & T-3.10: `ContentService`: fallback lang → en → vi; endpoint `GET /pois/{id}?lang` + signed URL audio (1 giờ), kèm image_url, PASS_AREA_MISMATCH (US-06, US-07).
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-3.9 & T-3.10)
+- **Đang làm:** Sẵn sàng kiểm tra T-3.14 (Rà soát bảo mật: không lưu/log tọa độ lat, lng và raw token) và Mốc cuối Ngày 3.
+- **Vừa xong:** T-3.9 & T-3.10: Triển khai `IContentService` & `ContentService` với logic fallback ngôn ngữ (lang yêu cầu → en → vi), trả 404 `POI_CONTENT_NOT_FOUND`, 403 `PASS_AREA_MISMATCH` khi pass khác khu; sinh Signed URL audio thời hạn 1 giờ từ `IFileStorage`; bổ sung method `GetWithTranslationsByIdAsync` vào `IPoiRepository` & `PoiRepository`; xây dựng action `GET /pois/{id}?lang` (và `/api/v1/pois/{id}`) trong `PoisController` bảo vệ bởi `[RequireAccessPass]`; viết 10 unit tests trong `ContentServiceTests` và 9 integration tests trong `PoiDetailEndpointsTests`; toàn bộ test suite đạt 252/252 XANH LÁ (127 Business, 110 Integration, 15 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
+- **Bước kế tiếp:** T-3.14: Rà soát bảo mật không lưu/log toạ độ lat, lng và token; Mốc cuối Ngày 3: Kiểm thử luồng tuần tự hoàn chỉnh: areas → passes → nearby → pois/{id}.
 - **Đang vướng:** không
 - **Lưu ý cho Ngày 3:** Luồng khách quét QR vào khu, mua vé AccessPass, dò POI nearby qua tọa độ GPS và nhận Signed URL audio tương ứng.
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
@@ -18,6 +18,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 15/10 — Hoàn thành T-3.9 & T-3.10: Triển khai `ContentService` (fallback ngôn ngữ lang → en → vi, bắt 404 POI_CONTENT_NOT_FOUND, 403 PASS_AREA_MISMATCH, sinh Signed URL 1 giờ qua IFileStorage), `IPoiRepository.GetWithTranslationsByIdAsync`, endpoint `GET /pois/{id}?lang` bảo vệ bằng `[RequireAccessPass]`; bổ sung 10 unit tests và 9 integration tests; toàn bộ 252/252 tests xanh lá.
 - 15/10 — Hoàn thành T-3.7 & T-3.8: Triển khai `GeoService` (Haversine distance, Bounding box, cờ within_trigger, sắp xếp Priority/Distance), `PoiService`, `IPoiRepository.GetActiveByAreaIdAsync` và endpoint `GET /pois/nearby` (US-05) bảo vệ bằng `[RequireAccessPass]`; bổ sung 10 unit tests và 10 integration tests; toàn bộ 233/233 tests xanh lá.
 - 15/10 — Hoàn thành T-3.6: Triển khai Middleware `AccessPassMiddleware`, attribute `[RequireAccessPass]`, method `ValidateTokenAsync` trong `PassService`, gắn `PassContext` vào `HttpContext`; xử lý đầy đủ các lỗi 401 `PASS_MISSING`, 403 `PASS_INVALID`, 403 `PASS_EXPIRED`; bổ sung 5 unit tests và 6 integration tests; toàn bộ 213/213 tests xanh lá.
 - 14/10 — Hoàn thành T-3.5: Cấu hình Rate Limiter middleware (`Microsoft.AspNetCore.RateLimiting`) với Fixed Window (5 req/phút/IP), tùy biến `OnRejected` trả ProblemDetails 429 `code: "RATE_LIMITED"`, áp dụng vào endpoint `CreatePass` trong `AreasController`; bổ sung 2 integration tests trong `RateLimitingTests` bao quát kịch bản vượt ngưỡng và cô lập IP; toàn bộ 197/197 tests xanh lá.

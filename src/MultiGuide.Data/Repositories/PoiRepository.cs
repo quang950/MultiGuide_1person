@@ -19,6 +19,13 @@ public class PoiRepository : IPoiRepository
         return await _context.Pois.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
+    public async Task<Poi?> GetWithTranslationsByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return await _context.Pois
+            .Include(p => p.Translations)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+    }
+
     public async Task<(IReadOnlyList<Poi> Items, int TotalCount)> GetPagedAsync(
         Guid? areaId,
         bool? isActive,

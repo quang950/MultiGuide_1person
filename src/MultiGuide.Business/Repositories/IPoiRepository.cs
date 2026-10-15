@@ -6,6 +6,8 @@ public interface IPoiRepository
 {
     Task<Poi?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
+    Task<Poi?> GetWithTranslationsByIdAsync(Guid id, CancellationToken cancellationToken = default);
+
     Task<(IReadOnlyList<Poi> Items, int TotalCount)> GetPagedAsync(
         Guid? areaId,
         bool? isActive,

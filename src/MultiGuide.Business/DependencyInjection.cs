@@ -14,6 +14,7 @@ public static class DependencyInjection
         services.AddScoped<IPassService, PassService>();
         services.AddScoped<IGeoService, GeoService>();
         services.AddScoped<IPoiService, PoiService>();
+        services.AddScoped<IContentService, ContentService>();
         return services;
     }
 }

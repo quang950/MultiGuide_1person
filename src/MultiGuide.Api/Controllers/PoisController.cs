@@ -15,10 +15,12 @@ namespace MultiGuide.Api.Controllers;
 public class PoisController : BaseApiController
 {
     private readonly IPoiService _poiService;
+    private readonly IContentService _contentService;
 
-    public PoisController(IPoiService poiService)
+    public PoisController(IPoiService poiService, IContentService contentService)
     {
         _poiService = poiService;
+        _contentService = contentService;
     }
 
     /// <summary>
@@ -89,5 +91,38 @@ public class PoisController : BaseApiController
             cancellationToken);
 
         return Ok(pois);
+    }
+
+    /// <summary>
+    /// Lấy chi tiết thông tin thuyết minh của một POI theo ngôn ngữ yêu cầu (US-06, US-07).
+    /// </summary>
+    /// <param name="id">Id của POI</param>
+    /// <param name="lang">Mã ngôn ngữ mong muốn (fallback: lang -> en -> vi)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Chi tiết POI kèm Signed URL audio phát trong 1 giờ</returns>
+    [HttpGet("{id:guid}")]
+    [RequireAccessPass]
+    [ProducesResponseType(typeof(PoiDetailResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PoiDetailResponse>> GetById(
+        [FromRoute] Guid id,
+        [FromQuery] string? lang,
+        CancellationToken cancellationToken)
+    {
+        var passContext = HttpContext.GetPassContext();
+        if (passContext == null)
+        {
+            throw new UnauthorizedException(ErrorCodes.PassMissing, "Yêu cầu AccessPass hợp lệ.");
+        }
+
+        var detail = await _contentService.GetPoiDetailAsync(
+            id,
+            passContext.AreaId,
+            lang,
+            cancellationToken);
+
+        return Ok(detail);
     }
 }
