@@ -22,6 +22,7 @@ public class PoiRepository : IPoiRepository
     public async Task<Poi?> GetWithTranslationsByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await _context.Pois
+            .AsNoTracking()
             .Include(p => p.Translations)
             .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }

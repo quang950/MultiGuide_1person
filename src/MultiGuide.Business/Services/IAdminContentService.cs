@@ -29,4 +29,9 @@ public interface IAdminContentService
         long contentLength,
         string? contentType,
         CancellationToken cancellationToken = default);
+
+    Task<AiSummaryResponse> GeneratePoiSummaryAsync(
+        Guid poiId,
+        string? language = "vi",
+        CancellationToken cancellationToken = default);
 }

@@ -2,20 +2,15 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH 100% DỰ ÁN NGÀY 4 & TOÀN BỘ ĐỒ ÁN)
-- **Đang làm:** Dự án đã hoàn thành 100% toàn bộ 4 ngày theo kế hoạch!
-- **Vừa xong:** Hoàn thành trọn vẹn Cụm 3 (T-4.8, T-4.9, T-4.10):
-  - **T-4.8 — Rà soát PRD ↔ Code & Hoàn thiện README, Swagger:**
-    + Rà soát đồng bộ 100% giữa PRD v1.2 và source code thực tế.
-    + Hoàn thiện tài liệu tổng quan [README.md](file:///d:/MultiGuide_1person/README.md) chuyên sâu: Giới thiệu hệ thống, kiến trúc 3-Tier Clean Architecture, ma trận API đầy đủ, bảng mã lỗi chuẩn RFC 7807 ProblemDetails, hướng dẫn chạy Local/Docker, CI/CD và kết quả đo tải k6.
-  - **T-4.9 — Kịch bản Demo 5 phút & Checklist chuẩn bị:**
-    + Xây dựng tài liệu [docs/DEMO_SCRIPT.md](file:///d:/MultiGuide_1person/docs/DEMO_SCRIPT.md) với Checklist 30 phút kiểm tra tính sẵn sàng (đánh thức Render, kiểm tra Supabase, mở Web Client Vercel).
-    + Kịch bản thuyết trình demo 5 phút phân đoạn rõ ràng: Quét QR -> Mua vé -> Nhận token -> Kéo thả GPS vào vùng kích hoạt (Marker phát sáng hào quang xanh ngọc bích & sóng radar lan tỏa) -> Nghe audio thuyết minh Signed URL -> Tự động ghi Play-Log.
-    + Ma trận xử lý rủi ro khi demo trực tiếp (mạng lag, cold-start).
-  - **T-4.10 — Hồ sơ sơ đồ báo cáo đồ án:**
-    + Xây dựng tài liệu [docs/REPORT_DIAGRAMS.md](file:///d:/MultiGuide_1person/docs/REPORT_DIAGRAMS.md) gồm 5 sơ đồ Mermaid chuẩn chỉnh: Sơ đồ Kiến trúc Thành phần 3 lớp (Component Diagram), Sơ đồ Use Case (Khách tham quan & Quản trị viên), Sơ đồ Thực thể Quan hệ (ERD 7 bảng), Sơ đồ Tuần tự Luồng Nghiệp vụ Cốt lõi (Sequence Diagram), Sơ đồ Quy trình Tích hợp và Triển khai Liên tục (CI/CD Pipeline).
-  - Toàn bộ test suite đạt **297/297 XANH LÁ** (146 Business, 133 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** (vượt xa chỉ tiêu 60%); `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Người dùng rà soát lần cuối và tự chạy `git push origin main` lên GitHub.
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH TASK T-4.4: TÍCH HỢP GEMINI AI)
+- **Đang làm:** Chuẩn bị Task T-4.2 (Testcontainers Postgres).
+- **Vừa xong:** Hoàn thành trọn vẹn **Task T-4.4 — Tích hợp Google Gemini AI sinh tóm tắt lịch sử POI (US-19)**:
+  - **Tầng Business:** Định nghĩa interface `IAiService`, DTOs `AiSummaryResponse`, `GenerateAiSummaryRequest`, mở rộng `IAdminContentService` và `AdminContentService` với phương thức `GeneratePoiSummaryAsync` (tự động nhận diện POI, Khu vực, ngôn ngữ và gọi dịch vụ AI).
+  - **Tầng Data:** Hiện thực `GeminiAiService` kết nối tới Google AI Studio REST API (`models/gemini-2.5-flash:generateContent`), prompt kỹ thuật chuẩn hướng dẫn viên thuyết minh, xử lý mã hóa Unicode tiếng Việt (`JavaScriptEncoder.UnsafeRelaxedJsonEscaping`), cơ chế fallback bản thảo mô phỏng an toàn khi chưa cấu hình key. Đăng ký DI thông qua `AddHttpClient<IAiService, GeminiAiService>()`.
+  - **Tầng Presentation (Api):** Bổ sung endpoint `POST /admin/pois/{id}/ai-summary` và alias `POST /admin/pois/{id}/generate-story` trong `AdminPoisController`, bảo vệ nghiêm ngặt bằng policy `role = admin`.
+  - **Kiểm thử tự động:** Thêm 5 unit tests trong `AdminContentServiceAiSummaryTests`, 5 unit tests trong `GeminiAiServiceTests`, và 4 integration tests trong `AdminPoisControllerTests`.
+  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **311/311 XANH LÁ (100%)** (151 Business, 142 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** Line Coverage và **98.96%** Branch Coverage; `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
+- **Bước kế tiếp:** Triển khai Task T-4.2 — Integration test với Testcontainers Postgres (kiểm thử luồng mua vé + nearby trên container PostgreSQL thật).
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
 
@@ -25,9 +20,11 @@
 - Tên khu + 6 POI: Văn Miếu - Quốc Tử Giám (`van-mieu`); 6 POI: Cổng Văn Miếu, Khuê Văn Các, Giếng Thiên Quang & Vườn Bia Tiến Sĩ, Cổng Đại Thành & Sân Đại Bái, Điện Đại Thành, Nhà Thái Học
 - Cách xác thực JWT Supabase (JWKS / JWT secret): ECC P-256 (JWKS qua `Supabase__JwtIssuer`) kèm hỗ trợ HS256 (`Supabase__JwtSecret`)
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
+- Model Gemini AI: `gemini-2.5-flash` (Google AI Studio Free Tier)
 
 ## Lịch sử
-- 15/10 — Hoàn thành Cụm 3 (T-4.8, T-4.9, T-4.10) & HOÀN THÀNH 100% NGÀY 4: Biên soạn tài liệu `README.md` chuyên sâu, kịch bản thuyết trình demo 5 phút `docs/DEMO_SCRIPT.md`, bộ 5 sơ đồ UML/Mermaid báo cáo đồ án `docs/REPORT_DIAGRAMS.md`; tick hoàn thành toàn bộ checklist Ngày 4 trong `docs/TASKS.md`.
+- 15/10 — Hoàn thành Task T-4.4 (US-19): Triển khai `IAiService` trong Business, `GeminiAiService` trong Data gọi Google AI Studio REST API, endpoint `POST /admin/pois/{id}/ai-summary` trong `AdminPoisController` (phân quyền admin); bổ sung 14 bài test nâng tổng test suite lên 311/311 tests xanh lá (100%).
+- 15/10 — Hoàn thành Cụm 3 (T-4.8, T-4.9, T-4.10): Biên soạn tài liệu `README.md` chuyên sâu, kịch bản thuyết trình demo 5 phút `docs/DEMO_SCRIPT.md`, bộ 5 sơ đồ UML/Mermaid báo cáo đồ án `docs/REPORT_DIAGRAMS.md`.
 - 15/10 — Hoàn thành T-4.6 & T-4.7: Hoàn thiện pipeline CD `cd.yml` (migration bundle Session Pooler, deploy hook, smoke test `/health/ready` 3 phút); xây dựng kịch bản k6 `load_test_k6.js` & runner `run_load_test.py`, đo tải thành công trên Render đạt 12.96 req/s, 0% lỗi, xuất báo cáo `docs/LOAD_TEST_RESULTS.md`.
 - 15/10 — Hoàn thành T-4.3 & T-4.5: Xây dựng Web Test Client Leaflet 1 trang responsive trong `client/` kèm cấu hình `vercel.json`; cấu hình CORS trên Backend `MultiGuide.Api` hỗ trợ localhost & `*.vercel.app`, thêm bộ integration test `CorsTests` (7 bài); toàn bộ 297/297 test xanh lá.
 - 15/10 — Hoàn thành T-4.1: Bổ sung các unit test còn thiếu (`PoiServiceTests`, `SystemClockTests`, `DependencyInjectionTests`), nâng test suite lên 290/290 test xanh; xây dựng `scripts/check_coverage.py` và tích hợp rào chắn CI kiểm tra ngưỡng tối thiểu 60% (độ phủ thực tế đạt 96.41% Line Coverage và 98.96% Branch Coverage).

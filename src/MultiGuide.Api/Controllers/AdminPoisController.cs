@@ -104,4 +104,26 @@ public class AdminPoisController : AdminBaseController
         await _adminContentService.DeletePoiAsync(id, cancellationToken);
         return NoContent();
     }
+
+    /// <summary>
+    /// Sinh đoạn văn tóm tắt lịch sử / câu chuyện thuyết minh cho POI bằng Gemini AI (US-19).
+    /// </summary>
+    /// <param name="id">Mã POI</param>
+    /// <param name="request">Yêu cầu (chứa language, mặc định vi)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpPost("{id:guid}/ai-summary")]
+    [HttpPost("{id:guid}/generate-story")]
+    [ProducesResponseType(typeof(AiSummaryResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AiSummaryResponse>> GenerateAiSummary(
+        Guid id,
+        [FromBody] GenerateAiSummaryRequest? request = null,
+        CancellationToken cancellationToken = default)
+    {
+        var language = request?.Language ?? "vi";
+        var result = await _adminContentService.GeneratePoiSummaryAsync(id, language, cancellationToken);
+        return Ok(result);
+    }
 }

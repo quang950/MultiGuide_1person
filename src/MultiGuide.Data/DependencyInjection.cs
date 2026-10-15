@@ -73,6 +73,7 @@ public static class DependencyInjection
         });
 
         services.AddHttpClient<IFileStorage, SupabaseFileStorage>();
+        services.AddHttpClient<IAiService, GeminiAiService>();
 
         return services;
     }

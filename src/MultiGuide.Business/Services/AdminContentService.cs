@@ -23,6 +23,7 @@ public class AdminContentService : IAdminContentService
     private readonly ILanguageRepository _languageRepository;
     private readonly IFileStorage _fileStorage;
     private readonly IQrCodeGenerator _qrCodeGenerator;
+    private readonly IAiService? _aiService;
 
     public AdminContentService(
         IAreaRepository areaRepository,
@@ -30,7 +31,8 @@ public class AdminContentService : IAdminContentService
         ITranslationRepository translationRepository,
         ILanguageRepository languageRepository,
         IFileStorage fileStorage,
-        IQrCodeGenerator qrCodeGenerator)
+        IQrCodeGenerator qrCodeGenerator,
+        IAiService? aiService = null)
     {
         _areaRepository = areaRepository;
         _poiRepository = poiRepository;
@@ -38,6 +40,7 @@ public class AdminContentService : IAdminContentService
         _languageRepository = languageRepository;
         _fileStorage = fileStorage;
         _qrCodeGenerator = qrCodeGenerator;
+        _aiService = aiService;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -575,6 +578,53 @@ public class AdminContentService : IAdminContentService
         {
             throw new ValidationException(ErrorCodes.ValidationError, "Thời hạn hiệu lực vé (pass_ttl_hours) phải lớn hơn 0.");
         }
+    }
+
+    public async Task<AiSummaryResponse> GeneratePoiSummaryAsync(
+        Guid poiId,
+        string? language = "vi",
+        CancellationToken cancellationToken = default)
+    {
+        if (_aiService == null)
+        {
+            throw new InvalidOperationException("Dịch vụ AI (IAiService) chưa được cấu hình.");
+        }
+
+        var targetLang = string.IsNullOrWhiteSpace(language) ? "vi" : language.Trim().ToLowerInvariant();
+
+        var poi = await _poiRepository.GetWithTranslationsByIdAsync(poiId, cancellationToken);
+        if (poi == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{poiId}'.");
+        }
+
+        var area = await _areaRepository.GetByIdAsync(poi.AreaId, cancellationToken);
+        var areaName = area?.Name ?? "Khu di tích";
+
+        // Ưu tiên tiêu đề bản dịch theo ngôn ngữ đích, hoặc bản dịch đầu tiên nếu có
+        IEnumerable<PoiTranslation> translations = (poi.Translations != null && poi.Translations.Count > 0)
+            ? poi.Translations
+            : (await _translationRepository.GetByPoiIdAsync(poi.Id, cancellationToken) ?? Array.Empty<PoiTranslation>());
+
+        var poiName = translations
+            .FirstOrDefault(t => t.LanguageCode.Equals(targetLang, StringComparison.OrdinalIgnoreCase))?.Title;
+
+        if (string.IsNullOrWhiteSpace(poiName))
+        {
+            poiName = translations.FirstOrDefault()?.Title ?? $"Điểm tham quan {poi.Id.ToString()[..8]}";
+        }
+
+        var summary = await _aiService.GeneratePoiSummaryAsync(poiName, areaName, targetLang, cancellationToken);
+
+        return new AiSummaryResponse
+        {
+            PoiId = poi.Id,
+            PoiName = poiName,
+            AreaName = areaName,
+            Summary = summary,
+            Language = targetLang,
+            Model = "gemini-2.5-flash"
+        };
     }
 
     private static AreaResponse MapToResponse(TourArea area) => new()
