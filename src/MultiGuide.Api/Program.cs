@@ -100,6 +100,41 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowClient", policy =>
+    {
+        var configuredOrigins = builder.Configuration["Cors:AllowedOrigins"]?
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        if (configuredOrigins != null && configuredOrigins.Contains("*"))
+        {
+            policy.AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader();
+        }
+        else
+        {
+            policy.SetIsOriginAllowed(origin =>
+            {
+                if (string.IsNullOrWhiteSpace(origin)) return false;
+                if (Uri.TryCreate(origin, UriKind.Absolute, out var uri))
+                {
+                    // Cho phép localhost mọi cổng (5173, 3000, 5500, 8080...)
+                    if (uri.Host == "localhost" || uri.Host == "127.0.0.1") return true;
+                    // Cho phép mọi domain triển khai trên Vercel (*.vercel.app)
+                    if (uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase)) return true;
+                    // Cho phép các domain cấu hình cụ thể
+                    if (configuredOrigins != null && configuredOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase)) return true;
+                }
+                return false;
+            })
+            .AllowAnyMethod()
+            .AllowAnyHeader();
+        }
+    });
+});
+
 builder.Services.AddSupabaseJwtAuthentication(builder.Configuration);
 builder.Services.AddApiRateLimiting();
 builder.Services.AddBusinessServices();
@@ -109,6 +144,8 @@ var app = builder.Build();
 
 // Use Global Exception Handler middleware early in pipeline
 app.UseExceptionHandler();
+
+app.UseCors("AllowClient");
 
 // Run seeder if enabled via configuration (Seed:Enabled or Seed__Enabled)
 using (var scope = app.Services.CreateScope())

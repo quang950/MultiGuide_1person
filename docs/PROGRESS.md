@@ -2,18 +2,16 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-4.1)
-- **Đang làm:** Sẵn sàng cho Task T-4.2 (hoặc T-4.3 nếu cắt T-4.2 theo kế hoạch Ngày 4).
-- **Vừa xong:** T-4.1 (Coverage Business ≥ 60% và CI fail khi dưới ngưỡng):
-  - Bổ sung các bài Unit Test còn thiếu trong `tests/MultiGuide.Business.Tests`: `PoiServiceTests.cs` (2 tests cho `PoiService.GetNearbyPoisAsync`), `SystemClockTests.cs` (1 test cho `SystemClock.UtcNow`), `DependencyInjectionTests.cs` (1 test cho `AddBusinessServices`), nâng tổng số unit test Business lên 146 bài.
-  - Tạo script `scripts/check_coverage.py` hỗ trợ tổng hợp thông minh đa file Cobertura XML, tính line coverage và branch coverage chuẩn xác cho `MultiGuide.Business`, tự động in log format GitHub Actions và ngắt tiến trình (exit code 1) nếu tỷ lệ bao phủ dưới 60.0%.
-  - Tích hợp bước kiểm tra ngưỡng Code Coverage Business (≥ 60%) vào pipeline GitHub Actions (`.github/workflows/ci.yml`).
-  - Độ phủ tầng Business thực tế đạt **96.41% Line Coverage** (914/948 dòng) và **98.96% Branch Coverage** (95/96 nhánh), vượt xa ngưỡng tối thiểu 60%.
-  - Toàn bộ test suite đạt **290/290 XANH LÁ** (146 Business, 126 Integration, 18 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Task T-4.2 (Integration test Testcontainers Postgres - Cắt nếu trễ) hoặc Task T-4.3 (Web test client Leaflet 1 trang).
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-4.3 & T-4.5)
+- **Đang làm:** Sẵn sàng cho Cụm tiếp theo: DevOps & Đo tải k6 (T-4.6 & T-4.7).
+- **Vừa xong:** T-4.3 & T-4.5 (Web Test Client Leaflet + Cấu hình CORS & Deploy Vercel):
+  - Xây dựng Web Test Client hoàn chỉnh trong thư mục `client/` (`index.html`, `style.css`, `app.js`, `vercel.json`): giao diện Leaflet map tương tác di chuyển tọa độ GPS, quét bán kính nearby POI (20-300m), mua thẻ tham quan mock (50,000 đ), hiển thị tình trạng vé và audio player HTML5 phát thuyết minh đa ngôn ngữ qua Signed URL Supabase Storage, tự động gửi `POST /play-logs`.
+  - Cấu hình chính sách CORS linh hoạt trên Backend `MultiGuide.Api` (`AddCors`, `UseCors` policy `AllowClient`), tự động hỗ trợ các môi trường localhost (mọi cổng) và domain triển khai Vercel (`*.vercel.app`) hoặc cấu hình tùy biến qua biến môi trường `Cors:AllowedOrigins`.
+  - Bổ sung 7 integration tests trong `tests/MultiGuide.Integration.Tests/CorsTests.cs` kiểm tra đầy đủ các origin hợp lệ, preflight request OPTIONS và chặn các origin không được phép.
+  - Toàn bộ test suite đạt **297/297 XANH LÁ** (146 Business, 133 Integration, 18 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
+- **Bước kế tiếp:** Cụm 2: Hoàn thiện `cd.yml` (T-4.6) và Đo tải bằng k6 (T-4.7).
 - **Đang vướng:** không
-- **Lưu ý cho Ngày 4:** Task T-4.1 đã hoàn thành xuất sắc!
-- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln` và `python scripts/check_coverage.py --min-coverage 60.0`
+- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln` hoặc mở file `client/index.html` trên trình duyệt.
  
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
@@ -23,7 +21,9 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 15/10 — Hoàn thành T-4.3 & T-4.5: Xây dựng Web Test Client Leaflet 1 trang responsive trong `client/` kèm cấu hình `vercel.json`; cấu hình CORS trên Backend `MultiGuide.Api` hỗ trợ localhost & `*.vercel.app`, thêm bộ integration test `CorsTests` (7 bài); toàn bộ 297/297 test xanh lá.
 - 15/10 — Hoàn thành T-4.1: Bổ sung các unit test còn thiếu (`PoiServiceTests`, `SystemClockTests`, `DependencyInjectionTests`), nâng test suite lên 290/290 test xanh; xây dựng `scripts/check_coverage.py` và tích hợp rào chắn CI kiểm tra ngưỡng tối thiểu 60% (độ phủ thực tế đạt 96.41% Line Coverage và 98.96% Branch Coverage).
+- 15/10 — Hoàn thành MỐC CUỐI NGÀY 3: Kiểm thử tự động E2E thành công 100% trên Render (`https://multiguide-1person.onrender.com`) luồng khách: `areas` -> `passes` -> `nearby` -> `pois/{id}` -> `passes/current`. Toàn bộ Ngày 3 đã hoàn tất xuất sắc (286/286 tests xanh).
 - 15/10 — Hoàn thành MỐC CUỐI NGÀY 3: Kiểm thử tự động E2E thành công 100% trên Render (`https://multiguide-1person.onrender.com`) luồng khách: `areas` -> `passes` -> `nearby` -> `pois/{id}` -> `passes/current`. Toàn bộ Ngày 3 đã hoàn tất xuất sắc (286/286 tests xanh).
 - 15/10 — Hoàn thành T-3.11 & T-3.12: Triển khai `PassesController` (`GET /passes/current`), `PlayLogsController` (`POST /play-logs`), `PlayLogService`, `PlayLogRepository`; bổ sung 13 unit tests và 12 integration tests; toàn bộ 277/277 tests xanh lá.
 - 15/10 — Hoàn thành T-3.9 & T-3.10: Triển khai `ContentService` (fallback ngôn ngữ lang → en → vi, bắt 404 POI_CONTENT_NOT_FOUND, 403 PASS_AREA_MISMATCH, sinh Signed URL 1 giờ qua IFileStorage), `IPoiRepository.GetWithTranslationsByIdAsync`, endpoint `GET /pois/{id}?lang` bảo vệ bằng `[RequireAccessPass]`; bổ sung 10 unit tests và 9 integration tests; toàn bộ 252/252 tests xanh lá.
