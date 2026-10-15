@@ -167,4 +167,26 @@ public class PassService : IPassService
             ExpiresAt = pass.ExpiresAt
         };
     }
+
+    public async Task<CurrentPassResponse> GetCurrentPassAsync(Guid passId, CancellationToken cancellationToken = default)
+    {
+        var pass = await _accessPassRepository.GetByIdAsync(passId, cancellationToken);
+        if (pass == null)
+        {
+            throw new NotFoundException(ErrorCodes.PassMissing, "Vé tham quan không tồn tại.");
+        }
+
+        var now = _clock.UtcNow;
+        var remainingSeconds = (int)Math.Max(0, (pass.ExpiresAt - now).TotalSeconds);
+
+        return new CurrentPassResponse
+        {
+            Id = pass.Id,
+            AreaId = pass.AreaId,
+            Status = pass.Status.ToString().ToLowerInvariant(),
+            IssuedAt = pass.IssuedAt,
+            ExpiresAt = pass.ExpiresAt,
+            RemainingSeconds = remainingSeconds
+        };
+    }
 }

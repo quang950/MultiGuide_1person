@@ -375,4 +375,46 @@ public class PassServiceTests
         Assert.Equal(areaId, context.AreaId);
         Assert.Equal(_fixedNow.AddHours(12), context.ExpiresAt);
     }
+
+    [Fact]
+    public async Task GetCurrentPassAsync_PassKhongTonTai_NemNotFoundException()
+    {
+        var passId = Guid.NewGuid();
+        _accessPassRepoMock.Setup(r => r.GetByIdAsync(passId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((AccessPass?)null);
+
+        var ex = await Assert.ThrowsAsync<NotFoundException>(() => _service.GetCurrentPassAsync(passId));
+        Assert.Equal(ErrorCodes.PassMissing, ex.Code);
+    }
+
+    [Fact]
+    public async Task GetCurrentPassAsync_PassTonTai_TraVeCurrentPassResponse()
+    {
+        var passId = Guid.NewGuid();
+        var areaId = Guid.NewGuid();
+        var issuedAt = _fixedNow.AddHours(-2);
+        var expiresAt = _fixedNow.AddHours(22);
+
+        var pass = new AccessPass
+        {
+            Id = passId,
+            AreaId = areaId,
+            Status = AccessPassStatus.Active,
+            IssuedAt = issuedAt,
+            ExpiresAt = expiresAt
+        };
+
+        _accessPassRepoMock.Setup(r => r.GetByIdAsync(passId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(pass);
+
+        var res = await _service.GetCurrentPassAsync(passId);
+
+        Assert.NotNull(res);
+        Assert.Equal(passId, res.Id);
+        Assert.Equal(areaId, res.AreaId);
+        Assert.Equal("active", res.Status);
+        Assert.Equal(issuedAt, res.IssuedAt);
+        Assert.Equal(expiresAt, res.ExpiresAt);
+        Assert.Equal(22 * 3600, res.RemainingSeconds);
+    }
 }
