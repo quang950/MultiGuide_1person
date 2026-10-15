@@ -8,8 +8,47 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Install dotnet-ef tool
+        run: |
+          dotnet tool install --global dotnet-ef || dotnet tool update --global dotnet-ef
+
+      - name: Run EF Core Migration Bundle (Session Pooler)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "::warning::DATABASE_URL secret is not set. Skipping migration bundle execution."
+          else
+            echo "Building EF Core migration bundle..."
+            dotnet ef migrations bundle \
+              --project src/MultiGuide.Data \
+              --startup-project src/MultiGuide.Api \
+              --output ./efbundle \
+              --force
+            
+            echo "Applying database migrations to Supabase via Session Pooler..."
+            chmod +x ./efbundle
+            ./efbundle --connection "$DATABASE_URL" --verbose
+            echo "Database migrations applied successfully."
+          fi
+
       - name: Trigger Render Deploy Hook
         run: |
           if [ -z "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" ]; then
@@ -20,47 +59,51 @@ jobs:
           response=$(curl -s -w "\n%{http_code}" -X POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}")
           http_code=$(echo "$response" | tail -n1)
           if [ "$http_code" -ne 200 ] && [ "$http_code" -ne 201 ]; then
-            echo "::error::Deploy hook failed with status $http_code"
+            echo "::error::Render deploy hook failed with HTTP status $http_code"
             exit 1
           fi
-          echo "Deploy hook triggered successfully."
+          echo "Render deploy hook triggered successfully."
 
-      - name: Smoke test /health
+      - name: Smoke test & Readiness probe (/health/ready up to 3 minutes)
         run: |
           SERVICE_URL="${{ secrets.RENDER_SERVICE_URL }}"
           if [ -z "$SERVICE_URL" ]; then
             SERVICE_URL="https://multiguide-1person.onrender.com"
           fi
 
-          echo "Starting smoke test on $SERVICE_URL/health (retrying up to 3 minutes)..."
+          echo "Starting smoke test & readiness check on $SERVICE_URL (timeout: 180s)..."
           start_time=$(date +%s)
           timeout=180
+          ready=false
 
           while true; do
             current_time=$(date +%s)
             elapsed=$((current_time - start_time))
             if [ $elapsed -ge $timeout ]; then
-              echo "::error::Smoke test timed out after ${timeout}s"
+              echo "::error::Readiness probe timed out after ${timeout}s! The service or database is not healthy."
+              echo "::error::ROLLBACK RECOMMENDED: Deploy the previous working commit on Render dashboard if service remains unavailable."
               exit 1
             fi
 
-            http_code=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/health" || true)
+            # Check /health/ready which verifies both API liveness and Database connectivity
+            http_code=$(curl -s -o /tmp/ready_res.json -w "%{http_code}" "$SERVICE_URL/health/ready" || true)
             if [ "$http_code" -eq 200 ]; then
-              echo "Smoke test passed! /health returned 200 OK after ${elapsed}s."
-              break
+              res_body=$(cat /tmp/ready_res.json 2>/dev/null || echo "")
+              if echo "$res_body" | grep -q "ready"; then
+                echo "Readiness check PASSED! /health/ready returned 200 OK after ${elapsed}s."
+                echo "Response: $res_body"
+                ready=true
+                break
+              fi
             fi
 
-            echo "Health check returned status $http_code. Waiting 10s before retry (${elapsed}s elapsed)..."
+            echo "Probe returned status $http_code (${elapsed}s elapsed). Retrying in 10s..."
             sleep 10
           done
 
-      - name: Smoke test /health/ready
-        run: |
-          SERVICE_URL="${{ secrets.RENDER_SERVICE_URL }}"
-          if [ -z "$SERVICE_URL" ]; then
-            SERVICE_URL="https://multiguide-1person.onrender.com"
+          if [ "$ready" = true ]; then
+            echo "Deployment verified successfully. MultiGuide Backend is LIVE and HEALTHY."
+          else
+            echo "::error::Deployment verification failed."
+            exit 1
           fi
-
-          echo "Checking $SERVICE_URL/health/ready..."
-          response=$(curl -s "$SERVICE_URL/health/ready" || true)
-          echo "Readiness response: $response"

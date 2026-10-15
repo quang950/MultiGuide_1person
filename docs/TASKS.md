@@ -56,8 +56,8 @@
 - [x] T-4.3 Web test client Leaflet (1 trang): nhập khu, mua pass, bấm bản đồ giả lập vị trí, hiện POI trong bán kính, nút Nghe
 - [ ] T-4.4 Tích hợp Gemini AI (Google AI Studio Free): `IAiService` + `GeminiAiService` sinh tóm tắt lịch sử POI cho Admin — US-19 **(Cắt)**
 - [x] T-4.5 Deploy test client lên Vercel; cập nhật CORS ở Render
-- [ ] T-4.6 Hoàn thiện `cd.yml`: migration bundle (Session pooler) → deploy hook → smoke test /health/ready tối đa 3 phút → rollback
-- [ ] T-4.7 Đo tải nearby và pois/{id} bằng k6 (server đã thức), ghi kết quả
+- [x] T-4.6 Hoàn thiện `cd.yml`: migration bundle (Session pooler) → deploy hook → smoke test /health/ready tối đa 3 phút → rollback
+- [x] T-4.7 Đo tải nearby và pois/{id} bằng k6 (server đã thức), ghi kết quả
 - [ ] T-4.8 Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example`
 - [ ] T-4.9 Chuẩn bị demo: đánh thức Render, kiểm tra Supabase không bị pause, kịch bản demo 5 phút
 - [ ] T-4.10 Báo cáo: sơ đồ component, use case, ERD, pipeline CI/CD (xuất từ docs)

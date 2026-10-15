@@ -2,16 +2,15 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-4.3 & T-4.5)
-- **Đang làm:** Sẵn sàng cho Cụm tiếp theo: DevOps & Đo tải k6 (T-4.6 & T-4.7).
-- **Vừa xong:** T-4.3 & T-4.5 (Web Test Client Leaflet + Cấu hình CORS & Deploy Vercel):
-  - Xây dựng Web Test Client hoàn chỉnh trong thư mục `client/` (`index.html`, `style.css`, `app.js`, `vercel.json`): giao diện Leaflet map tương tác di chuyển tọa độ GPS, quét bán kính nearby POI (20-300m), mua thẻ tham quan mock (50,000 đ), hiển thị tình trạng vé và audio player HTML5 phát thuyết minh đa ngôn ngữ qua Signed URL Supabase Storage, tự động gửi `POST /play-logs`.
-  - Cấu hình chính sách CORS linh hoạt trên Backend `MultiGuide.Api` (`AddCors`, `UseCors` policy `AllowClient`), tự động hỗ trợ các môi trường localhost (mọi cổng) và domain triển khai Vercel (`*.vercel.app`) hoặc cấu hình tùy biến qua biến môi trường `Cors:AllowedOrigins`.
-  - Bổ sung 7 integration tests trong `tests/MultiGuide.Integration.Tests/CorsTests.cs` kiểm tra đầy đủ các origin hợp lệ, preflight request OPTIONS và chặn các origin không được phép.
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-4.6 & T-4.7)
+- **Đang làm:** Sẵn sàng cho Cụm 3: Hoàn thiện tài liệu, PRD, Swagger, Kịch bản Demo & Báo cáo đồ án (T-4.8, T-4.9, T-4.10).
+- **Vừa xong:** T-4.6 & T-4.7 (Hoàn thiện CD `cd.yml` và Đo tải k6):
+  - T-4.6: Hoàn thiện trọn vẹn pipeline [.github/workflows/cd.yml](file:///d:/MultiGuide_1person/.github/workflows/cd.yml): tạo và thực thi EF Core Migration Bundle qua Session Pooler (`DATABASE_URL`), trigger Render Deploy Hook, và thực hiện smoke test lặp lại kiểm tra tính sẵn sàng chuyên sâu của CSDL qua `/health/ready` trong tối đa 180 giây kèm cảnh báo rollback tự động khi thất bại.
+  - T-4.7: Xây dựng kịch bản kiểm thử tải [scripts/load_test_k6.js](file:///d:/MultiGuide_1person/scripts/load_test_k6.js) và runner [scripts/run_load_test.py](file:///d:/MultiGuide_1person/scripts/run_load_test.py) đo tải đồng thời trên 2 endpoint cốt lõi (`GET /pois/nearby` và `GET /pois/{id}`); thực thi đo tải thực tế tới server Render đạt **12.96 req/s**, **Error Rate 0.00%**, độ trễ p50 đạt **288.31ms** và p95 đạt **790.94ms** (trong đó `nearby` p95 đạt 403.3ms); xuất tài liệu báo cáo hiệu năng đầy đủ tại [docs/LOAD_TEST_RESULTS.md](file:///d:/MultiGuide_1person/docs/LOAD_TEST_RESULTS.md).
   - Toàn bộ test suite đạt **297/297 XANH LÁ** (146 Business, 133 Integration, 18 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Cụm 2: Hoàn thiện `cd.yml` (T-4.6) và Đo tải bằng k6 (T-4.7).
+- **Bước kế tiếp:** Cụm 3: Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example` (T-4.8), Kịch bản Demo 5 phút (T-4.9), Báo cáo & sơ đồ đồ án (T-4.10).
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln` hoặc mở file `client/index.html` trên trình duyệt.
+- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln` và `python scripts/run_load_test.py`
  
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
@@ -21,6 +20,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 15/10 — Hoàn thành T-4.6 & T-4.7: Hoàn thiện pipeline CD `cd.yml` (migration bundle Session Pooler, deploy hook, smoke test `/health/ready` 3 phút); xây dựng kịch bản k6 `load_test_k6.js` & runner `run_load_test.py`, đo tải thành công trên Render đạt 12.96 req/s, 0% lỗi, xuất báo cáo `docs/LOAD_TEST_RESULTS.md`.
 - 15/10 — Hoàn thành T-4.3 & T-4.5: Xây dựng Web Test Client Leaflet 1 trang responsive trong `client/` kèm cấu hình `vercel.json`; cấu hình CORS trên Backend `MultiGuide.Api` hỗ trợ localhost & `*.vercel.app`, thêm bộ integration test `CorsTests` (7 bài); toàn bộ 297/297 test xanh lá.
 - 15/10 — Hoàn thành T-4.1: Bổ sung các unit test còn thiếu (`PoiServiceTests`, `SystemClockTests`, `DependencyInjectionTests`), nâng test suite lên 290/290 test xanh; xây dựng `scripts/check_coverage.py` và tích hợp rào chắn CI kiểm tra ngưỡng tối thiểu 60% (độ phủ thực tế đạt 96.41% Line Coverage và 98.96% Branch Coverage).
 - 15/10 — Hoàn thành MỐC CUỐI NGÀY 3: Kiểm thử tự động E2E thành công 100% trên Render (`https://multiguide-1person.onrender.com`) luồng khách: `areas` -> `passes` -> `nearby` -> `pois/{id}` -> `passes/current`. Toàn bộ Ngày 3 đã hoàn tất xuất sắc (286/286 tests xanh).
