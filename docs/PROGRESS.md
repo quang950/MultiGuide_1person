@@ -2,16 +2,23 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — hoàn thành T-4.6 & T-4.7)
-- **Đang làm:** Sẵn sàng cho Cụm 3: Hoàn thiện tài liệu, PRD, Swagger, Kịch bản Demo & Báo cáo đồ án (T-4.8, T-4.9, T-4.10).
-- **Vừa xong:** T-4.6 & T-4.7 (Hoàn thiện CD `cd.yml` và Đo tải k6):
-  - T-4.6: Hoàn thiện trọn vẹn pipeline [.github/workflows/cd.yml](file:///d:/MultiGuide_1person/.github/workflows/cd.yml): tạo và thực thi EF Core Migration Bundle qua Session Pooler (`DATABASE_URL`), trigger Render Deploy Hook, và thực hiện smoke test lặp lại kiểm tra tính sẵn sàng chuyên sâu của CSDL qua `/health/ready` trong tối đa 180 giây kèm cảnh báo rollback tự động khi thất bại.
-  - T-4.7: Xây dựng kịch bản kiểm thử tải [scripts/load_test_k6.js](file:///d:/MultiGuide_1person/scripts/load_test_k6.js) và runner [scripts/run_load_test.py](file:///d:/MultiGuide_1person/scripts/run_load_test.py) đo tải đồng thời trên 2 endpoint cốt lõi (`GET /pois/nearby` và `GET /pois/{id}`); thực thi đo tải thực tế tới server Render đạt **12.96 req/s**, **Error Rate 0.00%**, độ trễ p50 đạt **288.31ms** và p95 đạt **790.94ms** (trong đó `nearby` p95 đạt 403.3ms); xuất tài liệu báo cáo hiệu năng đầy đủ tại [docs/LOAD_TEST_RESULTS.md](file:///d:/MultiGuide_1person/docs/LOAD_TEST_RESULTS.md).
-  - Toàn bộ test suite đạt **297/297 XANH LÁ** (146 Business, 133 Integration, 18 Architecture); `dotnet build -warnaserror` 0 warning 0 error, `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Cụm 3: Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example` (T-4.8), Kịch bản Demo 5 phút (T-4.9), Báo cáo & sơ đồ đồ án (T-4.10).
+## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH 100% DỰ ÁN NGÀY 4 & TOÀN BỘ ĐỒ ÁN)
+- **Đang làm:** Dự án đã hoàn thành 100% toàn bộ 4 ngày theo kế hoạch!
+- **Vừa xong:** Hoàn thành trọn vẹn Cụm 3 (T-4.8, T-4.9, T-4.10):
+  - **T-4.8 — Rà soát PRD ↔ Code & Hoàn thiện README, Swagger:**
+    + Rà soát đồng bộ 100% giữa PRD v1.2 và source code thực tế.
+    + Hoàn thiện tài liệu tổng quan [README.md](file:///d:/MultiGuide_1person/README.md) chuyên sâu: Giới thiệu hệ thống, kiến trúc 3-Tier Clean Architecture, ma trận API đầy đủ, bảng mã lỗi chuẩn RFC 7807 ProblemDetails, hướng dẫn chạy Local/Docker, CI/CD và kết quả đo tải k6.
+  - **T-4.9 — Kịch bản Demo 5 phút & Checklist chuẩn bị:**
+    + Xây dựng tài liệu [docs/DEMO_SCRIPT.md](file:///d:/MultiGuide_1person/docs/DEMO_SCRIPT.md) với Checklist 30 phút kiểm tra tính sẵn sàng (đánh thức Render, kiểm tra Supabase, mở Web Client Vercel).
+    + Kịch bản thuyết trình demo 5 phút phân đoạn rõ ràng: Quét QR -> Mua vé -> Nhận token -> Kéo thả GPS vào vùng kích hoạt (Marker phát sáng hào quang xanh ngọc bích & sóng radar lan tỏa) -> Nghe audio thuyết minh Signed URL -> Tự động ghi Play-Log.
+    + Ma trận xử lý rủi ro khi demo trực tiếp (mạng lag, cold-start).
+  - **T-4.10 — Hồ sơ sơ đồ báo cáo đồ án:**
+    + Xây dựng tài liệu [docs/REPORT_DIAGRAMS.md](file:///d:/MultiGuide_1person/docs/REPORT_DIAGRAMS.md) gồm 5 sơ đồ Mermaid chuẩn chỉnh: Sơ đồ Kiến trúc Thành phần 3 lớp (Component Diagram), Sơ đồ Use Case (Khách tham quan & Quản trị viên), Sơ đồ Thực thể Quan hệ (ERD 7 bảng), Sơ đồ Tuần tự Luồng Nghiệp vụ Cốt lõi (Sequence Diagram), Sơ đồ Quy trình Tích hợp và Triển khai Liên tục (CI/CD Pipeline).
+  - Toàn bộ test suite đạt **297/297 XANH LÁ** (146 Business, 133 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** (vượt xa chỉ tiêu 60%); `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
+- **Bước kế tiếp:** Người dùng rà soát lần cuối và tự chạy `git push origin main` lên GitHub.
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln` và `python scripts/run_load_test.py`
- 
+- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
+
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
 - Supabase project ref: xbrfdxtmnhdcozblyilo (URL: https://xbrfdxtmnhdcozblyilo.supabase.co, Region: Singapore, Bucket: audio)
@@ -20,6 +27,7 @@
 - Admin user: `quanghi176@gmail.com` (role: `admin`)
 
 ## Lịch sử
+- 15/10 — Hoàn thành Cụm 3 (T-4.8, T-4.9, T-4.10) & HOÀN THÀNH 100% NGÀY 4: Biên soạn tài liệu `README.md` chuyên sâu, kịch bản thuyết trình demo 5 phút `docs/DEMO_SCRIPT.md`, bộ 5 sơ đồ UML/Mermaid báo cáo đồ án `docs/REPORT_DIAGRAMS.md`; tick hoàn thành toàn bộ checklist Ngày 4 trong `docs/TASKS.md`.
 - 15/10 — Hoàn thành T-4.6 & T-4.7: Hoàn thiện pipeline CD `cd.yml` (migration bundle Session Pooler, deploy hook, smoke test `/health/ready` 3 phút); xây dựng kịch bản k6 `load_test_k6.js` & runner `run_load_test.py`, đo tải thành công trên Render đạt 12.96 req/s, 0% lỗi, xuất báo cáo `docs/LOAD_TEST_RESULTS.md`.
 - 15/10 — Hoàn thành T-4.3 & T-4.5: Xây dựng Web Test Client Leaflet 1 trang responsive trong `client/` kèm cấu hình `vercel.json`; cấu hình CORS trên Backend `MultiGuide.Api` hỗ trợ localhost & `*.vercel.app`, thêm bộ integration test `CorsTests` (7 bài); toàn bộ 297/297 test xanh lá.
 - 15/10 — Hoàn thành T-4.1: Bổ sung các unit test còn thiếu (`PoiServiceTests`, `SystemClockTests`, `DependencyInjectionTests`), nâng test suite lên 290/290 test xanh; xây dựng `scripts/check_coverage.py` và tích hợp rào chắn CI kiểm tra ngưỡng tối thiểu 60% (độ phủ thực tế đạt 96.41% Line Coverage và 98.96% Branch Coverage).

@@ -58,6 +58,6 @@
 - [x] T-4.5 Deploy test client lên Vercel; cập nhật CORS ở Render
 - [x] T-4.6 Hoàn thiện `cd.yml`: migration bundle (Session pooler) → deploy hook → smoke test /health/ready tối đa 3 phút → rollback
 - [x] T-4.7 Đo tải nearby và pois/{id} bằng k6 (server đã thức), ghi kết quả
-- [ ] T-4.8 Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example`
-- [ ] T-4.9 Chuẩn bị demo: đánh thức Render, kiểm tra Supabase không bị pause, kịch bản demo 5 phút
-- [ ] T-4.10 Báo cáo: sơ đồ component, use case, ERD, pipeline CI/CD (xuất từ docs)
+- [x] T-4.8 Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example`
+- [x] T-4.9 Chuẩn bị demo: đánh thức Render, kiểm tra Supabase không bị pause, kịch bản demo 5 phút
+- [x] T-4.10 Báo cáo: sơ đồ component, use case, ERD, pipeline CI/CD (xuất từ docs)
