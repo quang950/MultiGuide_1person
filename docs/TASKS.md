@@ -48,7 +48,7 @@
 - [x] T-3.12 `GET /passes/current` — US-04
 - [x] T-3.13 `GET /admin/areas/{id}/qr` (PNG, URL `{PUBLIC_WEB_URL}/a/{code}`) — US-14
 - [x] T-3.14 Kiểm tra: không có chỗ nào log/ lưu lat, lng, token
-- [ ] **Mốc cuối ngày 3:** gọi tuần tự được: areas → passes → nearby → pois/{id} trên Render
+- [x] **Mốc cuối ngày 3:** gọi tuần tự được: areas → passes → nearby → pois/{id} trên Render
 
 ## Ngày 4 — Test, test client, hoàn thiện
 - [ ] T-4.1 Coverage Business ≥ 60% (bổ sung unit test còn thiếu); CI fail khi dưới ngưỡng
