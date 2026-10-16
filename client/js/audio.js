@@ -1,0 +1,632 @@
+/**
+ * MultiGuide - Audio Engine & Media Session API (Cụm 4 - Giai đoạn 5)
+ * FE-5.2: Trình phát âm thanh di sản kết nối Signed URL Supabase từ Backend
+ * FE-5.3: Media Session API (Lock screen controls & artwork)
+ * FE-5.4: Play-Log tự động gửi về Backend khi kết thúc nghe
+ */
+import { store } from './state.js';
+import { apiService } from './api.js';
+
+// Dữ liệu nội dung thuyết minh di sản 3 thứ tiếng (Việt, Anh, Nhật) cho 6 POI Thần đạo
+export const POI_STORIES = {
+  1: {
+    order: 1,
+    vi: {
+      title: 'Cổng Văn Miếu',
+      subtitle: 'Điểm 01/06 · Cửa ngõ thánh tích nghìn năm',
+      badge: 'CỬA THẦN ĐẠO',
+      heading: 'Cổng Văn Miếu — Khởi Đầu Trục Thần Đạo',
+      paragraph: 'Được dựng vào năm 1070 dưới triều vua Lý Thánh Tông, Cổng Văn Miếu là cổng tam quan đồ sộ mở đầu cho quần thể di tích. Phía trước cổng là hai tấm Bia Hạ Mã uy nghiêm nhắc nhở bất kỳ ai, từ bậc vương giả đến thứ dân, đều phải xuống ngựa ngả mũ để kính cẩn trước đạo học và tiền nhân hiền đức.',
+      quote: '"Hạ mã kính hiền — Bậc vương giả cũng phải nghiêng mình trước đạo học."',
+      subtext: 'Hai cột trụ hoa biểu sừng sững tạc hình nghê chầu, biểu trưng cho sự ngay thẳng và công bằng của tri thức quốc gia.',
+      duration: '3:45',
+      durationSec: 225
+    },
+    en: {
+      title: 'Van Mieu Gate',
+      subtitle: '01 of 06 · The Sacred Threshold',
+      badge: 'SACRED ENTRANCE',
+      heading: 'Van Mieu Gate — Gateway to the Sacred Axis',
+      paragraph: 'Built in 1070 under Emperor Ly Thanh Tong, the imposing three-arched Great Gate marks the start of the Sacred Axis. Flanking the entrance are the ancient Dismounting Stone Stelae (Hạ Mã), strictly requiring all visitors—even royal princes and high mandarins—to dismount from their horses to pay deep homage to Confucian masters and scholars.',
+      quote: '"Before knowledge and virtue, kings and commoners alike bow their heads."',
+      subtext: 'Twin ceremonial pillars crowned with mythical lion-dogs guard the courtyard, representing supreme integrity and justice.',
+      duration: '3:45',
+      durationSec: 225
+    },
+    ja: {
+      title: '文廟門 (大中門)',
+      subtitle: '01 of 06 · 千年の聖域への門出',
+      badge: '神道入口',
+      heading: '文廟門 — 神道軸の始まり',
+      paragraph: '1070年に李聖宗によって建立された荘厳な三門で、文廟・国子監の神道軸の起点となります。門前には「下馬碑」が建てられ、皇族や高官であっても馬から降りて儒学の先師たちに敬意を表すことが義務付けられていました。',
+      quote: '「学問と徳の前には、身分の尊卑なく誰もが敬意を払う。」',
+      subtext: '一対の華表柱の上には神獣が座し、真理の探究と学問の神聖さを象徴しています。',
+      duration: '3:45',
+      durationSec: 225
+    }
+  },
+  2: {
+    order: 2,
+    vi: {
+      title: 'Cổng Đại Trung',
+      subtitle: 'Điểm 02/06 · Đạo Trung Dung của Nho học',
+      badge: 'KHÔNG GIAN DI SẢN',
+      heading: 'Cổng Đại Trung — Vẻ Đẹp Bình Yên Giữa Lòng Thủ Đô',
+      paragraph: 'Cổng Đại Trung nằm ở cuối khu nhập đạo thứ hai, ẩn mình dưới bóng mát của những hàng muỗm cổ thụ trăm năm tuổi. Tên cổng mang hàm ý sâu xa về tư tưởng "Trung Dung" — giữ gìn sự công bằng, chính trực và hài hòa trong đời sống cũng như trên con đường tầm sư học đạo.',
+      quote: '"Trung dung vi đức — Lấy sự ngay thẳng, chuẩn mực làm gốc rễ tu thân."',
+      subtext: 'Hai bên cổng mở ra hai cửa nhỏ Thành Đức và Đạt Tài, tượng trưng cho sự vẹn toàn cả Tài lẫn Đức của sĩ tử xưa.',
+      duration: '4:10',
+      durationSec: 250
+    },
+    en: {
+      title: 'Great Middle Gate',
+      subtitle: '02 of 06 · The Doctrine of the Golden Mean',
+      badge: 'HERITAGE COURTYARD',
+      heading: 'Great Middle Gate — Serenity and Virtue',
+      paragraph: 'Nestled beneath the shade of centenarian mango-plum trees, the Great Middle Gate embodies the core Confucian philosophy of the "Golden Mean"—advocating moderation, balance, and unwavering moral integrity along the pursuit of wisdom.',
+      quote: '"Virtue lies in harmony; knowledge flourishes in moral righteousness."',
+      subtext: 'Flanked by two side gates—Attaining Virtue and Developing Talent—signifying the twin pillars of holistic education.',
+      duration: '4:10',
+      durationSec: 250
+    },
+    ja: {
+      title: '大中門',
+      subtitle: '02 of 06 · 中庸の徳と緑陰',
+      badge: '歴史空間',
+      heading: '大中門 — 儒学の中庸思想を体現する門',
+      paragraph: '樹齢数百年の古木に囲まれた静寂な空間に佇む大中門は、儒教の根本理念である「中庸」（過不足なく調和を保つこと）を象徴しています。左右には「成徳」「達材」という二つの小門があり、徳と才能を兼ね備えた人物の育成を願って名付けられました。',
+      quote: '「中庸の徳、それ至れるかな — 調和と節度こそ真の学びの礎。」',
+      subtext: '静寂な緑陰の小道は、訪れる者の心を落ち着かせ、次の神聖な空間へと誘います。',
+      duration: '4:10',
+      durationSec: 250
+    }
+  },
+  3: {
+    order: 3,
+    vi: {
+      title: 'Khuê Văn Các',
+      subtitle: 'Điểm 03/06 · Gác ngắm sao Khuê tỏa sáng',
+      badge: 'BIỂU TƯỢNG HÀ NỘI',
+      heading: 'Khuê Văn Các — Tinh Hoa Trí Tuệ Thăng Long',
+      paragraph: 'Được xây dựng vào năm 1805 dưới triều vua Gia Long, Khuê Văn Các (Gác sao Khuê) là biểu tượng văn hóa tiêu biểu của thủ đô Hà Nội. Công trình mang kiến trúc độc đáo với tầng trên là lầu gỗ vuông vức sơn son thếp vàng, bốn mặt trổ bốn cửa tròn lớn tượng trưng cho bầu trời và ánh sáng lấp lánh của vì sao chủ quản sự học, soi bóng xuống mặt giếng Thiên Quang vuông vức.',
+      quote: '"Khuê tinh thiên lãng nhân văn hữu — Sao Khuê soi sáng cho nền văn trị thái bình."',
+      subtext: 'Nơi đây từng là nơi hội tụ bình duyệt những áng văn chương tuyệt tác của các sĩ tử đỗ đạt thời phong kiến trước khi vào điện yết kiến hoàng đế.',
+      duration: '4:36',
+      durationSec: 276
+    },
+    en: {
+      title: 'Khuê Văn Pavilion',
+      subtitle: '03 of 06 · The poetry of the stars',
+      badge: 'HANOI ICON',
+      heading: 'Khuê Văn Pavilion — Symbol of Thang Long Wisdom',
+      paragraph: 'Erected in 1805 during the Nguyen Dynasty, Khue Van Pavilion stands as the timeless cultural insignia of Hanoi Capital. Its upper wooden chamber features four radiant circular windows representing the shining star of literature, casting its reflection onto the square Thien Quang Well to mirror the ancient cosmic harmony of round heaven and square earth.',
+      quote: '"When the literature star shines bright, peace and scholarly wisdom flourish."',
+      subtext: 'Poets and imperial laureates once gathered here to critique masterwork verses before entering the imperial hall.',
+      duration: '4:36',
+      durationSec: 276
+    },
+    ja: {
+      title: '奎文閣 (けいぶんかく)',
+      subtitle: '03 of 06 · 文学と星の詩',
+      badge: 'ハノイの象徴',
+      heading: '奎文閣 — 千年の都を照らす学問の光',
+      paragraph: '1805年に建てられた木造二層の美しい楼閣で、ハノイ市の公式文化シンボルです。上層部の四方には太陽の光線を模した円形の窓が穿たれており、学問を司る奎星（けいせい）の輝きを表現しています。四角い天光井の池にその姿を映し、天地の調和を象徴しています。',
+      quote: '「奎星天に輝き、人文大いに興る — 学問の光が世を照らす。」',
+      subtext: 'かつて科挙合格者たちが皇帝へ拝謁する前に、ここで詩文の批評会を開いたと伝えられています。',
+      duration: '4:36',
+      durationSec: 276
+    }
+  },
+  4: {
+    order: 4,
+    vi: {
+      title: 'Giếng Thiên Quang & Bia Tiến Sĩ',
+      subtitle: 'Điểm 04/06 · Ánh sáng soi tỏ tâm hồn sĩ tử',
+      badge: 'DI SẢN THẾ GIỚI UNESCO',
+      heading: 'Giếng Thiên Quang — Tinh Khôi Đất Trời',
+      paragraph: 'Giếng Thiên Quang mang ý nghĩa "Ánh sáng bầu trời". Hai bên hồ là khu vườn đặt 82 tấm Bia Tiến Sĩ dựng trên lưng rùa đá — Di sản Tư liệu Thế giới được UNESCO vinh danh. Nơi đây khắc ghi tên tuổi 1.304 vị đỗ đại khoa qua các kỳ thi từ năm 1442 đến 1779, truyền tải chân lý bất hủ.',
+      quote: '"Hiền tài là nguyên khí quốc gia — Nguyên khí thịnh thì thế nước mạnh, nguyên khí suy thì thế nước yếu."',
+      subtext: 'Rùa đá đội bia tượng trưng cho sự trường tồn vĩnh cửu của đạo học và lòng tri ân sâu sắc của hậu thế đối với các bậc danh nhân.',
+      duration: '5:12',
+      durationSec: 312
+    },
+    en: {
+      title: 'Heavenly Clarity Well',
+      subtitle: '04 of 06 · UNESCO Memory of the World',
+      badge: 'WORLD MEMORY',
+      heading: 'Heavenly Clarity Well & 82 Doctor Stelae',
+      paragraph: 'The square Thien Quang Well represents the mirror of heaven. Flanking its serene waters are 82 Doctor Stelae mounted on stone tortoises, an inscribed UNESCO Memory of the World heritage. They immortalize 1,304 doctoral laureates from 1442 to 1779, enshrining an eternal principle.',
+      quote: '"Virtuous talents are the vital vitality of a nation; when vitality thrives, the realm prospers."',
+      subtext: 'Stone tortoises carrying stelae embody longevity and eternal reverence for intellectual pioneers.',
+      duration: '5:12',
+      durationSec: 312
+    },
+    ja: {
+      title: '天光井と進士題名碑',
+      subtitle: '04 of 06 · ユネスコ「世界の記憶」',
+      badge: '世界遺産',
+      heading: '天光井 — 天の光を映す鏡',
+      paragraph: '天の光を意味する四角い天光井の両脇には、亀の背に乗せられた82基の進士碑が整然と並びます。ユネスコ世界の記憶に登録されており、1442年から1779年までの科挙合格者1,304名の名が刻まれ、「賢才は国家の元気なり」という不滅の哲学を今に伝えています。',
+      quote: '「賢才は国家の元気なり — 元気盛んなれば国運隆盛なり。」',
+      subtext: '不老長寿の象徴である石亀が重い石碑を支える姿は、学問の永続性と国家への貢献を表しています。',
+      duration: '5:12',
+      durationSec: 312
+    }
+  },
+  5: {
+    order: 5,
+    vi: {
+      title: 'Điện Đại Thành',
+      subtitle: 'Điểm 05/06 · Trung tâm thờ tự Nho giáo',
+      badge: 'CHÁNH ĐIỆN LINH THIÊNG',
+      heading: 'Điện Đại Thành — Nơi Tôn Vinh Bậc Vạn Thế Sư Biểu',
+      paragraph: 'Điện Đại Thành là công trình trung tâm và linh thiêng nhất của Văn Miếu. Điện gồm 9 gian với kiến trúc gỗ lim bề thế, sơn son thếp vàng lộng lẫy. Gian chính tôn nghiêm thờ Khổng Tử cùng tứ phối: Nhan Hồi, Tăng Tử, Tử Tư và Mạnh Tử. Phía trước điện là Sân Đại Bái rộng lớn từng diễn ra các lễ tế long trọng của triều đình.',
+      quote: '"Vạn thế sư biểu — Người thầy tiêu biểu muôn đời của đạo học á đông."',
+      subtext: 'Bức hoành phi "Vạn thế sư biểu" do chính hoàng đế Khang Hy ngự bút ban tặng, treo trang trọng giữa tiền đường.',
+      duration: '4:50',
+      durationSec: 290
+    },
+    en: {
+      title: 'Đại Thành Sanctuary',
+      subtitle: '05 of 06 · Heart of Confucian Veneration',
+      badge: 'SANCTUARY',
+      heading: 'Đại Thành Sanctuary — Sacred Realm of Sages',
+      paragraph: 'The Grand Đại Thành Sanctuary stands as the spiritual core of the monument. Comprising nine grand bays supported by solid ironwood columns and ornate gold leaf carvings, it enshrines Confucius and his four great disciples. The vast Great Ceremonial Courtyard before it hosted imperial ceremonies honoring education.',
+      quote: '"Teacher for Ten Thousand Generations — A legacy of moral and intellectual elevation."',
+      subtext: 'The grand gilded plaque above the altar was personally gifted by Emperor Kangxi in reverent admiration.',
+      duration: '4:50',
+      durationSec: 290
+    },
+    ja: {
+      title: '大成殿 (だいせいでん)',
+      subtitle: '05 of 06 · 儒教の最高神聖空間',
+      badge: '本殿・拝殿',
+      heading: '大成殿 — 万世の師表を祀る聖堂',
+      paragraph: '文廟の最も神聖な中心殿堂です。豪壮な鉄木造りの九間建築で、朱漆と金箔で荘厳に飾られています。中央には孔子と四配（顔回・曾子・子思・孟子）の神位が祀られ、前庭の「大拝殿」では歴代王朝による盛大な祭礼が執り行われました。',
+      quote: '「万世の師表 — 永遠に仰ぎ見られる徳と学問の模範。」',
+      subtext: '殿内に掲げられた扁額「万世師表」は、儒学への最高級の敬意を表しています。',
+      duration: '4:50',
+      durationSec: 290
+    }
+  },
+  6: {
+    order: 6,
+    vi: {
+      title: 'Nhà Thái Học',
+      subtitle: 'Điểm 06/06 · Trường đại học đầu tiên Việt Nam',
+      badge: 'TRƯỜNG ĐẠI HỌC CỔ',
+      heading: 'Nhà Thái Học — Cái Nôi Đào Tạo Nhân Tài Quốc Gia',
+      paragraph: 'Được vua Lý Nhân Tông thành lập năm 1076, Quốc Tử Giám được xem là trường đại học đầu tiên của Việt Nam. Nơi đây lưu giữ và tôn vinh người thầy mẫu mực Chu Văn An cùng các vị minh quân Lý Thánh Tông, Lý Nhân Tông, Lê Thánh Tông — những bậc vua hiền đã có công gây dựng nền học vấn nghìn năm của nước nhà.',
+      quote: '"Tầm sư học đạo — Trọng thầy yêu bạn, rèn đức luyện tài vì giang sơn."',
+      subtext: 'Tầng hai Nhà Thái Học trưng bày trang phục tiến sĩ, nghiên mực rùa và mô hình các kỳ thi đình triều phong kiến.',
+      duration: '5:30',
+      durationSec: 330
+    },
+    en: {
+      title: 'Thái Học Academy',
+      subtitle: '06 of 06 · Vietnam’s First Imperial University',
+      badge: 'FIRST UNIVERSITY',
+      heading: 'Thái Học Academy — Cradle of National Talents',
+      paragraph: 'Established in 1076 under Emperor Ly Nhan Tong, the Imperial Academy is revered as the first university of Vietnam. It pays eternal homage to revered Master Chu Van An alongside three visionary emperors: Ly Thanh Tong, Ly Nhan Tong, and Le Thanh Tong, who established and nurtured nine centuries of national scholarship.',
+      quote: '"Cultivate moral character and intellectual brilliance for the realm."',
+      subtext: 'The upper gallery showcases doctoral ceremonial robes, antique slate inkstones, and imperial exam models.',
+      duration: '5:30',
+      durationSec: 330
+    },
+    ja: {
+      title: '太学 (国子監)',
+      subtitle: '06 of 06 · ベトナム最古の最高学府',
+      badge: '国子監・太学',
+      heading: '太学 — 国家を担う英才たちの揺籃',
+      paragraph: '1076年に李仁宗によって創設された、ベトナム最古の大学（最高学府）です。厳格な名教師として敬愛される朱文安（チュー・ヴァン・アン）をはじめ、文教政策を推し進めた李聖宗、李仁宗、黎聖宗の三帝が祀られています。',
+      quote: '「師を敬い道を尊ぶ — 徳を磨き才を錬磨して国に尽くす。」',
+      subtext: '二階には科挙の及第者が着用した官服や筆硯、往時の試験風景の模型が展示されています。',
+      duration: '5:30',
+      durationSec: 330
+    }
+  }
+};
+
+/**
+ * Tạo âm thanh chuông cảnh di sản êm dịu (WAV data URI) để phát audio mượt mà
+ * khi offline, kiểm thử, hoặc khi Render backend đang Cold Start
+ */
+function generateCalmTempleBellWav(durationSeconds = 12) {
+  const sampleRate = 22050;
+  const numSamples = sampleRate * durationSeconds;
+  const buffer = new ArrayBuffer(44 + numSamples * 2);
+  const view = new DataView(buffer);
+
+  // RIFF Chunk
+  writeString(view, 0, 'RIFF');
+  view.setUint32(4, 36 + numSamples * 2, true);
+  writeString(view, 8, 'WAVE');
+
+  // fmt Subchunk
+  writeString(view, 12, 'fmt ');
+  view.setUint32(16, 16, true); // Subchunk1Size
+  view.setUint16(20, 1, true);  // AudioFormat (PCM)
+  view.setUint16(22, 1, true);  // NumChannels (Mono)
+  view.setUint32(24, sampleRate, true); // SampleRate
+  view.setUint32(28, sampleRate * 2, true); // ByteRate
+  view.setUint16(32, 2, true);  // BlockAlign
+  view.setUint16(34, 16, true); // BitsPerSample
+
+  // data Subchunk
+  writeString(view, 36, 'data');
+  view.setUint32(40, numSamples * 2, true);
+
+  // Sinh hợp âm chuông di sản thiền định (432Hz cơ bản, hài âm 864Hz và 1296Hz tan chậm)
+  const baseFreq = 432;
+  for (let i = 0; i < numSamples; i++) {
+    const t = i / sampleRate;
+    // Phong bì suy giảm tự nhiên (Exponential Decay)
+    const envelope = Math.exp(-t * 0.45);
+    const sampleVal = (
+      Math.sin(2 * Math.PI * baseFreq * t) * 0.6 +
+      Math.sin(2 * Math.PI * (baseFreq * 2) * t) * 0.25 +
+      Math.sin(2 * Math.PI * (baseFreq * 3.01) * t) * 0.15
+    ) * envelope * 0.35;
+
+    // Giới hạn trong khoảng 16-bit PCM [-32768, 32767]
+    const clamped = Math.max(-1, Math.min(1, sampleVal));
+    view.setInt16(44 + i * 2, clamped * 32767, true);
+  }
+
+  const blob = new Blob([buffer], { type: 'audio/wav' });
+  return URL.createObjectURL(blob);
+}
+
+function writeString(view, offset, string) {
+  for (let i = 0; i < string.length; i++) {
+    view.setUint8(offset + i, string.charCodeAt(i));
+  }
+}
+
+/**
+ * Định dạng số giây thành chuỗi thời gian "phút:giây" (VD: 276 -> "4:36")
+ */
+function formatTime(seconds) {
+  if (isNaN(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+export class AudioEngine {
+  constructor() {
+    this.audioElement = null;
+    this.currentPoiId = 3; // Mặc định POI 3: Khuê Văn Các theo Giao_dien_Chinh.png
+    this.startTime = null;
+    this.fallbackAudioUrl = null;
+    this.isSeeking = false;
+  }
+
+  init() {
+    // 1. Gắn thẻ Audio HTML5 từ DOM
+    this.audioElement = document.getElementById('heritageAudioElement') || new Audio();
+    this.audioElement.preload = 'metadata';
+
+    // 2. Tạo sẵn âm thanh chuông di sản thiền định làm fallback mượt mà
+    try {
+      this.fallbackAudioUrl = generateCalmTempleBellWav(18);
+    } catch (e) {
+      console.warn('[MultiGuide Audio] Không thể khởi tạo chuông fallback:', e);
+    }
+
+    // 3. Đăng ký các sự kiện của Audio Element
+    this.setupListeners();
+
+    // 4. Khởi tạo Media Session API (FE-5.3)
+    this.setupMediaSession();
+
+    // 5. Cập nhật nội dung ban đầu từ POI mặc định (Khuê Văn Các)
+    this.syncPoiContent(this.currentPoiId);
+
+    console.log('[MultiGuide Audio] Audio Engine & Media Session API đã sẵn sàng.');
+  }
+
+  setupListeners() {
+    if (!this.audioElement) return;
+
+    // Khi âm thanh bắt đầu phát
+    this.audioElement.addEventListener('play', () => {
+      this.startTime = Date.now();
+      store.set({ isPlaying: true });
+      this.updatePlayPauseButtonUI(true);
+      this.updateMediaSessionState('playing');
+    });
+
+    // Khi âm thanh tạm dừng
+    this.audioElement.addEventListener('pause', () => {
+      store.set({ isPlaying: false });
+      this.updatePlayPauseButtonUI(false);
+      this.updateMediaSessionState('paused');
+    });
+
+    // Khi siêu dữ liệu tải xong (lấy được thời lượng duration)
+    this.audioElement.addEventListener('loadedmetadata', () => {
+      this.updateDurationUI(this.audioElement.duration);
+    });
+
+    // Cập nhật thanh Scrubber tiến trình theo thời gian thực (FE-5.2)
+    this.audioElement.addEventListener('timeupdate', () => {
+      if (this.isSeeking) return;
+      const current = this.audioElement.currentTime || 0;
+      const total = this.audioElement.duration || 1;
+      this.updateCurrentTimeUI(current, total);
+    });
+
+    // Khi bài nghe kết thúc (FE-5.4: Tự động ghi nhận Play-Log)
+    this.audioElement.addEventListener('ended', () => {
+      console.log(`[MultiGuide Audio] Hoàn thành bài nghe POI ${this.currentPoiId}`);
+      this.finishPlayback();
+    });
+
+    // Bắt sự kiện người dùng nhấp trên thanh Scrubber để tua nhạc
+    const scrubberTrack = document.getElementById('playerScrubberTrack');
+    if (scrubberTrack) {
+      scrubberTrack.addEventListener('click', (e) => {
+        const rect = scrubberTrack.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        const fraction = Math.max(0, Math.min(1, clickX / rect.width));
+        this.seek(fraction);
+      });
+    }
+
+    // Bắt nút Play/Pause trên Mini Player
+    const btnToggle = document.getElementById('btnPlayerToggle');
+    if (btnToggle) {
+      btnToggle.addEventListener('click', (e) => {
+        e.stopPropagation(); // Không trigger mở rộng Bottom Sheet
+        this.togglePlay();
+      });
+    }
+
+    // Lắng nghe thay đổi ngôn ngữ từ store
+    store.subscribe((state) => {
+      if (state.selectedLang) {
+        this.syncPoiContent(this.currentPoiId);
+      }
+    });
+  }
+
+  /**
+   * Phát hoặc tạm dừng thuyết minh (Play/Pause Toggle)
+   */
+  async togglePlay() {
+    if (!this.audioElement) return;
+
+    if (this.audioElement.paused) {
+      try {
+        if (!this.audioElement.src || this.audioElement.src === window.location.href) {
+          await this.loadAudioForPoi(this.currentPoiId);
+        }
+        await this.audioElement.play();
+      } catch (err) {
+        console.warn('[MultiGuide Audio] Không thể tự động phát, đang thử fallback:', err);
+        if (this.fallbackAudioUrl) {
+          this.audioElement.src = this.fallbackAudioUrl;
+          await this.audioElement.play().catch(() => {});
+        }
+      }
+    } else {
+      this.audioElement.pause();
+    }
+  }
+
+  /**
+   * Bắt đầu phát âm thanh cho một POI cụ thể
+   */
+  async playPoi(poiId) {
+    this.currentPoiId = poiId;
+    this.syncPoiContent(poiId);
+
+    try {
+      await this.loadAudioForPoi(poiId);
+      await this.audioElement.play();
+    } catch (err) {
+      console.warn(`[MultiGuide Audio] Lỗi phát POI ${poiId}, sử dụng âm thanh di sản:`, err);
+      if (this.fallbackAudioUrl) {
+        this.audioElement.src = this.fallbackAudioUrl;
+        await this.audioElement.play().catch(() => {});
+      }
+    }
+  }
+
+  /**
+   * Tải URL âm thanh từ Backend Render hoặc Supabase Signed URL
+   */
+  async loadAudioForPoi(poiId) {
+    const lang = store.get().selectedLang || 'vi';
+
+    try {
+      console.log(`[MultiGuide Audio] Gọi API Backend lấy Signed URL cho POI ${poiId} (${lang})...`);
+      const detail = await apiService.getPoiDetail(poiId, lang);
+
+      if (detail && detail.audioUrl) {
+        console.log(`[MultiGuide Audio] Đã nhận Signed URL Supabase:`, detail.audioUrl);
+        this.audioElement.src = detail.audioUrl;
+        return;
+      }
+    } catch (e) {
+      console.info(`[MultiGuide Audio] Backend đang offline/cold start hoặc chưa có audio file thật. Áp dụng âm thanh chuông di sản 432Hz.`);
+    }
+
+    // Fallback mượt mà bằng âm thanh chuông hòa âm thiền định
+    if (this.fallbackAudioUrl) {
+      this.audioElement.src = this.fallbackAudioUrl;
+    }
+  }
+
+  /**
+   * Tua thời gian âm thanh theo tỉ lệ phần trăm [0, 1]
+   */
+  seek(fraction) {
+    if (!this.audioElement || !this.audioElement.duration) return;
+    const targetTime = fraction * this.audioElement.duration;
+    this.audioElement.currentTime = targetTime;
+    this.updateCurrentTimeUI(targetTime, this.audioElement.duration);
+  }
+
+  /**
+   * Đồng bộ toàn bộ nội dung text và giao diện của POI sang Bottom Sheet
+   */
+  syncPoiContent(poiId) {
+    const lang = store.get().selectedLang || 'vi';
+    const poiData = POI_STORIES[poiId] || POI_STORIES[3];
+    const story = poiData[lang] || poiData['en'] || poiData['vi'];
+
+    // 1. Cập nhật Mini Player Header
+    const titleElem = document.getElementById('sheetPoiTitle');
+    const subtitleElem = document.getElementById('sheetPoiSubtitle');
+    const langBadge = document.getElementById('playerLangBadge');
+
+    if (titleElem) titleElem.textContent = story.title;
+    if (subtitleElem) subtitleElem.textContent = story.subtitle;
+    if (langBadge) langBadge.textContent = lang.toUpperCase();
+
+    // 2. Cập nhật Khung Mở Rộng Đọc Toàn Văn (Nấc 2)
+    const storyBadge = document.querySelector('.sheet-expanded-content .story-badge');
+    const storyHeading = document.getElementById('storyHeading');
+    const storyParagraph = document.getElementById('storyParagraph');
+    const storyQuote = document.querySelector('.sheet-expanded-content .story-quote');
+    const storySubtext = document.querySelector('.sheet-expanded-content .story-subtext');
+
+    if (storyBadge) storyBadge.textContent = story.badge;
+    if (storyHeading) storyHeading.textContent = story.heading;
+    if (storyParagraph) storyParagraph.textContent = story.paragraph;
+    if (storyQuote) storyQuote.textContent = story.quote;
+    if (storySubtext) storySubtext.textContent = story.subtext;
+
+    // 3. Cập nhật Media Session Metadata
+    this.updateMediaSessionMetadata(story.title, story.subtitle);
+
+    // 4. Cập nhật thời lượng hiển thị mặc định
+    const totalElem = document.getElementById('timeTotal');
+    if (totalElem && story.duration) {
+      totalElem.textContent = story.duration;
+    }
+  }
+
+  /**
+   * Cập nhật nút Play/Pause trên giao diện
+   */
+  updatePlayPauseButtonUI(isPlaying) {
+    const iconPlay = document.getElementById('iconPlay');
+    const iconPause = document.getElementById('iconPause');
+
+    if (iconPlay && iconPause) {
+      iconPlay.style.display = isPlaying ? 'none' : 'block';
+      iconPause.style.display = isPlaying ? 'block' : 'none';
+    }
+  }
+
+  /**
+   * Cập nhật thời gian hiện tại và thanh Scrubber Fill
+   */
+  updateCurrentTimeUI(currentTime, duration) {
+    const currentElem = document.getElementById('timeCurrent');
+    const fillElem = document.getElementById('playerScrubberFill');
+
+    if (currentElem) {
+      currentElem.textContent = formatTime(currentTime);
+    }
+
+    if (fillElem && duration > 0) {
+      const percentage = Math.min(100, (currentTime / duration) * 100);
+      fillElem.style.width = `${percentage.toFixed(1)}%`;
+    }
+  }
+
+  /**
+   * Cập nhật tổng thời lượng audio
+   */
+  updateDurationUI(duration) {
+    const totalElem = document.getElementById('timeTotal');
+    if (totalElem && !isNaN(duration) && duration > 0) {
+      totalElem.textContent = formatTime(duration);
+    }
+  }
+
+  /**
+   * Cấu hình Media Session API (FE-5.3) trên màn hình khóa điện thoại
+   */
+  setupMediaSession() {
+    if (!('mediaSession' in navigator)) return;
+
+    try {
+      navigator.mediaSession.setActionHandler('play', () => this.togglePlay());
+      navigator.mediaSession.setActionHandler('pause', () => this.togglePlay());
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime && this.audioElement) {
+          this.audioElement.currentTime = details.seekTime;
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', (details) => {
+        if (this.audioElement) {
+          const skip = details.seekOffset || 10;
+          this.audioElement.currentTime = Math.max(0, this.audioElement.currentTime - skip);
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekforward', (details) => {
+        if (this.audioElement) {
+          const skip = details.seekOffset || 10;
+          this.audioElement.currentTime = Math.min(this.audioElement.duration || 0, this.audioElement.currentTime + skip);
+        }
+      });
+    } catch (e) {
+      console.warn('[MultiGuide Audio] Lỗi thiết lập MediaSession handlers:', e);
+    }
+  }
+
+  /**
+   * Cập nhật Metadata cho Media Session API
+   */
+  updateMediaSessionMetadata(title, subtitle) {
+    if (!('mediaSession' in navigator)) return;
+
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: title || 'Khuê Văn Các',
+        artist: 'MultiGuide — Thuyết Minh Di Tích Văn Miếu',
+        album: 'Hanoi Heritage Tour Edition',
+        artwork: [
+          { src: 'assets/hero-khue-van-cac.jpg', sizes: '512x512', type: 'image/jpeg' },
+          { src: 'assets/icons/heritage-temple.svg', sizes: '96x96', type: 'image/svg+xml' }
+        ]
+      });
+    } catch (e) {
+      // Bỏ qua lỗi trình duyệt cũ
+    }
+  }
+
+  /**
+   * Cập nhật playbackState của MediaSession
+   */
+  updateMediaSessionState(state) {
+    if (!('mediaSession' in navigator)) return;
+    try {
+      navigator.mediaSession.playbackState = state;
+    } catch (e) {}
+  }
+
+  /**
+   * Kết thúc bài nghe & tự động gửi Play-Log về Backend thật (FE-5.4)
+   */
+  finishPlayback() {
+    const durationSeconds = this.startTime 
+      ? Math.max(1, Math.round((Date.now() - this.startTime) / 1000))
+      : 1;
+
+    console.log(`[MultiGuide Audio] Gửi Play-Log cho POI ${this.currentPoiId} (Thời lượng: ${durationSeconds}s)...`);
+    apiService.sendPlayLog(this.currentPoiId, durationSeconds);
+
+    this.startTime = null;
+    store.set({ isPlaying: false });
+    this.updatePlayPauseButtonUI(false);
+    this.updateMediaSessionState('none');
+  }
+}
+
+export const audioEngine = new AudioEngine();

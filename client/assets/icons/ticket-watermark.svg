@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 400" width="100%" height="100%" fill="none" opacity="0.32">
+  <defs>
+    <linearGradient id="bronzeFlow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C28E58" stop-opacity="0.1" />
+      <stop offset="50%" stop-color="#C28E58" stop-opacity="0.38" />
+      <stop offset="100%" stop-color="#8E6030" stop-opacity="0.08" />
+    </linearGradient>
+  </defs>
+  <!-- Các đường cong Guilloche lượn sóng giao thoa hình học chuẩn vé di sản -->
+  <g stroke="url(#bronzeFlow)" stroke-width="0.85">
+    <ellipse cx="230" cy="80" rx="90" ry="170" transform="rotate(25 230 80)" />
+    <ellipse cx="220" cy="95" rx="85" ry="160" transform="rotate(20 220 95)" />
+    <ellipse cx="210" cy="110" rx="80" ry="150" transform="rotate(15 210 110)" />
+    <ellipse cx="200" cy="125" rx="75" ry="140" transform="rotate(10 200 125)" />
+    <ellipse cx="190" cy="140" rx="70" ry="130" transform="rotate(5 190 140)" />
+    <ellipse cx="180" cy="155" rx="65" ry="120" transform="rotate(0 180 155)" />
+    <ellipse cx="170" cy="170" rx="60" ry="110" transform="rotate(-5 170 170)" />
+    <ellipse cx="160" cy="185" rx="55" ry="100" transform="rotate(-10 160 185)" />
+    <ellipse cx="150" cy="200" rx="50" ry="90" transform="rotate(-15 150 200)" />
+    <ellipse cx="140" cy="215" rx="45" ry="80" transform="rotate(-20 140 215)" />
+    <ellipse cx="130" cy="230" rx="40" ry="70" transform="rotate(-25 130 230)" />
+    <ellipse cx="120" cy="245" rx="35" ry="60" transform="rotate(-30 120 245)" />
+    <ellipse cx="110" cy="260" rx="30" ry="50" transform="rotate(-35 110 260)" />
+    <ellipse cx="100" cy="275" rx="25" ry="40" transform="rotate(-40 100 275)" />
+
+    <ellipse cx="240" cy="70" rx="95" ry="180" transform="rotate(30 240 70)" />
+    <ellipse cx="250" cy="60" rx="100" ry="190" transform="rotate(35 250 60)" />
+    <ellipse cx="260" cy="50" rx="105" ry="200" transform="rotate(40 260 50)" />
+    <ellipse cx="270" cy="40" rx="110" ry="210" transform="rotate(45 270 40)" />
+
+    <!-- Cụm lượn sóng phụ phía dưới -->
+    <ellipse cx="180" cy="270" rx="50" ry="110" transform="rotate(45 180 270)" />
+    <ellipse cx="190" cy="285" rx="55" ry="120" transform="rotate(40 190 285)" />
+    <ellipse cx="200" cy="300" rx="60" ry="130" transform="rotate(35 200 300)" />
+    <ellipse cx="210" cy="315" rx="65" ry="140" transform="rotate(30 210 315)" />
+    <ellipse cx="220" cy="330" rx="70" ry="150" transform="rotate(25 220 330)" />
+    <ellipse cx="230" cy="345" rx="75" ry="160" transform="rotate(20 230 345)" />
+  </g>
+</svg>

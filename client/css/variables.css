@@ -1,0 +1,91 @@
+/**
+ * MultiGuide Design System - Design Tokens & Variables
+ * Phong cách: "Heritage Modernism & Calm Technology"
+ */
+
+:root {
+  /* ========================================================
+     1. Color Palette: Giấy Dó, Mực Nho & Ánh Đồng Cổ
+     ======================================================== */
+  /* Nền Giấy Dó & Bề Mặt Ấm */
+  --bg-cream: #FBF9F5;              /* Nền chính giấy dó ấm */
+  --bg-cream-pure: #FFFDF9;         /* Trắng ngà cho bề mặt card nổi */
+  --bg-cream-tint: #F3EFEA;         /* Nền thứ cấp nhạt */
+  --bg-surface: #FFFFFF;            /* Trắng tuyệt đối */
+
+  /* Mực Nho & Trầm Hương (Text Hierarchy) */
+  --text-ink: #181816;              /* Chữ chính: Mực nho sâu, tương phản êm mắt */
+  --text-primary: #1C1B18;          /* Tiêu đề chính */
+  --text-muted: #6B6964;            /* Xám trầm hương: Phụ đề, mô tả */
+  --text-subtle: #9E9B95;           /* Xám nhạt: Metadata, ghi chú bản quyền */
+  --text-on-dark: #FFFFFF;          /* Chữ trên nền đen/đồng */
+
+  /* Điểm Nhấn Đồng Cổ Hoàng Gia (Antique Bronze & Gold) */
+  --accent-bronze: #C28E58;         /* Màu nhấn đồng cổ chủ đạo */
+  --accent-bronze-light: #E0BA8F;   /* Ánh đồng sáng */
+  --accent-bronze-tint: #F4EADA;    /* Nền phủ đồng nhạt */
+  --accent-bronze-dark: #8E6030;    /* Viền đồng trầm */
+
+  /* Trạng Thái & Tín Hiệu */
+  --status-active: #2E7D32;         /* Xanh ngọc di sản (Vé active, GPS on) */
+  --status-active-bg: #E8F5E9;
+  --status-alert: #C62828;          /* Đỏ trầm cảnh báo */
+
+  /* ========================================================
+     2. Frosted Glassmorphism Tokens (Kính Mờ Sương)
+     ======================================================== */
+  --glass-bg: rgba(251, 249, 245, 0.88);
+  --glass-bg-card: rgba(255, 255, 255, 0.92);
+  --glass-blur: blur(20px);
+  --glass-border: rgba(24, 24, 22, 0.08);
+  --glass-border-light: rgba(255, 255, 255, 0.6);
+
+  /* ========================================================
+     3. Typography Tokens
+     ======================================================== */
+  --font-serif: 'Playfair Display', 'Lora', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  /* Line Heights */
+  --lh-tight: 1.15;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.65;
+
+  /* ========================================================
+     4. Border Radius (Bo góc mềm mại chuẩn luxury)
+     ======================================================== */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-xl: 32px;
+  --radius-pill: 9999px;
+
+  /* ========================================================
+     5. Elevations & Soft Shadows
+     ======================================================== */
+  --shadow-sm: 0 2px 8px rgba(24, 24, 22, 0.04);
+  --shadow-md: 0 6px 20px rgba(24, 24, 22, 0.06), 0 1px 3px rgba(24, 24, 22, 0.03);
+  --shadow-lg: 0 16px 36px rgba(24, 24, 22, 0.08), 0 3px 8px rgba(24, 24, 22, 0.04);
+  --shadow-glass: 0 12px 32px rgba(194, 142, 88, 0.08), 0 2px 8px rgba(24, 24, 22, 0.04);
+
+  /* ========================================================
+     6. Transitions & Motion
+     ======================================================== */
+  --transition-fast: 180ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-smooth: 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-spring: 480ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ========================================================
+     7. Mobile Viewport & Safe Area Dimensions
+     ======================================================== */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --max-app-width: 440px;           /* Khung chuẩn màn hình iPhone Pro Max */
+  --breakpoint-tablet: 768px;
+  --breakpoint-desktop: 1024px;
+  --desktop-sidebar-width: 420px;
+}

@@ -1,0 +1,23 @@
+{
+  "name": "MultiGuide — Thuyết Minh Di Tích Văn Miếu",
+  "short_name": "MultiGuide",
+  "description": "Thuyết minh di sản tự động dựa trên vị trí GPS tại Văn Miếu – Quốc Tử Giám",
+  "start_url": "index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F6F0",
+  "theme_color": "#F8F6F0",
+  "icons": [
+    {
+      "src": "assets/icons/logo-mark.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icons/heritage-temple.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

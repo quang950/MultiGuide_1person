@@ -1,0 +1,1635 @@
+/**
+ * MultiGuide Design System - Component Styles
+ * Tối ưu hóa theo chuẩn thiết kế "Heritage Modernism & Calm Technology"
+ */
+
+/* ========================================================
+   1. The Arrival (Màn hình 1 — Giao diện ngoài)
+   ======================================================== */
+.arrival-screen {
+  width: 100%;
+  max-width: var(--max-app-width);
+  min-height: 100dvh;
+  margin: 0 auto;
+  position: relative;
+  background-color: var(--bg-cream);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: calc(28px + var(--safe-bottom));
+}
+
+/* Header thương hiệu phía trên */
+.arrival-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: calc(14px + var(--safe-top)) 20px 10px 20px;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-logo-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.brand-title {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-ink);
+  letter-spacing: -0.4px;
+}
+
+.edition-badge {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+/* Khối Hero ảnh Khuê Văn Các */
+.arrival-hero {
+  position: relative;
+  width: 100%;
+  height: 310px;
+  overflow: hidden;
+}
+
+.hero-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  /* Kỹ thuật mask gradient hòa tan chân ảnh vào nền giấy dó */
+  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+}
+
+/* Phần nội dung chính dưới Hero */
+.arrival-body {
+  position: relative;
+  margin-top: -24px;
+  padding: 0 20px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================================
+   2. Language Switcher Pill (FE-2.2 - Chuẩn Giao_dien_ngoai.png)
+   ======================================================== */
+.lang-switcher-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 25;
+}
+
+.lang-switcher-pill {
+  width: 100%;
+  max-width: 350px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px;
+  background: rgba(248, 246, 242, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 16px rgba(24, 24, 22, 0.05), 0 1px 3px rgba(24, 24, 22, 0.03);
+}
+
+.lang-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 9px 8px;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #55534E;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: all var(--transition-fast);
+}
+
+.lang-btn .lang-flag-img {
+  width: 19px;
+  height: 14px;
+  border-radius: 2.5px;
+  object-fit: cover;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(24, 24, 22, 0.12);
+}
+
+.lang-btn .lang-flag {
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+.lang-btn .lang-text {
+  letter-spacing: -0.2px;
+}
+
+/* Trạng thái Active: Nền trắng tinh khôi bo tròn nổi nhẹ */
+.lang-btn.is-active {
+  background: #FFFFFF;
+  color: var(--text-ink);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(24, 24, 22, 0.08), 0 1px 2px rgba(24, 24, 22, 0.04);
+}
+
+.lang-btn:not(.is-active):active {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(0.97);
+}
+
+/* Typography di sản nghệ thuật */
+.arrival-intro {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.arrival-tag {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.arrival-title {
+  font-family: var(--font-serif);
+  font-size: 2.65rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+}
+
+.arrival-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.94rem;
+  color: var(--text-muted);
+  line-height: 1.48;
+  font-weight: 400;
+  margin-top: 2px;
+}
+
+/* ========================================================
+   3. Digital Heritage Pass Card (FE-2.3) & 1-Tap Buy (FE-2.4)
+   ======================================================== */
+.pass-checkout-container {
+  margin-top: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Thẻ vé di sản số */
+.heritage-pass-card {
+  position: relative;
+  background-color: #FFFFFF;
+  border-radius: 20px;
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  box-shadow: 0 10px 28px rgba(24, 24, 22, 0.04), 0 1px 3px rgba(24, 24, 22, 0.02);
+  overflow: hidden;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+/* Watermark Guilloche in chìm */
+.pass-watermark {
+  position: absolute;
+  top: -10px;
+  right: -25px;
+  width: 220px;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.9;
+}
+
+.pass-watermark-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Nửa trên thẻ vé */
+.pass-card-top {
+  position: relative;
+  z-index: 2;
+  padding: 22px 22px 14px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pass-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pass-category-tag {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.pass-temple-icon {
+  width: 20px;
+  height: 20px;
+  opacity: 0.9;
+}
+
+.pass-card-title {
+  font-family: var(--font-serif);
+  font-size: 1.48rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.22;
+  letter-spacing: -0.3px;
+}
+
+.pass-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-top: 2px;
+}
+
+.pass-price-amount {
+  font-family: var(--font-sans);
+  font-size: 1.68rem;
+  font-weight: 700;
+  color: var(--text-ink);
+  letter-spacing: -0.5px;
+}
+
+.pass-validity-hint {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* Dải ngăn cách xé vé & 2 vết khuyết (Ticket Notches) */
+.pass-ticket-divider {
+  position: relative;
+  width: 100%;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.pass-ticket-divider .dashed-line {
+  flex: 1;
+  border-top: 1.5px dashed rgba(24, 24, 22, 0.15);
+  margin: 0 14px;
+}
+
+.pass-ticket-divider .notch {
+  width: 18px;
+  height: 18px;
+  background-color: var(--bg-cream);
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+}
+
+.pass-ticket-divider .notch-left {
+  left: -9px;
+  border-right: 1px solid rgba(24, 24, 22, 0.08);
+  box-shadow: inset -1px 0 2px rgba(24, 24, 22, 0.05);
+}
+
+.pass-ticket-divider .notch-right {
+  right: -9px;
+  border-left: 1px solid rgba(24, 24, 22, 0.08);
+  box-shadow: inset 1px 0 2px rgba(24, 24, 22, 0.05);
+}
+
+/* Nửa dưới thẻ vé */
+.pass-card-bottom {
+  position: relative;
+  z-index: 2;
+  padding: 14px 22px 18px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pass-features-list {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  list-style: none;
+  gap: 4px;
+}
+
+.pass-feature-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: #484642;
+  white-space: nowrap;
+}
+
+.pass-feature-item .check-icon {
+  color: #9D6E3F;
+  font-weight: 700;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.pass-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 2px;
+}
+
+.pass-collection-name {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #8C8983;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.pass-serial-code {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6B6862;
+  letter-spacing: 0.6px;
+}
+
+/* Nút kích hoạt vé 1-chạm đen tuyền */
+.btn-activate-pass {
+  width: 100%;
+  height: 52px;
+  background-color: var(--text-ink);
+  color: #FFFFFF;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.94rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 24px rgba(24, 24, 22, 0.18), 0 2px 6px rgba(24, 24, 22, 0.08);
+  transition: transform var(--transition-fast), background-color var(--transition-fast), opacity var(--transition-fast);
+  letter-spacing: -0.2px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.btn-activate-pass:active {
+  transform: scale(0.985);
+}
+
+.btn-activate-pass:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+/* Spinner khi loading API */
+.btn-activate-pass .btn-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--accent-bronze);
+  border-radius: 50%;
+  animation: passBtnSpin 0.8s linear infinite;
+}
+
+.btn-activate-pass.is-loading .btn-spinner {
+  display: inline-block;
+}
+
+@keyframes passBtnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Footer cam kết bảo mật */
+.pass-security-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  color: #7A7772;
+  margin-top: -4px;
+  margin-bottom: 6px;
+}
+
+.security-lock-icon {
+  width: 13px;
+  height: 13px;
+  opacity: 0.8;
+}
+
+/* ========================================================
+   4. Proximity Beacon Toast & Interactive Heritage Bottom Sheet (Cụm 4)
+   ======================================================== */
+
+/* Toast thông báo nhẹ nhàng khi đến gần di tích */
+.proximity-beacon-toast {
+  position: absolute;
+  top: calc(82px + var(--safe-top));
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(194, 142, 88, 0.45);
+  box-shadow: 0 6px 20px rgba(194, 142, 88, 0.18), 0 2px 6px rgba(24, 24, 22, 0.05);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.proximity-beacon-toast.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(-50%) translateY(0);
+}
+
+.proximity-beacon-toast .beacon-sparkle {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.proximity-beacon-toast .beacon-text {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #181816;
+}
+
+/* Khung trượt đáy di sản tương tác (Bottom Sheet Drawer) */
+.heritage-bottom-sheet {
+  position: absolute;
+  bottom: calc(68px + var(--safe-bottom));
+  left: 14px;
+  right: 14px;
+  z-index: 50;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  box-shadow: 0 12px 36px rgba(24, 24, 22, 0.09), 0 2px 6px rgba(24, 24, 22, 0.03);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, height 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transform: translateY(140%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Khi du khách chọn POI -> Trượt lên hiển thị Nấc 1 */
+.heritage-bottom-sheet.is-visible {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Trạng thái Mở rộng (Nấc 2 - Kéo lên đọc toàn văn) */
+.heritage-bottom-sheet.is-expanded {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 78vh;
+  border-radius: 28px 28px 0 0;
+  box-shadow: 0 -10px 40px rgba(24, 24, 22, 0.16);
+}
+
+/* Vùng tay nắm kéo trượt */
+.sheet-drag-zone {
+  width: 100%;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: grab;
+  padding-top: 6px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sheet-drag-handle {
+  width: 38px;
+  height: 4.5px;
+  border-radius: 2.5px;
+  background-color: rgba(24, 24, 22, 0.2);
+  transition: background-color var(--transition-fast);
+}
+
+.sheet-drag-zone:active .sheet-drag-handle {
+  background-color: var(--accent-bronze);
+}
+
+/* ========================================================
+   Khung Mini Player Ghim Đáy (Nấc 1 — Chuẩn Giao_dien_Chinh.png)
+   ======================================================== */
+.mini-player-header {
+  padding: 0 18px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.player-meta-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.player-tag {
+  font-family: var(--font-sans);
+  font-size: 0.64rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.player-tag .tag-dot {
+  color: #C28E58;
+  margin-right: 2px;
+}
+
+.player-meta-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-lang-badge {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6B6964;
+  text-transform: uppercase;
+}
+
+.btn-sheet-close {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background-color: rgba(24, 24, 22, 0.08);
+  color: #6B6964;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-sheet-close:hover,
+.btn-sheet-close:active {
+  background-color: rgba(24, 24, 22, 0.16);
+  color: var(--text-ink);
+  transform: scale(1.08);
+}
+
+.player-main-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.player-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.player-poi-title {
+  font-family: var(--font-serif);
+  font-size: 1.38rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-poi-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Nút tròn đen tuyền Play/Pause */
+.btn-player-toggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #181816;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 14px rgba(24, 24, 22, 0.22);
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-player-toggle:active {
+  transform: scale(0.92);
+  background-color: #2A2A26;
+}
+
+/* Thanh Scrubber tiến trình âm thanh */
+.player-scrubber-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+.scrubber-time {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #6B6964;
+  min-width: 28px;
+}
+
+.player-scrubber-track {
+  flex: 1;
+  height: 3.5px;
+  background-color: rgba(194, 142, 88, 0.22);
+  border-radius: 2px;
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.player-scrubber-fill {
+  height: 100%;
+  background-color: #C28E58;
+  border-radius: 2px;
+  width: 0%;
+  transition: width 0.12s linear;
+}
+
+/* ========================================================
+   Khung Mở Rộng Đọc Câu Chuyện Lịch Sử (Nấc 2)
+   ======================================================== */
+.sheet-expanded-content {
+  display: none;
+  padding: 0 20px 30px 20px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+}
+
+.heritage-bottom-sheet.is-expanded .sheet-expanded-content {
+  display: block;
+}
+
+.story-divider {
+  width: 100%;
+  height: 1px;
+  background-color: rgba(24, 24, 22, 0.08);
+  margin-bottom: 18px;
+}
+
+.story-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.story-badge {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.story-heading {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.25;
+}
+
+.story-paragraph {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: #383632;
+  line-height: 1.6;
+}
+
+.story-quote {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 0.94rem;
+  color: #6B4A25;
+  background-color: #F8F5EE;
+  padding: 12px 16px;
+  border-left: 3px solid #C28E58;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
+  margin: 4px 0;
+}
+
+.story-subtext {
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  color: #6E6B65;
+  line-height: 1.55;
+}
+
+/* ========================================================
+   5. Responsive Layout: Tablet & Desktop Split Screen
+   ======================================================== */
+@media (min-width: 768px) {
+  /* --- Màn hình 1: The Arrival 2 cột đối xứng --- */
+  .arrival-screen {
+    max-width: 1040px;
+    min-height: 100vh;
+    padding: 32px 32px 48px 32px;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 28px 48px;
+    align-items: center;
+  }
+
+  .arrival-header {
+    grid-column: 1 / -1;
+    position: relative;
+    padding: 0 0 12px 0;
+  }
+
+  .arrival-hero {
+    grid-column: 1;
+    height: 100%;
+    min-height: 480px;
+    max-height: 580px;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 16px 40px rgba(24, 24, 22, 0.08);
+    margin: 0;
+  }
+
+  .arrival-hero .hero-img {
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .arrival-body {
+    grid-column: 2;
+    padding: 0;
+    margin-top: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .arrival-title {
+    font-size: 3.2rem;
+  }
+
+  .pass-checkout-container {
+    margin-top: 24px;
+  }
+
+  /* --- Màn hình 2: Bảng Điều Khiển Di Sản Cột Phải (Heritage Story Sidebar) --- */
+  .heritage-bottom-sheet {
+    grid-column: 2;
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    height: 100vh;
+    width: 100%;
+    border-radius: 0;
+    border-left: 1px solid rgba(24, 24, 22, 0.08);
+    background: #FFFFFF;
+    box-shadow: -8px 0 32px rgba(24, 24, 22, 0.05);
+    display: flex;
+    flex-direction: column;
+    z-index: 50;
+  }
+
+  .heritage-bottom-sheet .sheet-drag-zone {
+    display: none; /* Desktop không cần tay kéo */
+  }
+
+  .heritage-bottom-sheet .mini-player-header {
+    padding: 24px 24px 18px 24px;
+    border-bottom: 1px solid rgba(24, 24, 22, 0.08);
+    cursor: default;
+  }
+
+  /* Khung nội dung luôn mở rộng sẵn và hỗ trợ cuộn mượt */
+  .heritage-bottom-sheet .sheet-expanded-content {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  /* Khi chưa chọn POI -> Hiện bảng chờ di sản, ẩn player */
+  .heritage-bottom-sheet:not(.is-visible) .sheet-idle-placeholder {
+    display: flex;
+  }
+  .heritage-bottom-sheet:not(.is-visible) .mini-player-header {
+    display: none;
+  }
+  .heritage-bottom-sheet:not(.is-visible) .sheet-expanded-content {
+    display: none !important;
+  }
+
+  /* Khi đã chọn POI -> Ẩn bảng chờ, hiện player và bài viết */
+  .heritage-bottom-sheet.is-visible .sheet-idle-placeholder {
+    display: none;
+  }
+  .heritage-bottom-sheet.is-visible .mini-player-header {
+    display: flex;
+  }
+  .heritage-bottom-sheet.is-visible .sheet-expanded-content {
+    display: block !important;
+  }
+
+  .story-heading {
+    font-size: 1.55rem;
+  }
+
+  .story-paragraph {
+    font-size: 0.94rem;
+    line-height: 1.7;
+  }
+
+  .story-quote {
+    font-size: 1rem;
+    padding: 14px 18px;
+    margin: 8px 0;
+  }
+}
+
+/* ========================================================
+   6. Bảng chờ di sản (Idle Placeholder)
+   ======================================================== */
+.sheet-idle-placeholder {
+  display: none;
+  flex: 1;
+  padding: 36px 28px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.idle-content-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 320px;
+}
+
+.idle-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: var(--accent-bronze-tint);
+  border: 1px solid rgba(194, 142, 88, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(194, 142, 88, 0.12);
+}
+
+.idle-temple-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.idle-category {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.idle-heading {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.25;
+}
+
+.idle-desc {
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.idle-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background-color: var(--bg-cream);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5C5852;
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  margin-top: 6px;
+}
+
+.idle-dot {
+  color: #C28E58;
+}
+
+/* ========================================================
+   7. Thanh Điều Hướng Đáy 3 Tab (Bottom Navigation Bar — FE-6.1)
+   ======================================================== */
+.bottom-navigation-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(60px + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(24, 24, 22, 0.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 60;
+  box-shadow: 0 -4px 18px rgba(24, 24, 22, 0.04);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #8E8B85;
+  transition: color var(--transition-fast), transform var(--transition-fast);
+  padding: 4px 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.bottom-nav-item:active {
+  transform: scale(0.94);
+}
+
+.nav-icon-wrap {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
+  opacity: 0.65;
+  transition: opacity var(--transition-fast), filter var(--transition-fast);
+}
+
+.nav-label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* Tab đang được chọn (Active Tab — Màu đồng hoàng gia #9D6E3F) */
+.bottom-nav-item.is-active {
+  color: #9D6E3F;
+}
+
+.bottom-nav-item.is-active .nav-icon {
+  opacity: 1;
+  filter: drop-shadow(0 1px 4px rgba(157, 110, 63, 0.35));
+}
+
+/* ========================================================
+   8. Tab View Overlay (Màn hình All stops & My pass — FE-6.2 & FE-6.3)
+   ======================================================== */
+.tab-view-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(60px + var(--safe-bottom));
+  background: var(--bg-cream, #FBF9F5);
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.36s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+}
+
+.tab-view-overlay.is-open {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tab-view-header {
+  position: sticky;
+  top: 0;
+  background: rgba(251, 249, 245, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 10;
+  padding: calc(18px + var(--safe-top)) 20px 14px 20px;
+  border-bottom: 1px solid rgba(24, 24, 22, 0.06);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tab-view-badge {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.tab-view-title {
+  font-family: var(--font-serif);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-ink, #181816);
+  line-height: 1.25;
+  margin-top: 2px;
+}
+
+.tab-view-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--text-muted, #7A7770);
+  margin-top: 4px;
+}
+
+.btn-close-tab-view {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(24, 24, 22, 0.06);
+  color: #5C5852;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn-close-tab-view:active {
+  transform: scale(0.92);
+  background: rgba(24, 24, 22, 0.12);
+}
+
+/* ========================================================
+   9. Danh Sách Lộ Trình Di Sản (All Stops — FE-6.2)
+   ======================================================== */
+.stops-list-container {
+  padding: 16px 18px 36px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.poi-journey-card {
+  background: #FFFFFF;
+  border-radius: 18px;
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(24, 24, 22, 0.03);
+  transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.poi-journey-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(24, 24, 22, 0.06);
+}
+
+.poi-journey-card:active {
+  transform: scale(0.98);
+}
+
+.poi-journey-card.is-active {
+  border-color: #C28E58;
+  background: linear-gradient(135deg, #FFFFFF 0%, #FDFBF7 100%);
+  box-shadow: 0 6px 20px rgba(194, 142, 88, 0.16);
+}
+
+.journey-number-badge {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--bg-cream, #FBF9F5);
+  border: 1px solid rgba(194, 142, 88, 0.3);
+  color: #9D6E3F;
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.poi-journey-card.is-active .journey-number-badge {
+  background: #C28E58;
+  color: #FFFFFF;
+  border-color: #C28E58;
+}
+
+.journey-info-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.journey-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.journey-order-tag {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.journey-duration {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  color: var(--text-muted, #7A7770);
+}
+
+.journey-title {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-ink, #181816);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.journey-title-vn {
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  color: var(--text-muted, #7A7770);
+  margin-top: 1px;
+}
+
+.journey-status-pill {
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.status-pill-playing {
+  background-color: #C28E58;
+  color: #FFFFFF;
+  animation: pulseLight 2s infinite;
+}
+
+.status-pill-nearby {
+  background-color: #2E7D32;
+  color: #FFFFFF;
+}
+
+.status-pill-listen {
+  background-color: rgba(24, 24, 22, 0.05);
+  color: #5C5852;
+}
+
+/* ========================================================
+   10. Màn hình Quản Lý Vé Di Sản (My Pass — FE-6.3)
+   ======================================================== */
+.pass-detail-container {
+  padding: 18px 18px 40px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.royal-pass-card {
+  background: linear-gradient(145deg, #2D2721 0%, #1A1714 100%);
+  border-radius: 24px;
+  border: 1px solid rgba(194, 142, 88, 0.4);
+  padding: 24px 20px;
+  color: #FFFFFF;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  position: relative;
+  overflow: hidden;
+}
+
+.royal-pass-card::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 140px;
+  height: 140px;
+  background: radial-gradient(circle, rgba(194, 142, 88, 0.25) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.royal-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 14px;
+}
+
+.royal-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.royal-brand-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.royal-brand-name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #FFFFFF;
+  display: block;
+  line-height: 1.1;
+}
+
+.royal-brand-edition {
+  font-family: var(--font-sans);
+  font-size: 0.6rem;
+  letter-spacing: 1px;
+  color: #C28E58;
+}
+
+.royal-pass-status-badge {
+  background: rgba(46, 125, 50, 0.25);
+  border: 1px solid #4CAF50;
+  color: #81C784;
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  letter-spacing: 0.5px;
+}
+
+.royal-card-body {
+  padding: 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.royal-monument-name {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #F4EADA;
+  letter-spacing: 0.4px;
+}
+
+.royal-code-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.royal-code-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.code-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  color: #A39E93;
+  letter-spacing: 0.6px;
+}
+
+.code-value {
+  font-family: monospace;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #C28E58;
+  letter-spacing: 1px;
+}
+
+.royal-tier-badge {
+  font-family: var(--font-sans);
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #F4EADA;
+  background: rgba(194, 142, 88, 0.22);
+  border: 1px solid rgba(194, 142, 88, 0.5);
+  padding: 4px 10px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+/* Hộp đồng hồ đếm ngược 24h sống động */
+.pass-countdown-box {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.countdown-label {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  color: #A39E93;
+  letter-spacing: 0.8px;
+}
+
+.countdown-digits-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.countdown-value {
+  font-family: monospace;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  letter-spacing: 2px;
+}
+
+.countdown-tag {
+  background: #E53935;
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.8px;
+  animation: pulseLight 1.8s infinite;
+}
+
+.royal-card-perks {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  color: #D8D4CC;
+  line-height: 1.4;
+}
+
+.perk-check {
+  color: #C28E58;
+  font-weight: 700;
+}
+
+/* Tiện ích vé */
+.pass-actions-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pass-option-row {
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.option-label {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-ink, #181816);
+}
+
+.pass-lang-pills {
+  display: flex;
+  gap: 6px;
+}
+
+.pass-lang-pills .lang-pill {
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--bg-cream, #FBF9F5);
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  color: #5C5852;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pass-lang-pills .lang-pill.is-active {
+  background: #C28E58;
+  color: #FFFFFF;
+  border-color: #C28E58;
+}
+
+.btn-pass-action {
+  width: 100%;
+  padding: 14px 18px;
+  border-radius: 16px;
+  font-family: var(--font-sans);
+  font-size: 0.84rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  border: none;
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-pass-action:active {
+  transform: scale(0.98);
+}
+
+.btn-offline-download {
+  background: #FFFFFF;
+  border: 1px solid rgba(24, 24, 22, 0.1);
+  color: var(--text-ink, #181816);
+}
+
+.btn-refresh-pass {
+  background: rgba(194, 142, 88, 0.12);
+  color: #9D6E3F;
+}
+
+/* ========================================================
+   11. Tablet & Desktop Split View Responsive (FE-6.1)
+   ======================================================== */
+@media (min-width: 768px) {
+  /* Trên desktop: Bottom Nav chuyển thành Tab Switcher đặt tại đỉnh Sidebar */
+  .bottom-navigation-bar {
+    grid-column: 2;
+    position: absolute;
+    top: 0;
+    bottom: auto;
+    left: auto;
+    right: 0;
+    width: var(--desktop-sidebar-width, 420px);
+    height: 56px;
+    border-top: none;
+    border-bottom: 1px solid rgba(24, 24, 22, 0.08);
+    background: #FFFFFF;
+    padding-bottom: 0;
+    z-index: 60;
+  }
+
+  .heritage-bottom-sheet {
+    top: 56px;
+    height: calc(100vh - 56px);
+  }
+
+  .tab-view-overlay {
+    grid-column: 2;
+    position: absolute;
+    top: 56px;
+    bottom: 0;
+    left: auto;
+    right: 0;
+    width: var(--desktop-sidebar-width, 420px);
+    border-left: 1px solid rgba(24, 24, 22, 0.08);
+  }
+}
+

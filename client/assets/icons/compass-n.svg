@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 36" width="20" height="30" fill="none">
+  <!-- Mũi tên la bàn chỉ hướng Bắc phong cách bản đồ di sản -->
+  <text x="12" y="9" font-family="'Plus Jakarta Sans', sans-serif" font-size="9" font-weight="700" fill="#181816" text-anchor="middle">N</text>
+  <polygon points="12,12 16.5,28 12,25 7.5,28" fill="#181816" />
+  <polygon points="12,12 7.5,28 12,25" fill="#4A4A46" />
+</svg>

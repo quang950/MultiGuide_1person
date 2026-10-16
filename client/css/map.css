@@ -1,0 +1,479 @@
+/**
+ * MultiGuide Design System - Map View & Leaflet Zen Customization
+ * Phong cách "Heritage Modernism & Calm Technology"
+ */
+
+/* ========================================================
+   1. Khung Canvas Bản Đồ Di Sản
+   ======================================================== */
+.map-screen {
+  position: relative;
+  width: 100%;
+  max-width: var(--max-app-width);
+  height: 100dvh;
+  margin: 0 auto;
+  overflow: hidden;
+  background-color: #E8ECE5; /* Nền xanh rêu ngọc trầm của thảm cỏ di tích */
+}
+
+#mapCanvas {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background-color: #E8ECE5;
+}
+
+/* Ẩn Leaflet attribution & default zoom controls để giữ giao diện tối giản tĩnh lặng */
+.leaflet-control-zoom,
+.leaflet-control-attribution {
+  display: none !important;
+}
+
+/* Tùy biến bộ lọc màu cho Leaflet Tiles để tạo hiệu ứng giấy dó di sản dịu mắt */
+.leaflet-tile-pane {
+  filter: contrast(95%) brightness(98%) sepia(8%);
+}
+
+/* ========================================================
+   2. Floating HUD: Thẻ Header Nổi & Chỉ Báo
+   ======================================================== */
+.map-floating-header {
+  position: absolute;
+  top: calc(12px + var(--safe-top));
+  left: 16px;
+  right: 16px;
+  z-index: 40;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px 12px 18px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 8px 24px rgba(24, 24, 22, 0.06), 0 1px 3px rgba(24, 24, 22, 0.03);
+}
+
+.header-text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.header-category-tag {
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.header-monument-title {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: 1.2;
+  letter-spacing: -0.3px;
+}
+
+.header-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-top: 1px;
+}
+
+.btn-header-options {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(24, 24, 22, 0.04);
+  border: 1px solid rgba(24, 24, 22, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform var(--transition-fast), background-color var(--transition-fast);
+}
+
+.btn-header-options:active {
+  transform: scale(0.92);
+  background: rgba(24, 24, 22, 0.08);
+}
+
+/* Pill chỉ báo GPS audio */
+.map-gps-pill {
+  position: absolute;
+  top: calc(96px + var(--safe-top));
+  left: 18px;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  box-shadow: 0 2px 8px rgba(24, 24, 22, 0.05);
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #4A4A46;
+  user-select: none;
+}
+
+.map-gps-pill .gps-dot {
+  width: 6.5px;
+  height: 6.5px;
+  border-radius: 50%;
+  background-color: #C28E58;
+}
+
+/* La bàn hướng Bắc */
+.map-compass-hud {
+  position: absolute;
+  top: calc(96px + var(--safe-top));
+  right: 20px;
+  z-index: 35;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+}
+
+/* Thước tỉ lệ 20 m */
+.map-scale-hud {
+  position: absolute;
+  bottom: calc(88px + var(--safe-bottom));
+  left: 20px;
+  z-index: 35;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.map-scale-hud .scale-label {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: #6E6B65;
+}
+
+.map-scale-hud .scale-bracket {
+  width: 42px;
+  height: 5px;
+  border-left: 1.5px solid #6E6B65;
+  border-right: 1.5px solid #6E6B65;
+  border-bottom: 1.5px solid #6E6B65;
+}
+
+/* Nút Recenter GPS */
+.btn-map-recenter {
+  position: absolute;
+  bottom: calc(86px + var(--safe-bottom));
+  right: 18px;
+  z-index: 35;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(24, 24, 22, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(24, 24, 22, 0.12), 0 1px 3px rgba(24, 24, 22, 0.04);
+  transition: transform var(--transition-fast);
+}
+
+.btn-map-recenter:active {
+  transform: scale(0.92);
+}
+
+/* ========================================================
+   3. Custom POI Pin Markers (Bia Đá Di Sản)
+   ======================================================== */
+.poi-marker-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Khung Pin bia đá */
+.poi-stele-pin {
+  width: 38px;
+  height: 48px;
+  filter: drop-shadow(0 4px 10px rgba(24, 24, 22, 0.14));
+  transition: transform var(--transition-fast);
+}
+
+.poi-marker-wrapper:hover .poi-stele-pin {
+  transform: scale(1.08);
+}
+
+.poi-marker-wrapper:active .poi-stele-pin {
+  transform: scale(0.95);
+}
+
+/* Pin đang phát (Active - Màu đồng hoàng gia) */
+.poi-marker-wrapper.is-active .poi-stele-pin {
+  filter: drop-shadow(0 6px 16px rgba(194, 142, 88, 0.45));
+}
+
+/* Pin đang ở gần (Nearby Proximity - Màu xanh ngọc di sản) */
+.poi-marker-wrapper.is-nearby .poi-stele-pin {
+  filter: drop-shadow(0 6px 18px rgba(46, 125, 50, 0.55));
+  animation: nearbyMarkerBounce 2.4s ease-in-out infinite;
+}
+
+/* Vòng hào quang xanh thở dịu nhẹ quanh POI ở gần (Calm Proximity Halo) */
+.poi-marker-wrapper.is-nearby::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background-color: rgba(46, 125, 50, 0.2);
+  border: 1.5px solid rgba(46, 125, 50, 0.5);
+  transform: translate(-50%, -50%);
+  animation: greenBreathingHalo 2.2s cubic-bezier(0.2, 0.8, 0.25, 1) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@keyframes greenBreathingHalo {
+  0% {
+    width: 34px;
+    height: 34px;
+    opacity: 0.95;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  60% {
+    opacity: 0.45;
+  }
+  100% {
+    width: 76px;
+    height: 76px;
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.15);
+  }
+}
+
+@keyframes nearbyMarkerBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+/* Badge trạng thái ở gần màu xanh */
+.poi-label-status.status-nearby {
+  background-color: #2E7D32;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(46, 125, 50, 0.35);
+}
+
+/* Nhãn địa danh hai bên */
+.poi-side-label {
+  position: absolute;
+  white-space: nowrap;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.poi-side-label.label-left {
+  right: 48px;
+  text-align: right;
+  align-items: flex-end;
+}
+
+.poi-side-label.label-right {
+  left: 48px;
+  text-align: left;
+  align-items: flex-start;
+}
+
+.poi-label-title {
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #181816;
+  line-height: 1.25;
+  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.95), 0 0 8px rgba(255, 255, 255, 0.9);
+}
+
+/* Tùy biến Leaflet Tooltip trong suốt */
+.poi-tooltip-transparent.leaflet-tooltip {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  pointer-events: none !important;
+}
+
+.poi-tooltip-transparent.leaflet-tooltip-left::before,
+.poi-tooltip-transparent.leaflet-tooltip-right::before,
+.poi-tooltip-transparent.leaflet-tooltip-top::before,
+.poi-tooltip-transparent.leaflet-tooltip-bottom::before {
+  display: none !important;
+}
+
+.custom-poi-div-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+/* ========================================================
+   4. User Location Marker & Double Breathing Pulse Radar (FE-4.1)
+   ======================================================== */
+.user-radar-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+/* Chấm tròn đen viền trắng nổi ở trung tâm */
+.user-center-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #181816;
+  border: 2.5px solid #FFFFFF;
+  box-shadow: 0 2px 6px rgba(24, 24, 22, 0.35);
+  position: relative;
+  z-index: 10;
+}
+
+/* Vòng sóng radar 1 (Sóng trong) */
+.radar-ring-1 {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(194, 142, 88, 0.55);
+  background-color: rgba(194, 142, 88, 0.08);
+  animation: doublePulse 3.2s cubic-bezier(0.2, 0.8, 0.25, 1) infinite;
+  z-index: 5;
+}
+
+/* Vòng sóng radar 2 (Sóng ngoài - trễ pha) */
+.radar-ring-2 {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid rgba(194, 142, 88, 0.35);
+  background-color: rgba(194, 142, 88, 0.04);
+  animation: doublePulse 3.2s cubic-bezier(0.2, 0.8, 0.25, 1) infinite;
+  animation-delay: 0.9s;
+  z-index: 4;
+}
+
+/* Hoạt họa sóng radar nhịp thở đôi Calm Technology */
+@keyframes doublePulse {
+  0% {
+    width: 14px;
+    height: 14px;
+    opacity: 0.9;
+    transform: scale(0.8);
+  }
+  60% {
+    opacity: 0.55;
+  }
+  100% {
+    width: 86px;
+    height: 86px;
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ========================================================
+   5. Responsive Layout: Tablet & Desktop Split Map Screen
+   ======================================================== */
+@media (min-width: 768px) {
+  .map-screen {
+    width: 100vw;
+    max-width: 100vw;
+    height: 100vh;
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1fr var(--desktop-sidebar-width, 420px);
+  }
+
+  #mapCanvas {
+    grid-column: 1;
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  /* Header nổi trên bản đồ ở cột 1 */
+  .map-floating-header {
+    left: 24px;
+    right: auto;
+    width: 360px;
+    top: 24px;
+  }
+
+  .map-gps-pill {
+    left: 24px;
+    top: 108px;
+  }
+
+  .btn-map-recenter {
+    left: auto;
+    right: calc(var(--desktop-sidebar-width, 420px) + 24px);
+    bottom: 32px;
+  }
+
+  .map-compass-hud {
+    right: calc(var(--desktop-sidebar-width, 420px) + 24px);
+    top: 24px;
+  }
+
+  .map-scale-hud {
+    left: 24px;
+    bottom: 32px;
+  }
+
+  .proximity-beacon-toast {
+    left: calc(50% - (var(--desktop-sidebar-width, 420px) / 2));
+    top: 24px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .map-screen {
+    grid-template-columns: 1fr 460px;
+  }
+
+  .btn-map-recenter {
+    right: 484px;
+  }
+
+  .map-compass-hud {
+    right: 484px;
+  }
+
+  .proximity-beacon-toast {
+    left: calc(50% - 230px);
+  }
+}
+

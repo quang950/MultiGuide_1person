@@ -1,0 +1,136 @@
+/**
+ * MultiGuide Design System - Base Styles & Mobile Reset
+ */
+
+/* ========================================================
+   1. Modern Reset
+   ======================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  height: 100%;
+  background-color: var(--bg-cream);
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-ink);
+  background-color: var(--bg-cream);
+  line-height: var(--lh-normal);
+  min-height: 100%;
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ========================================================
+   2. Mobile-First App Shell Container
+   ======================================================== */
+.app-viewport {
+  width: 100%;
+  max-width: var(--max-app-width);
+  min-height: 100dvh;
+  position: relative;
+  background-color: var(--bg-cream);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 0 50px rgba(24, 24, 22, 0.08);
+}
+
+@media (min-width: 768px) {
+  body {
+    background-color: #F3EFEA;
+    align-items: center;
+  }
+
+  .app-viewport {
+    max-width: 100%;
+    min-height: 100vh;
+    box-shadow: none;
+  }
+}
+
+/* ========================================================
+   3. Typography Utility Classes
+   ======================================================== */
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3, .title-serif {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: var(--text-ink);
+  line-height: var(--lh-tight);
+}
+
+p, span, label, input, button {
+  font-family: var(--font-sans);
+}
+
+/* ========================================================
+   4. Safe Area Helpers
+   ======================================================== */
+.safe-area-top {
+  padding-top: var(--safe-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-bottom);
+}
+
+/* ========================================================
+   5. Buttons & Controls Base
+   ======================================================== */
+button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.95rem;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ========================================================
+   6. Custom Scrollbar
+   ======================================================== */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-bronze-light);
+  border-radius: var(--radius-pill);
+}
