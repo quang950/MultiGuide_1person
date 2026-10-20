@@ -8,29 +8,38 @@
    ======================================================== */
 .arrival-screen {
   width: 100%;
-  max-width: var(--max-app-width);
+  max-width: var(--max-app-width, 440px);
   min-height: 100dvh;
   margin: 0 auto;
   position: relative;
-  background-color: var(--bg-cream);
+  background-color: var(--bg-cream, #F8F6F0);
   display: flex;
   flex-direction: column;
+  align-items: center;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-bottom: calc(28px + var(--safe-bottom));
+  padding: calc(16px + var(--safe-top, 0px)) 20px calc(28px + var(--safe-bottom, 0px)) 20px;
+  box-sizing: border-box;
 }
 
-/* Header thương hiệu phía trên */
+/* Header thương hiệu phía trên (Glassmorphism mờ nhẹ, bo tròn, tương phản cao) */
 .arrival-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 20;
+  width: 100%;
+  max-width: 400px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: calc(14px + var(--safe-top)) 20px 10px 20px;
+  padding: 10px 18px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 20px;
+  border: 1px solid rgba(194, 142, 88, 0.25);
+  box-shadow: 0 4px 18px rgba(24, 24, 22, 0.05);
+  margin: 4px auto 20px auto;
+  position: relative;
+  z-index: 20;
+  box-sizing: border-box;
 }
 
 .brand-group {
@@ -46,47 +55,34 @@
 
 .brand-title {
   font-family: var(--font-sans);
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 700;
-  color: var(--text-ink);
+  color: var(--text-ink, #181816);
   letter-spacing: -0.4px;
 }
 
 .edition-badge {
   font-family: var(--font-sans);
-  font-size: 0.68rem;
-  font-weight: 600;
-  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #8C5E28;
+  background: rgba(194, 142, 88, 0.12);
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(194, 142, 88, 0.3);
   letter-spacing: 0.8px;
   text-transform: uppercase;
 }
 
-/* Khối Hero ảnh Khuê Văn Các */
-.arrival-hero {
-  position: relative;
-  width: 100%;
-  height: 310px;
-  overflow: hidden;
-}
-
-.hero-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  /* Kỹ thuật mask gradient hòa tan chân ảnh vào nền giấy dó */
-  mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-}
-
-/* Phần nội dung chính dưới Hero */
+/* Phần nội dung chính cân đối ở giữa */
 .arrival-body {
   position: relative;
-  margin-top: -24px;
-  padding: 0 20px;
-  z-index: 10;
+  width: 100%;
+  max-width: 400px;
   display: flex;
   flex-direction: column;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* ========================================================
@@ -174,6 +170,9 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  text-align: left;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .arrival-tag {
@@ -211,6 +210,8 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Thẻ vé di sản số */
@@ -221,6 +222,9 @@
   border: 1px solid rgba(24, 24, 22, 0.08);
   box-shadow: 0 10px 28px rgba(24, 24, 22, 0.04), 0 1px 3px rgba(24, 24, 22, 0.02);
   overflow: hidden;
+  width: 100%;
+  box-sizing: border-box;
+  text-align: left;
   transition: transform var(--transition-fast), box-shadow var(--transition-fast);
 }
 
@@ -246,16 +250,19 @@
 .pass-card-top {
   position: relative;
   z-index: 2;
-  padding: 22px 22px 14px 22px;
+  padding: 20px 20px 14px 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pass-header-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  width: 100%;
 }
 
 .pass-category-tag {
@@ -275,17 +282,18 @@
 
 .pass-card-title {
   font-family: var(--font-serif);
-  font-size: 1.48rem;
+  font-size: 1.38rem;
   font-weight: 600;
   color: var(--text-ink);
-  line-height: 1.22;
-  letter-spacing: -0.3px;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
 }
 
 .pass-price-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
+  width: 100%;
   margin-top: 2px;
 }
 
@@ -312,6 +320,7 @@
   display: flex;
   align-items: center;
   z-index: 2;
+  box-sizing: border-box;
 }
 
 .pass-ticket-divider .dashed-line {
@@ -345,10 +354,12 @@
 .pass-card-bottom {
   position: relative;
   z-index: 2;
-  padding: 14px 22px 18px 22px;
+  padding: 14px 20px 18px 20px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pass-features-list {
@@ -356,7 +367,9 @@
   justify-content: space-between;
   align-items: center;
   list-style: none;
-  gap: 4px;
+  gap: 6px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pass-feature-item {
@@ -368,6 +381,7 @@
   font-weight: 500;
   color: #484642;
   white-space: nowrap;
+  flex-shrink: 1;
 }
 
 .pass-feature-item .check-icon {
@@ -521,17 +535,17 @@
 /* Khung trượt đáy di sản tương tác (Bottom Sheet Drawer) */
 .heritage-bottom-sheet {
   position: absolute;
-  bottom: calc(68px + var(--safe-bottom));
+  bottom: calc(72px + var(--safe-bottom, 0px));
   left: 14px;
   right: 14px;
-  z-index: 50;
-  background: rgba(255, 255, 255, 0.94);
+  z-index: 1000;
+  background: rgba(255, 255, 255, 0.96);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 12px 36px rgba(24, 24, 22, 0.09), 0 2px 6px rgba(24, 24, 22, 0.03);
-  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease, height 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 0 12px 36px rgba(24, 24, 22, 0.14), 0 2px 8px rgba(24, 24, 22, 0.05);
+  transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, height 0.38s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -540,21 +554,26 @@
   pointer-events: none;
 }
 
-/* Khi du khách chọn POI -> Trượt lên hiển thị Nấc 1 */
+/* Khi du khách chọn POI -> Trượt lên hiển thị Nấc 1 (Bảng nhỏ Mini Player) */
 .heritage-bottom-sheet.is-visible {
   transform: translateY(0);
   opacity: 1;
   pointer-events: auto;
 }
 
-/* Trạng thái Mở rộng (Nấc 2 - Kéo lên đọc toàn văn) */
+/* Trạng thái Mở rộng (Nấc 2 - Kéo lên đọc toàn văn câu chuyện di tích) */
 .heritage-bottom-sheet.is-expanded {
   bottom: 0;
   left: 0;
   right: 0;
-  height: 78vh;
+  height: 78%;
+  max-height: 84%;
   border-radius: 28px 28px 0 0;
-  box-shadow: 0 -10px 40px rgba(24, 24, 22, 0.16);
+  box-shadow: 0 -10px 40px rgba(24, 24, 22, 0.22);
+}
+
+.sheet-idle-placeholder {
+  display: none !important;
 }
 
 /* Vùng tay nắm kéo trượt */
@@ -816,112 +835,75 @@
    5. Responsive Layout: Tablet & Desktop Split Screen
    ======================================================== */
 @media (min-width: 768px) {
-  /* --- Màn hình 1: The Arrival 2 cột đối xứng --- */
+  /* --- Màn hình 1: The Arrival Căn Giữa Đối Xứng --- */
   .arrival-screen {
-    max-width: 1040px;
-    min-height: 100vh;
-    padding: 32px 32px 48px 32px;
-    display: grid;
-    grid-template-columns: 1.05fr 1fr;
-    grid-template-rows: auto 1fr;
-    gap: 28px 48px;
+    width: 100%;
+    max-width: var(--max-app-width, 440px);
+    height: 94dvh;
+    max-height: 920px;
+    margin: auto;
+    border-radius: 36px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(24, 24, 22, 0.08);
+    position: relative;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    padding: 24px 20px 40px 20px;
   }
 
   .arrival-header {
-    grid-column: 1 / -1;
-    position: relative;
-    padding: 0 0 12px 0;
-  }
-
-  .arrival-hero {
-    grid-column: 1;
-    height: 100%;
-    min-height: 480px;
-    max-height: 580px;
-    border-radius: 28px;
-    overflow: hidden;
-    box-shadow: 0 16px 40px rgba(24, 24, 22, 0.08);
-    margin: 0;
-  }
-
-  .arrival-hero .hero-img {
-    height: 100%;
-    object-fit: cover;
+    width: 100%;
+    max-width: 400px;
+    margin-bottom: 20px;
   }
 
   .arrival-body {
-    grid-column: 2;
-    padding: 0;
-    margin-top: 0;
+    width: 100%;
+    max-width: 400px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    align-items: center;
+    text-align: center;
+    margin: 0 auto;
   }
 
   .arrival-title {
-    font-size: 3.2rem;
+    font-size: 2.6rem;
   }
 
   .pass-checkout-container {
-    margin-top: 24px;
+    margin-top: 18px;
   }
 
-  /* --- Màn hình 2: Bảng Điều Khiển Di Sản Cột Phải (Heritage Story Sidebar) --- */
+  /* --- Màn hình 2: Bảng Điều Khiển Di Sản (Heritage Bottom Sheet chuẩn app di động) --- */
   .heritage-bottom-sheet {
-    grid-column: 2;
-    position: relative;
-    bottom: auto;
-    left: auto;
-    right: auto;
-    height: 100vh;
-    width: 100%;
-    border-radius: 0;
-    border-left: 1px solid rgba(24, 24, 22, 0.08);
-    background: #FFFFFF;
-    box-shadow: -8px 0 32px rgba(24, 24, 22, 0.05);
-    display: flex;
-    flex-direction: column;
-    z-index: 50;
+    position: absolute;
+    bottom: calc(72px + var(--safe-bottom, 0px));
+    left: 14px;
+    right: 14px;
+    z-index: 1000;
+  }
+
+  .heritage-bottom-sheet.is-expanded {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 78%;
+    max-height: 84%;
   }
 
   .heritage-bottom-sheet .sheet-drag-zone {
-    display: none; /* Desktop không cần tay kéo */
+    display: flex;
+    cursor: pointer;
   }
 
   .heritage-bottom-sheet .mini-player-header {
-    padding: 24px 24px 18px 24px;
-    border-bottom: 1px solid rgba(24, 24, 22, 0.08);
-    cursor: default;
+    cursor: pointer;
   }
 
-  /* Khung nội dung luôn mở rộng sẵn và hỗ trợ cuộn mượt */
-  .heritage-bottom-sheet .sheet-expanded-content {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
-  }
-
-  /* Khi chưa chọn POI -> Hiện bảng chờ di sản, ẩn player */
-  .heritage-bottom-sheet:not(.is-visible) .sheet-idle-placeholder {
-    display: flex;
-  }
-  .heritage-bottom-sheet:not(.is-visible) .mini-player-header {
-    display: none;
-  }
-  .heritage-bottom-sheet:not(.is-visible) .sheet-expanded-content {
+  .heritage-bottom-sheet .sheet-idle-placeholder {
     display: none !important;
-  }
-
-  /* Khi đã chọn POI -> Ẩn bảng chờ, hiện player và bài viết */
-  .heritage-bottom-sheet.is-visible .sheet-idle-placeholder {
-    display: none;
-  }
-  .heritage-bottom-sheet.is-visible .mini-player-header {
-    display: flex;
-  }
-  .heritage-bottom-sheet.is-visible .sheet-expanded-content {
-    display: block !important;
   }
 
   .story-heading {
@@ -1596,40 +1578,43 @@
 }
 
 /* ========================================================
-   11. Tablet & Desktop Split View Responsive (FE-6.1)
+   11. Tablet & Desktop Mobile-First App Frame (FE-6.1)
    ======================================================== */
 @media (min-width: 768px) {
-  /* Trên desktop: Bottom Nav chuyển thành Tab Switcher đặt tại đỉnh Sidebar */
+  .arrival-screen {
+    width: 100%;
+    max-width: var(--max-app-width, 440px);
+    height: 94dvh;
+    max-height: 920px;
+    margin: auto;
+    border-radius: 36px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(24, 24, 22, 0.08);
+  }
+
+  /* Khung ứng dụng cố định thanh 3 Tab luôn ở dưới đáy */
   .bottom-navigation-bar {
-    grid-column: 2;
     position: absolute;
-    top: 0;
-    bottom: auto;
-    left: auto;
+    bottom: 0;
+    left: 0;
     right: 0;
-    width: var(--desktop-sidebar-width, 420px);
-    height: 56px;
-    border-top: none;
-    border-bottom: 1px solid rgba(24, 24, 22, 0.08);
-    background: #FFFFFF;
-    padding-bottom: 0;
+    width: 100%;
+    height: calc(60px + var(--safe-bottom));
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     z-index: 60;
   }
 
-  .heritage-bottom-sheet {
-    top: 56px;
-    height: calc(100vh - 56px);
-  }
-
   .tab-view-overlay {
-    grid-column: 2;
     position: absolute;
-    top: 56px;
-    bottom: 0;
-    left: auto;
+    top: 0;
+    bottom: calc(60px + var(--safe-bottom));
+    left: 0;
     right: 0;
-    width: var(--desktop-sidebar-width, 420px);
-    border-left: 1px solid rgba(24, 24, 22, 0.08);
+    width: 100%;
+    border-left: none;
+    z-index: 55;
   }
 }
+
 

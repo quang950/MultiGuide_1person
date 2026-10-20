@@ -6,13 +6,14 @@ import { CONFIG } from './config.js';
 import { store } from './state.js';
 import { apiService } from './api.js';
 import { geoService } from './geo.js';
-import { audioEngine } from './audio.js';
+import { audioEngine, POI_STORIES } from './audio.js';
 import { showProximityBeacon, showBottomSheet, hideBottomSheet } from './ui.js';
 
 // Dữ liệu chuẩn 6 POIs Thần đạo Văn Miếu - Quốc Tử Giám (Khớp 100% DbSeeder Backend)
 export const HERITAGE_POIS = [
   {
     id: 1,
+    guid: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
     order: 1,
     code: 'cong-van-mieu',
     title: 'Cổng Văn Miếu',
@@ -25,6 +26,7 @@ export const HERITAGE_POIS = [
   },
   {
     id: 2,
+    guid: '3ede2134-c305-4270-9413-39c9743f9cb8',
     order: 2,
     code: 'cong-dai-trung',
     title: 'Cổng Đại Trung',
@@ -37,6 +39,7 @@ export const HERITAGE_POIS = [
   },
   {
     id: 3,
+    guid: '70dabf88-5450-48e7-9603-b753f5350047',
     order: 3,
     code: 'khue-van-cac',
     title: 'Khuê Văn Các',
@@ -49,6 +52,7 @@ export const HERITAGE_POIS = [
   },
   {
     id: 4,
+    guid: 'cc63b968-096f-4b06-b4f8-19f8f829ef42',
     order: 4,
     code: 'gieng-thien-quang',
     title: 'Giếng Thiên Quang',
@@ -59,6 +63,7 @@ export const HERITAGE_POIS = [
   },
   {
     id: 5,
+    guid: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
     order: 5,
     code: 'dien-dai-thanh',
     title: 'Điện Đại Thành',
@@ -69,6 +74,7 @@ export const HERITAGE_POIS = [
   },
   {
     id: 6,
+    guid: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd',
     order: 6,
     code: 'nha-thai-hoc',
     title: 'Nhà Thái Học',
@@ -97,23 +103,22 @@ export class MapManager {
 
     const center = [CONFIG.MAP_CENTER.lat, CONFIG.MAP_CENTER.lng];
 
-    // 1. Khởi tạo đối tượng Leaflet Map với khóa góc cuộn (MaxBounds)
+    // 1. Khởi tạo đối tượng Leaflet Map (tự do kéo di chuyển khắp vùng lân cận)
     this.map = L.map(containerId, {
       center: center,
       zoom: CONFIG.MAP_CENTER.zoom,
-      minZoom: CONFIG.MAP_CENTER.minZoom,
-      maxZoom: CONFIG.MAP_CENTER.maxZoom,
-      maxBounds: CONFIG.MAP_BOUNDS,
-      maxBoundsViscosity: 0.85,
+      minZoom: CONFIG.MAP_CENTER.minZoom || 12,
+      maxZoom: CONFIG.MAP_CENTER.maxZoom || 20,
       zoomControl: false,
       attributionControl: false
     });
 
-    // 2. Nạp Tile Layer OpenStreetMap chuẩn, sắc nét, không watermark
-    const tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+    // 2. Nạp Tile Layer Google Maps chuẩn, sắc nét, không watermark, không cần API key
+    const tileUrl = CONFIG.MAP_TILE_URL || 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
     L.tileLayer(tileUrl, {
+      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
       maxZoom: 20,
-      attribution: '&copy; OpenStreetMap'
+      attribution: CONFIG.MAP_ATTRIBUTION || '&copy; Google Maps'
     }).addTo(this.map);
 
     // 3. Vẽ đường trục Thần đạo nét đứt màu đồng (FE-3.2)
@@ -146,6 +151,13 @@ export class MapManager {
     window.addEventListener('resize', () => {
       if (this.map) {
         this.map.invalidateSize();
+      }
+    });
+
+    // 11. Đăng ký lắng nghe thay đổi ngôn ngữ để cập nhật nhãn Marker trên bản đồ
+    store.subscribe((state) => {
+      if (state.selectedLang) {
+        this.updateAllMarkerLabels();
       }
     });
 
@@ -455,20 +467,41 @@ export class MapManager {
     marker.setIcon(updatedIcon);
 
     const labelClass = p.labelPos === 'left' ? 'label-left' : 'label-right';
+    const currentLang = store.get().selectedLang || 'vi';
+
+    // Lấy tiêu đề đa ngữ từ POI_STORIES
+    let displayTitle = p.titleEn;
+    if (POI_STORIES && POI_STORIES[p.id] && POI_STORIES[p.id][currentLang]) {
+      displayTitle = POI_STORIES[p.id][currentLang].title;
+    } else if (currentLang === 'vi') {
+      displayTitle = p.title;
+    }
+
     let statusHtml = '';
     if (p.isActive) {
-      statusHtml = '<span class="poi-label-status">NOW PLAYING</span>';
+      const playingText = currentLang === 'vi' ? 'ĐANG PHÁT' : (currentLang === 'zh' ? '正在播放' : (currentLang === 'ja' ? '再生中' : 'NOW PLAYING'));
+      statusHtml = `<span class="poi-label-status">${playingText}</span>`;
     } else if (p.isNearby) {
-      statusHtml = '<span class="poi-label-status status-nearby">Ở GẦN BẠN</span>';
+      const nearbyText = currentLang === 'vi' ? 'Ở GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
+      statusHtml = `<span class="poi-label-status status-nearby">${nearbyText}</span>`;
     }
 
     const labelContent = `
       <div class="poi-side-label ${labelClass}">
-        <span class="poi-label-title">${p.titleEn}</span>
+        <span class="poi-label-title">${displayTitle}</span>
         ${statusHtml}
       </div>
     `;
     marker.setTooltipContent(labelContent);
+  }
+
+  /**
+   * Cập nhật toàn bộ nhãn 6 POI khi người dùng đổi ngôn ngữ
+   */
+  updateAllMarkerLabels() {
+    HERITAGE_POIS.forEach(p => {
+      this.updateMarkerVisual(p);
+    });
   }
 
   /**
@@ -516,7 +549,7 @@ export class MapManager {
 
     if (activePoi) {
       // 1. Mở khung Bottom Sheet trượt lên (Nấc 1)
-      showBottomSheet();
+      showBottomSheet(poiId);
       // 2. Đồng bộ phát âm thanh di sản
       audioEngine.playPoi(poiId);
     }
@@ -556,3 +589,4 @@ export class MapManager {
 }
 
 export const mapManager = new MapManager();
+

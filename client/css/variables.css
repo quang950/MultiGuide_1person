@@ -43,7 +43,7 @@
   /* ========================================================
      3. Typography Tokens
      ======================================================== */
-  --font-serif: 'Playfair Display', 'Lora', Georgia, serif;
+  --font-serif: 'Lora', 'Playfair Display', Georgia, serif;
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   /* Line Heights */

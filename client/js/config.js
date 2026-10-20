@@ -11,16 +11,13 @@ export const CONFIG = {
   MAP_CENTER: {
     lat: 21.0282,
     lng: 105.8355,
-    zoom: 17.8,
-    minZoom: 16,
+    zoom: 17.5,
+    minZoom: 12,
     maxZoom: 20
   },
   
-  // Ranh giới khóa khung nhìn (MaxBounds) xung quanh khuôn viên Văn Miếu
-  MAP_BOUNDS: [
-    [21.0245, 105.8325], // Nam - Tây
-    [21.0325, 105.8385]  // Bắc - Đông
-  ],
+  // Cho phép tự do kéo bản đồ khắp Hà Nội và các vùng lân cận
+  MAP_BOUNDS: null,
   
   // Bán kính quét mặc định
   DEFAULT_SCAN_RADIUS: 50, // mét
@@ -30,7 +27,8 @@ export const CONFIG = {
   PASS_PRICE_USD: 5.00,
   PASS_DURATION_HOURS: 24,
 
-  // Bản đồ Tiles tiêu chuẩn (Sạch sẽ, không watermark, mượt mà trên mobile)
-  MAP_TILE_URL: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-  MAP_ATTRIBUTION: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  // Bản đồ Tiles tiêu chuẩn Google Maps (Cực nét, đầy đủ địa danh tiếng Việt, không watermark, không cần API key)
+  MAP_TILE_URL: 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}',
+  MAP_ATTRIBUTION: '&copy; Google Maps'
 };
+

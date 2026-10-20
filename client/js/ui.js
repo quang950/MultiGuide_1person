@@ -5,6 +5,8 @@
 import { store } from './state.js';
 import { apiService } from './api.js';
 import { mapManager } from './map.js';
+import { t } from './i18n.js';
+import { POI_STORIES } from './audio.js';
 
 /**
  * Mở khóa AudioContext cho iOS Safari / Android Chrome (CONSTRAINTS.md)
@@ -62,7 +64,7 @@ export function initLanguageSwitcher() {
     if (!btn) return;
 
     const langCode = btn.dataset.lang;
-    if (langCode && ['vi', 'en', 'ja'].includes(langCode)) {
+    if (langCode && ['vi', 'en', 'zh', 'ja'].includes(langCode)) {
       // 1. Mở khóa AudioContext im lặng cho mobile
       unlockAudioContextSilently();
 
@@ -83,8 +85,13 @@ export function initPassCheckout() {
 
   const btnText = btnActivate.querySelector('.btn-text');
 
-  // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy
-  const currentToken = store.get().accessToken;
+  // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy (bỏ qua token demo nếu có)
+  let currentToken = store.get().accessToken;
+  if (currentToken && currentToken.startsWith('mg_demo_pass_')) {
+    store.setAccessToken(null);
+    currentToken = null;
+  }
+
   if (currentToken) {
     if (btnText) btnText.textContent = 'Tiếp tục khám phá di tích →';
   }
@@ -93,8 +100,8 @@ export function initPassCheckout() {
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
     unlockAudioContextSilently();
 
-    // Nếu đã có token vé từ trước, chuyển thẳng sang màn hình chính
-    if (store.get().accessToken) {
+    // Nếu đã có token vé thật từ trước, chuyển thẳng sang màn hình chính
+    if (store.get().accessToken && !store.get().accessToken.startsWith('mg_demo_pass_')) {
       transitionToMainApp();
       return;
     }
@@ -208,17 +215,23 @@ export function initBottomSheet() {
   const miniHeader = document.getElementById('miniPlayerHeader');
   if (!sheet) return;
 
-  // 1. Nhấp vào Mini Player Header để chuyển đổi nấc mở rộng (tránh chạm nút play và scrubber)
+  // 1. Nhấp vào Mini Player Header hoặc Drag Zone để chuyển đổi nấc mở rộng (tránh chạm nút play và scrubber)
   if (miniHeader) {
     miniHeader.addEventListener('click', (e) => {
-      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack')) {
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) {
         return;
       }
       sheet.classList.toggle('is-expanded');
     });
   }
 
-  // 2. Kéo vuốt cảm ứng (Swipe Gesture) trên thanh nắm Drag Handle
+  if (dragZone) {
+    dragZone.addEventListener('click', () => {
+      sheet.classList.toggle('is-expanded');
+    });
+  }
+
+  // 2. Kéo vuốt cảm ứng (Swipe Gesture) & Kéo chuột trên thanh nắm Drag Handle & Header
   let startY = 0;
   let isDragging = false;
 
@@ -232,26 +245,30 @@ export function initBottomSheet() {
     isDragging = false;
     const deltaY = clientY - startY;
 
-    // Vuốt lên > 40px -> Mở rộng Nấc 2 đọc toàn văn
-    if (deltaY < -40) {
+    // Vuốt lên > 25px -> Mở rộng Nấc 2 đọc toàn văn
+    if (deltaY < -25) {
       sheet.classList.add('is-expanded');
     }
-    // Vuốt xuống > 40px -> Thu gọn về Mini Player Nấc 1
-    else if (deltaY > 40) {
+    // Vuốt xuống > 25px -> Thu gọn về Mini Player Nấc 1
+    else if (deltaY > 25) {
       sheet.classList.remove('is-expanded');
     }
   };
 
-  if (dragZone) {
-    dragZone.addEventListener('touchstart', (e) => {
+  [dragZone, miniHeader].forEach(el => {
+    if (!el) return;
+    el.addEventListener('touchstart', (e) => {
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       if (e.touches && e.touches[0]) onDragStart(e.touches[0].clientY);
     }, { passive: true });
 
-    dragZone.addEventListener('touchend', (e) => {
+    el.addEventListener('touchend', (e) => {
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       if (e.changedTouches && e.changedTouches[0]) onDragEnd(e.changedTouches[0].clientY);
     }, { passive: true });
 
-    dragZone.addEventListener('mousedown', (e) => {
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       onDragStart(e.clientY);
       const onMouseUp = (upEvt) => {
         onDragEnd(upEvt.clientY);
@@ -259,7 +276,7 @@ export function initBottomSheet() {
       };
       window.addEventListener('mouseup', onMouseUp);
     });
-  }
+  });
 
   // 3. Nút đóng / hạ khung Bottom Sheet (✕)
   const btnClose = document.getElementById('btnSheetClose');
@@ -274,10 +291,13 @@ export function initBottomSheet() {
 /**
  * Hiển thị khung Bottom Sheet (Nấc 1) khi du khách chọn POI
  */
-export function showBottomSheet() {
+export function showBottomSheet(poiId) {
   const sheet = document.getElementById('heritageBottomSheet');
   if (sheet) {
     sheet.classList.add('is-visible');
+  }
+  if (poiId && audioEngine) {
+    audioEngine.syncPoiContent(poiId);
   }
 }
 
@@ -376,6 +396,7 @@ export function renderAllStops() {
   const container = document.getElementById('stopsListContainer');
   if (!container || !window.HERITAGE_POIS) return;
 
+  const currentLang = store.get().selectedLang || 'vi';
   const pois = window.HERITAGE_POIS;
   const activePoi = store.get().activePoi;
   const activeId = activePoi ? (activePoi.id || activePoi.order) : null;
@@ -386,23 +407,27 @@ export function renderAllStops() {
     
     let statusBadge = '';
     if (isNowPlaying) {
-      statusBadge = '<span class="journey-status-pill status-pill-playing">ĐANG PHÁT</span>';
+      statusBadge = `<span class="journey-status-pill status-pill-playing">${t('stopsTab.statusPlaying', currentLang)}</span>`;
     } else if (p.isNearby) {
-      statusBadge = '<span class="journey-status-pill status-pill-nearby">Ở GẦN BẠN</span>';
+      statusBadge = `<span class="journey-status-pill status-pill-nearby">${t('stopsTab.statusNearby', currentLang)}</span>`;
     } else {
-      statusBadge = '<span class="journey-status-pill status-pill-listen">NGHE NGAY</span>';
+      statusBadge = `<span class="journey-status-pill status-pill-listen">${t('stopsTab.statusListen', currentLang)}</span>`;
     }
+
+    const poiStory = POI_STORIES[p.id] ? (POI_STORIES[p.id][currentLang] || POI_STORIES[p.id]['en'] || POI_STORIES[p.id]['vi']) : null;
+    const mainTitle = poiStory ? poiStory.title : p.title;
+    const subTitle = poiStory ? poiStory.subtitle : p.titleEn;
 
     return `
       <div class="${cardClass}" data-poi-id="${p.id}">
         <div class="journey-number-badge">${String(p.order).padStart(2, '0')}</div>
         <div class="journey-info-group">
           <div class="journey-meta-row">
-            <span class="journey-order-tag">ĐIỂM DỪNG ${p.order} / 06</span>
-            <span class="journey-duration">· ${p.duration || '04:00'}</span>
+            <span class="journey-order-tag">${t('stopsTab.stopPrefix', currentLang)} ${p.order} / 06</span>
+            <span class="journey-duration">· ${poiStory?.duration || '04:00'}</span>
           </div>
-          <div class="journey-title">${p.titleEn}</div>
-          <div class="journey-title-vn">${p.title}</div>
+          <div class="journey-title">${mainTitle}</div>
+          <div class="journey-title-vn">${subTitle}</div>
         </div>
         ${statusBadge}
       </div>
@@ -544,7 +569,7 @@ export function transitionToMainApp() {
     setTimeout(() => {
       arrivalScreen.style.display = 'none';
       if (mainAppContainer) {
-        mainAppContainer.style.display = 'flex';
+        mainAppContainer.style.display = 'block';
         mainAppContainer.style.opacity = '0';
         mainAppContainer.style.transition = 'opacity 0.4s ease';
 

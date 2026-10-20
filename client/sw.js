@@ -2,18 +2,18 @@
  * Service Worker cho MultiGuide Heritage PWA
  * Hỗ trợ lưu cache tài nguyên tĩnh, font chữ và chạy offline khi mất sóng di động
  */
-const CACHE_NAME = 'multiguide-v2.3';
+const CACHE_NAME = 'multiguide-v2.8';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
-  './css/variables.css',
-  './css/base.css',
-  './css/components.css',
-  './css/map.css',
-  './style.css',
-  './js/app.js?v=2.2',
+  './css/variables.css?v=2.8',
+  './css/base.css?v=2.8',
+  './css/components.css?v=2.8',
+  './css/map.css?v=2.8',
+  './js/app.js?v=2.8',
+  './js/i18n.js',
   './js/config.js',
   './js/state.js',
   './js/api.js',
@@ -21,6 +21,10 @@ const STATIC_ASSETS = [
   './js/map.js',
   './js/audio.js',
   './js/ui.js',
+  './assets/icons/flag-vn.svg',
+  './assets/icons/flag-en.svg',
+  './assets/icons/flag-zh.svg',
+  './assets/icons/flag-ja.svg',
   './assets/icons/logo-mark.svg',
   './assets/icons/compass-n.svg',
   './assets/icons/recenter.svg',
@@ -29,8 +33,9 @@ const STATIC_ASSETS = [
   './assets/icons/tab-explore.svg',
   './assets/icons/tab-stops.svg',
   './assets/icons/tab-pass.svg',
+  './assets/icons/ticket-watermark.svg',
   './assets/icons/lock.svg',
-  './assets/khue_van_cac.png'
+  './assets/hero-khue-van-cac.jpg'
 ];
 
 self.addEventListener('install', (event) => {

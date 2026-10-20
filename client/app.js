@@ -270,10 +270,11 @@ function initMap() {
     zoomControl: true
   }).setView([initialLat, initialLng], 18);
 
-  // Thêm OpenStreetMap Tile
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  // Thêm CARTO Voyager Tile
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    subdomains: 'abcd',
     maxZoom: 20,
-    attribution: '&copy; OpenStreetMap contributors | MultiGuide'
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
   }).addTo(map);
 
   poiMarkersLayer = L.layerGroup().addTo(map);

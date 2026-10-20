@@ -405,75 +405,48 @@
 }
 
 /* ========================================================
-   5. Responsive Layout: Tablet & Desktop Split Map Screen
+/* ========================================================
+   5. Responsive Layout: Mobile-First App Shell on Desktop
    ======================================================== */
 @media (min-width: 768px) {
   .map-screen {
-    width: 100vw;
-    max-width: 100vw;
-    height: 100vh;
-    margin: 0;
-    display: grid;
-    grid-template-columns: 1fr var(--desktop-sidebar-width, 420px);
+    width: 100%;
+    max-width: var(--max-app-width, 440px);
+    height: 94dvh;
+    max-height: 920px;
+    margin: auto;
+    border-radius: 36px;
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(24, 24, 22, 0.08);
+    position: relative;
+    overflow: hidden;
   }
 
   #mapCanvas {
-    grid-column: 1;
     width: 100%;
     height: 100%;
     position: relative;
   }
 
-  /* Header nổi trên bản đồ ở cột 1 */
-  .map-floating-header {
-    left: 24px;
-    right: auto;
-    width: 360px;
-    top: 24px;
-  }
-
-  .map-gps-pill {
-    left: 24px;
-    top: 108px;
-  }
-
   .btn-map-recenter {
-    left: auto;
-    right: calc(var(--desktop-sidebar-width, 420px) + 24px);
-    bottom: 32px;
+    right: 20px;
+    bottom: calc(76px + var(--safe-bottom));
   }
 
   .map-compass-hud {
-    right: calc(var(--desktop-sidebar-width, 420px) + 24px);
-    top: 24px;
+    right: 20px;
+    top: 20px;
   }
 
   .map-scale-hud {
-    left: 24px;
-    bottom: 32px;
+    left: 20px;
+    bottom: calc(76px + var(--safe-bottom));
   }
 
   .proximity-beacon-toast {
-    left: calc(50% - (var(--desktop-sidebar-width, 420px) / 2));
-    top: 24px;
-  }
-}
-
-@media (min-width: 1200px) {
-  .map-screen {
-    grid-template-columns: 1fr 460px;
-  }
-
-  .btn-map-recenter {
-    right: 484px;
-  }
-
-  .map-compass-hud {
-    right: 484px;
-  }
-
-  .proximity-beacon-toast {
-    left: calc(50% - 230px);
+    left: 20px;
+    right: 20px;
+    top: 20px;
+    transform: none;
   }
 }
 

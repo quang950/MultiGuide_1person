@@ -7,6 +7,7 @@
   
   <meta name="theme-color" content="#F8F6F0">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="manifest.json">
   
@@ -19,11 +20,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <!-- Design System CSS Tokens & Components -->
-  <link rel="stylesheet" href="css/variables.css">
-  <link rel="stylesheet" href="css/base.css">
-  <link rel="stylesheet" href="css/components.css">
-  <link rel="stylesheet" href="css/map.css">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/variables.css?v=2.8">
+  <link rel="stylesheet" href="css/base.css?v=2.8">
+  <link rel="stylesheet" href="css/components.css?v=2.8">
+  <link rel="stylesheet" href="css/map.css?v=2.8">
 </head>
 <body>
 
@@ -32,24 +32,19 @@
        ========================================== -->
   <div class="arrival-screen" id="arrivalScreen">
     
-    <!-- 1. Header Thương hiệu & Hanoi Edition -->
+    <!-- 1. Header Thương hiệu & Hanoi Edition (Glassmorphism mờ nhẹ, bo tròn mềm mại) -->
     <header class="arrival-header">
       <div class="brand-group">
         <img src="assets/icons/logo-mark.svg" alt="MultiGuide Logo" class="brand-logo-icon">
-        <span class="brand-title">MultiGuide</span>
+        <span class="brand-title" data-i18n="arrival.brandTitle">MultiGuide</span>
       </div>
-      <div class="edition-badge">HANOI EDITION</div>
+      <div class="edition-badge" data-i18n="arrival.editionBadge">HANOI EDITION</div>
     </header>
 
-    <!-- 2. Hero Khuê Văn Các với Mask Gradient -->
-    <div class="arrival-hero">
-      <img src="assets/hero-khue-van-cac.jpg" alt="Khuê Văn Các — Văn Miếu" class="hero-img">
-    </div>
-
-    <!-- 3. Nội dung Di sản & Typography -->
+    <!-- 2. Nội dung Di sản & Typography (Căn giữa đối xứng hoàn hảo) -->
     <div class="arrival-body">
       
-      <!-- Thanh chuyển đổi ngôn ngữ (Language Switcher Pill - FE-2.2) -->
+      <!-- Thanh chuyển đổi ngôn ngữ (Language Switcher Pill: VI, EN, ZH, JA) -->
       <nav class="lang-switcher-wrapper" aria-label="Ngôn ngữ thuyết minh">
         <div class="lang-switcher-pill" role="radiogroup" id="languageSwitcher">
           <button type="button" class="lang-btn" role="radio" aria-checked="false" data-lang="vi">
@@ -60,6 +55,10 @@
             <img src="assets/icons/flag-en.svg" alt="UK Flag" class="lang-flag-img">
             <span class="lang-text">English</span>
           </button>
+          <button type="button" class="lang-btn" role="radio" aria-checked="false" data-lang="zh">
+            <img src="assets/icons/flag-zh.svg" alt="China Flag" class="lang-flag-img">
+            <span class="lang-text">中文</span>
+          </button>
           <button type="button" class="lang-btn" role="radio" aria-checked="false" data-lang="ja">
             <img src="assets/icons/flag-ja.svg" alt="Japan Flag" class="lang-flag-img">
             <span class="lang-text">日本語</span>
@@ -69,9 +68,9 @@
 
       <!-- Khối Giới thiệu Nghệ thuật (FE-2.1) -->
       <section class="arrival-intro">
-        <div class="arrival-tag">TEMPLE OF LITERATURE · HANOI</div>
-        <h1 class="arrival-title">Every step,<br>a story.</h1>
-        <p class="arrival-subtitle">Wander at your own pace. Let the stories find you, automatically, as you explore.</p>
+        <div class="arrival-tag" data-i18n="arrival.tag">TEMPLE OF LITERATURE · HANOI</div>
+        <h1 class="arrival-title" data-i18n-html="arrival.title">Every step,<br>a story.</h1>
+        <p class="arrival-subtitle" data-i18n="arrival.subtitle">Wander at your own pace. Let the stories find you, automatically, as you explore.</p>
       </section>
 
       <!-- ==========================================
@@ -89,15 +88,15 @@
           <!-- Nửa trên của thẻ vé -->
           <div class="pass-card-top">
             <div class="pass-header-row">
-              <span class="pass-category-tag">DIGITAL HERITAGE PASS</span>
+              <span class="pass-category-tag" data-i18n="arrival.passCategory">DIGITAL HERITAGE PASS</span>
               <img src="assets/icons/heritage-temple.svg" alt="Văn Miếu Temple" class="pass-temple-icon">
             </div>
 
-            <h2 class="pass-card-title">24-Hour Temple Pass</h2>
+            <h2 class="pass-card-title" data-i18n="arrival.passTitle">24-Hour Temple Pass</h2>
 
             <div class="pass-price-row">
-              <span class="pass-price-amount">$5.00 USD</span>
-              <span class="pass-validity-hint">Starts when you activate</span>
+              <span class="pass-price-amount" data-i18n="arrival.passPrice">$5.00 USD</span>
+              <span class="pass-validity-hint" data-i18n="arrival.passValidity">Starts when you activate</span>
             </div>
           </div>
 
@@ -113,35 +112,35 @@
             <ul class="pass-features-list">
               <li class="pass-feature-item">
                 <span class="check-icon">✓</span>
-                <span>GPS Geofence Audio</span>
+                <span data-i18n="arrival.feat1">GPS Geofence Audio</span>
               </li>
               <li class="pass-feature-item">
                 <span class="check-icon">✓</span>
-                <span>6 POIs</span>
+                <span data-i18n="arrival.feat2">6 Sacred Axis POIs</span>
               </li>
               <li class="pass-feature-item">
                 <span class="check-icon">✓</span>
-                <span>Offline Ready</span>
+                <span data-i18n="arrival.feat3">Offline Ready</span>
               </li>
             </ul>
 
             <div class="pass-meta-row">
-              <span class="pass-collection-name">VĂN MIẾU COLLECTION</span>
-              <span class="pass-serial-code">HN — 001</span>
+              <span class="pass-collection-name" data-i18n="arrival.collectionTag">VAN MIEU COLLECTION</span>
+              <span class="pass-serial-code" data-i18n="arrival.collectionCode">HN — 001</span>
             </div>
           </div>
         </article>
 
         <!-- 2. Nút kích hoạt vé 1-chạm đen tuyền (FE-2.4) -->
         <button type="button" class="btn-activate-pass" id="btnActivatePass">
-          <span class="btn-text">Kích hoạt vé tham quan (1-Tap Buy)</span>
+          <span class="btn-text" data-i18n="arrival.unlockBtn">Unlock & Begin Audio Tour</span>
           <span class="btn-spinner" aria-hidden="true"></span>
         </button>
 
         <!-- 3. Footer cam kết bảo mật (FE-2.4) -->
         <footer class="pass-security-footer">
           <img src="assets/icons/lock.svg" alt="Bảo mật" class="security-lock-icon">
-          <span>Secure checkout · No app download needed</span>
+          <span data-i18n="arrival.securityFooter">Secure checkout · No app download needed</span>
         </footer>
 
       </div>
@@ -156,22 +155,12 @@
     <!-- 1. Canvas Bản đồ Leaflet Zen (FE-3.1) -->
     <div id="mapCanvas"></div>
 
-    <!-- 2. Thẻ Header nổi Frosted Glass (FE-3.4) -->
-    <header class="map-floating-header">
-      <div class="header-text-group">
-        <span class="header-category-tag">MULTIGUIDE - HANOI</span>
-        <h1 class="header-monument-title">Temple of Literature</h1>
-        <span class="header-subtitle">Văn Miếu – Quốc Tử Giám</span>
-      </div>
-      <button type="button" class="btn-header-options" id="btnMapOptions" aria-label="Tùy chọn hiển thị">
-        <img src="assets/icons/filter-sliders.svg" alt="Tùy chọn">
-      </button>
-    </header>
+
 
     <!-- 3. Pill trạng thái GPS Audio ON (FE-3.4) -->
     <div class="map-gps-pill" id="gpsAudioStatusPill">
       <span class="gps-dot"></span>
-      <span>GPS audio on</span>
+      <span data-i18n="map.gpsAudioOn">GPS audio on</span>
     </div>
 
     <!-- 4. La bàn hướng Bắc (FE-3.4) -->
@@ -181,12 +170,12 @@
 
     <!-- 5. Thước tỉ lệ 20 m (FE-3.4) -->
     <div class="map-scale-hud" aria-hidden="true">
-      <span class="scale-label">20 m</span>
+      <span class="scale-label" data-i18n="map.scale">20 m</span>
       <div class="scale-bracket"></div>
     </div>
 
     <!-- 6. Nút Recenter vị trí du khách (FE-3.4) -->
-    <button type="button" class="btn-map-recenter" id="btnRecenterMap" aria-label="Căn giữa vị trí của bạn">
+    <button type="button" class="btn-map-recenter" id="btnRecenterMap" aria-label="Căn giữa vị trí của bạn" data-i18n-aria="map.recenterAria">
       <img src="assets/icons/recenter.svg" alt="Vị trí của bạn">
     </button>
 
@@ -200,24 +189,6 @@
     <section class="heritage-bottom-sheet" id="heritageBottomSheet" aria-label="Trình phát thuyết minh di sản">
       
       <!-- Thanh nắm kéo cảm ứng (Drag Handle) -->
-      <!-- Bảng chờ ban đầu khi chưa chọn POI (Desktop & Tablet Idle State) -->
-      <div class="sheet-idle-placeholder" id="sheetIdlePlaceholder">
-        <div class="idle-content-box">
-          <div class="idle-icon-wrap">
-            <img src="assets/icons/heritage-temple.svg" alt="Văn Miếu" class="idle-temple-icon">
-          </div>
-          <span class="idle-category">MULTIGUIDE · HANOI</span>
-          <h3 class="idle-heading">Khám Phá Di Tích Văn Miếu</h3>
-          <p class="idle-desc">
-            Nhấp chọn bất kỳ điểm di tích nào trên trục Thần đạo hoặc di chuyển bước chân lại gần để lắng nghe câu chuyện lịch sử nghìn năm.
-          </p>
-          <div class="idle-badge-pill">
-            <span class="idle-dot">●</span> 6 ĐIỂM DỪNG THUYẾT MINH TỰ ĐỘNG
-          </div>
-        </div>
-      </div>
-
-      <!-- Thanh nắm kéo cảm ứng (Drag Handle) -->
       <div class="sheet-drag-zone" id="sheetDragZone">
         <div class="sheet-drag-handle"></div>
       </div>
@@ -226,11 +197,11 @@
       <div class="mini-player-header" id="miniPlayerHeader">
         <div class="player-meta-top">
           <span class="player-tag">
-            <span class="tag-dot">●</span> STORIES, IN STEP WITH YOU
+            <span class="tag-dot">●</span> <span data-i18n="player.tag">STORIES, IN STEP WITH YOU</span>
           </span>
           <div class="player-meta-actions">
             <span class="player-lang-badge" id="playerLangBadge">EN</span>
-            <button type="button" class="btn-sheet-close" id="btnSheetClose" aria-label="Đóng bảng thuyết minh">✕</button>
+            <button type="button" class="btn-sheet-close" id="btnSheetClose" aria-label="Đóng bảng thuyết minh" data-i18n-aria="player.closeAria">✕</button>
           </div>
         </div>
 
@@ -241,7 +212,7 @@
           </div>
 
           <!-- Nút tròn đen tuyền Play/Pause -->
-          <button type="button" class="btn-player-toggle" id="btnPlayerToggle" aria-label="Phát hoặc tạm dừng thuyết minh">
+          <button type="button" class="btn-player-toggle" id="btnPlayerToggle" aria-label="Phát hoặc tạm dừng thuyết minh" data-i18n-aria="player.playAria">
             <svg class="icon-play" id="iconPlay" viewBox="0 0 24 24" width="18" height="18" fill="none">
               <polygon points="6,4 20,12 6,20" fill="#FFFFFF"/>
             </svg>
@@ -267,7 +238,7 @@
         <div class="story-divider"></div>
         
         <div class="story-body">
-          <div class="story-badge">DI SẢN NGHÌN NĂM</div>
+          <div class="story-badge" data-i18n="player.badge">DI SẢN NGHÌN NĂM</div>
           <h4 class="story-heading" id="storyHeading">Khuê Văn Các — Biểu Tượng Trí Tuệ Thăng Long</h4>
           
           <p class="story-paragraph" id="storyParagraph">
@@ -293,9 +264,9 @@
     <section class="tab-view-overlay" id="tabViewStops" aria-label="Danh sách điểm tham quan">
       <div class="tab-view-header">
         <div class="tab-view-heading-group">
-          <span class="tab-view-badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
-          <h2 class="tab-view-title">Hành Trình Di Sản</h2>
-          <p class="tab-view-subtitle">Chạm vào bất kỳ điểm nào để xem vị trí trên bản đồ và lắng nghe thuyết minh</p>
+          <span class="tab-view-badge" data-i18n="stopsTab.badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
+          <h2 class="tab-view-title" data-i18n="stopsTab.title">Hành Trình Di Sản</h2>
+          <p class="tab-view-subtitle" data-i18n="stopsTab.subtitle">Chạm vào bất kỳ điểm nào để xem vị trí trên bản đồ và lắng nghe thuyết minh</p>
         </div>
         <button type="button" class="btn-close-tab-view" id="btnCloseStopsView" aria-label="Quay lại bản đồ">✕</button>
       </div>
@@ -309,9 +280,9 @@
     <section class="tab-view-overlay" id="tabViewPass" aria-label="Thẻ vé số di sản">
       <div class="tab-view-header">
         <div class="tab-view-heading-group">
-          <span class="tab-view-badge">DIGITAL HERITAGE PASS</span>
-          <h2 class="tab-view-title">Vé Của Tôi</h2>
-          <p class="tab-view-subtitle">Vé tham quan điện tử tích hợp thuyết minh tự động</p>
+          <span class="tab-view-badge" data-i18n="passTab.badge">DIGITAL HERITAGE PASS</span>
+          <h2 class="tab-view-title" data-i18n="passTab.title">Vé Của Tôi</h2>
+          <p class="tab-view-subtitle" data-i18n="passTab.subtitle">Vé tham quan điện tử tích hợp thuyết minh tự động</p>
         </div>
         <button type="button" class="btn-close-tab-view" id="btnClosePassView" aria-label="Quay lại bản đồ">✕</button>
       </div>
@@ -342,7 +313,7 @@
 
             <!-- Đồng hồ đếm ngược 24h hiệu lực vé sống động -->
             <div class="pass-countdown-box">
-              <span class="countdown-label">THỜI GIAN HIỆU LỰC CÒN LẠI</span>
+              <span class="countdown-label" data-i18n="passTab.timeRemaining">THỜI GIAN HIỆU LỰC CÒN LẠI</span>
               <div class="countdown-digits-row">
                 <span class="countdown-value" id="passCountdownClock">23:59:59</span>
                 <span class="countdown-tag">LIVE</span>
@@ -353,19 +324,19 @@
           <div class="royal-card-perks">
             <div class="perk-item">
               <span class="perk-check">✓</span>
-              <span>Trọn bộ 6 điểm thuyết minh âm thanh di sản chất lượng cao</span>
+              <span data-i18n="passTab.featAudio">Trọn bộ 6 điểm thuyết minh âm thanh di sản chất lượng cao</span>
             </div>
             <div class="perk-item">
               <span class="perk-check">✓</span>
-              <span>Định vị GPS tự động phát hiện khi bước lại gần</span>
+              <span data-i18n="passTab.featGps">Định vị GPS tự động phát hiện khi bước lại gần</span>
             </div>
             <div class="perk-item">
               <span class="perk-check">✓</span>
-              <span>Hỗ trợ 3 ngôn ngữ: Tiếng Việt, English, 日本語</span>
+              <span data-i18n="passTab.featLang">Hỗ trợ 4 ngôn ngữ: Tiếng Việt, English, 中文, 日本語</span>
             </div>
             <div class="perk-item">
               <span class="perk-check">✓</span>
-              <span>Bản đồ di sản Zen Offline không cần tải app ngoài</span>
+              <span data-i18n="passTab.featOffline">Bản đồ di sản Zen Offline không cần tải app ngoài</span>
             </div>
           </div>
         </div>
@@ -373,22 +344,23 @@
         <!-- Cài đặt & Tiện ích thêm -->
         <div class="pass-actions-group">
           <div class="pass-option-row">
-            <span class="option-label">Ngôn ngữ thuyết minh:</span>
+            <span class="option-label" data-i18n="passTab.langLabel">Ngôn ngữ thuyết minh:</span>
             <div class="pass-lang-pills" id="passLangSwitcher">
               <button type="button" class="lang-pill" data-lang="vi">Tiếng Việt</button>
               <button type="button" class="lang-pill" data-lang="en">English</button>
+              <button type="button" class="lang-pill" data-lang="zh">中文</button>
               <button type="button" class="lang-pill" data-lang="ja">日本語</button>
             </div>
           </div>
 
           <button type="button" class="btn-pass-action btn-offline-download" id="btnDownloadOffline">
             <span class="action-icon">💾</span>
-            <span>Tải dữ liệu Offline trọn gói (PWA)</span>
+            <span data-i18n="passTab.btnDownload">Tải dữ liệu Offline trọn gói (PWA)</span>
           </button>
           
           <button type="button" class="btn-pass-action btn-refresh-pass" id="btnRefreshPass">
             <span class="action-icon">🔄</span>
-            <span>Làm mới trạng thái vé</span>
+            <span data-i18n="passTab.btnRefresh">Làm mới trạng thái vé</span>
           </button>
         </div>
       </div>
@@ -423,6 +395,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Modular JS Application Controller -->
-  <script type="module" src="js/app.js?v=2.2"></script>
+  <script type="module" src="js/app.js?v=2.8"></script>
 </body>
 </html>

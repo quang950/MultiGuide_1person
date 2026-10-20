@@ -43,6 +43,17 @@ export const POI_STORIES = {
       subtext: '一対の華表柱の上には神獣が座し、真理の探究と学問の神聖さを象徴しています。',
       duration: '3:45',
       durationSec: 225
+    },
+    zh: {
+      title: '文庙门 (大门)',
+      subtitle: '第 01/06 站 · 千年圣域之门',
+      badge: '神道入口',
+      heading: '文庙大门 — 神道轴线的庄严起点',
+      paragraph: '文庙大门始建于1070年李圣宗时期，是一座庄严的三开门式建筑。门前立有一对“下马碑”，明文规定凡文武百官乃至皇亲国戚行经于此，皆须下马步行，以示对儒学至圣先师与学问道德的崇高敬意。',
+      quote: '“下马敬贤 — 在圣贤学问与道德面前，人人皆怀敬畏之心。”',
+      subtext: '大门两侧立有华表石柱，顶端雕刻神兽，象征着国家选拔人才的公正、廉明与纯正。',
+      duration: '3:45',
+      durationSec: 225
     }
   },
   2: {
@@ -76,7 +87,17 @@ export const POI_STORIES = {
       heading: '大中門 — 儒学の中庸思想を体現する門',
       paragraph: '樹齢数百年の古木に囲まれた静寂な空間に佇む大中門は、儒教の根本理念である「中庸」（過不足なく調和を保つこと）を象徴しています。左右には「成徳」「達材」という二つの小門があり、徳と才能を兼ね備えた人物の育成を願って名付けられました。',
       quote: '「中庸の徳、それ至れるかな — 調和と節度こそ真の学びの礎。」',
-      subtext: '静寂な緑陰の小道は、訪れる者の心を落ち着かせ、次の神聖な空間へと誘います。',
+      duration: '4:10',
+      durationSec: 250
+    },
+    zh: {
+      title: '大中门',
+      subtitle: '第 02/06 站 · 儒家中庸之道',
+      badge: '历史空间',
+      heading: '大中门 — 宁静中的中庸哲理',
+      paragraph: '大中门掩映在数百年参天古树的绿荫之中，命名源自儒家经典所倡导的“中庸”之道——秉持公正、不偏不倚的处世修身准则。门两侧各辟有一座小门，分别名为“成德”与“达材”，寄托了培育才德兼备国之栋梁的美好期许。',
+      quote: '“中庸为德 — 处世中正和平，立身以德为本。”',
+      subtext: '漫步于林荫小道，微风轻拂，让来访者洗净心尘，步入更神圣的学问殿堂。',
       duration: '4:10',
       durationSec: 250
     }
@@ -115,6 +136,17 @@ export const POI_STORIES = {
       subtext: 'かつて科挙合格者たちが皇帝へ拝謁する前に、ここで詩文の批評会を開いたと伝えられています。',
       duration: '4:36',
       durationSec: 276
+    },
+    zh: {
+      title: '奎文阁',
+      subtitle: '第 03/06 站 · 奎星璀璨耀文光',
+      badge: '河内文化标志',
+      heading: '奎文阁 — 昇龙古都的智慧象征',
+      paragraph: '奎文阁建于1805年阮朝时期，是首都河内的文化标志性建筑。木质双层楼阁四面辟有象征奎宿之光的圆形窗扉，倒映在正方形的天光井水面上，完美展现了古代“天圆地方”的宇宙哲学与天人合一境界。',
+      quote: '“奎星天朗人文友 — 奎光朗照，斯文鼎盛，天下太平。”',
+      subtext: '古时科举及第的举人们在晋见皇帝之前，常在此聚会品评绝妙诗文。',
+      duration: '4:36',
+      durationSec: 276
     }
   },
   4: {
@@ -149,6 +181,17 @@ export const POI_STORIES = {
       paragraph: '天の光を意味する四角い天光井の両脇には、亀の背に乗せられた82基の進士碑が整然と並びます。ユネスコ世界の記憶に登録されており、1442年から1779年までの科挙合格者1,304名の名が刻まれ、「賢才は国家の元気なり」という不滅の哲学を今に伝えています。',
       quote: '「賢才は国家の元気なり — 元気盛んなれば国運隆盛なり。」',
       subtext: '不老長寿の象徴である石亀が重い石碑を支える姿は、学問の永続性と国家への貢献を表しています。',
+      duration: '5:12',
+      durationSec: 312
+    },
+    zh: {
+      title: '天光井与进士题名碑',
+      subtitle: '第 04/06 站 · 联合国教科文组织世界记忆',
+      badge: '世界记忆名录',
+      heading: '天光井与82座进士碑 — 铭记千秋栋梁',
+      paragraph: '天光井意为“映照上天之光的明镜”。水池两侧整齐排列着82座由灵龟驮负的进士题名碑，被列入联合国教科文组织世界记忆名录。碑上镌刻着1442至1779年间1304位进士姓名，昭示着千古不朽的真理。',
+      quote: '“贤才是国家之元气 — 元气盛则国势强，元气衰则国势弱。”',
+      subtext: '石龟驮碑寓意着学术精神与国家文脉的长青永驻，以及后世对先贤的无限追思。',
       duration: '5:12',
       durationSec: 312
     }
@@ -187,6 +230,17 @@ export const POI_STORIES = {
       subtext: '殿内に掲げられた扁額「万世師表」は、儒学への最高級の敬意を表しています。',
       duration: '4:50',
       durationSec: 290
+    },
+    zh: {
+      title: '大成殿',
+      subtitle: '第 05/06 站 · 儒学最高祭祀殿堂',
+      badge: '庄严正殿',
+      heading: '大成殿 — 尊奉万世师表之圣所',
+      paragraph: '大成殿是整个文庙建筑群的核心与最神圣所在。九开间宏伟的铁木大殿雕梁画栋、金碧辉煌。殿内正中庄严肃穆供奉至圣先师孔子神位，两侧为复圣颜回、宗圣曾子、述圣子思、亚圣孟子“四配”。',
+      quote: '“万世师表 — 照亮东方文明的千古师德之光。”',
+      subtext: '殿堂正中高悬清康熙皇帝御题的“万世师表”金字匾额，辉映千载。',
+      duration: '4:50',
+      durationSec: 290
     }
   },
   6: {
@@ -223,8 +277,29 @@ export const POI_STORIES = {
       subtext: '二階には科挙の及第者が着用した官服や筆硯、往時の試験風景の模型が展示されています。',
       duration: '5:30',
       durationSec: 330
+    },
+    zh: {
+      title: '太学 (国子监)',
+      subtitle: '第 06/06 站 · 越南第一所国立大学',
+      badge: '古代理学府',
+      heading: '太学堂 — 国家英才的摇篮',
+      paragraph: '国子监由李仁宗于1076年创建，被公认为越南历史上的第一所最高国立学府。这里特别纪念敬仰被誉为“帝师”的一代名儒朱文安，以及李圣宗、李仁宗、黎圣宗三位开创并繁荣国家文治的贤明君主。',
+      quote: '“尊师重道 — 崇尚师尊，勤学笃行，修身齐家以报江山。”',
+      subtext: '二楼陈列着进士朝服、青石砚台以及昔日殿试科举的微缩场景模型。',
+      duration: '5:30',
+      durationSec: 330
     }
   }
+};
+
+// Ánh xạ POI ID (1-6) sang UUID POI trên Backend/Supabase Database
+export const POI_GUID_MAP = {
+  1: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
+  2: '3ede2134-c305-4270-9413-39c9743f9cb8',
+  3: '70dabf88-5450-48e7-9603-b753f5350047',
+  4: 'cc63b968-096f-4b06-b4f8-19f8f829ef42',
+  5: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
+  6: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd'
 };
 
 /**
@@ -439,10 +514,11 @@ export class AudioEngine {
    */
   async loadAudioForPoi(poiId) {
     const lang = store.get().selectedLang || 'vi';
+    const targetGuid = POI_GUID_MAP[poiId] || poiId;
 
     try {
-      console.log(`[MultiGuide Audio] Gọi API Backend lấy Signed URL cho POI ${poiId} (${lang})...`);
-      const detail = await apiService.getPoiDetail(poiId, lang);
+      console.log(`[MultiGuide Audio] Gọi API Backend lấy Signed URL cho POI ${poiId} (${targetGuid}, ${lang})...`);
+      const detail = await apiService.getPoiDetail(targetGuid, lang);
 
       if (detail && detail.audioUrl) {
         console.log(`[MultiGuide Audio] Đã nhận Signed URL Supabase:`, detail.audioUrl);
@@ -450,7 +526,7 @@ export class AudioEngine {
         return;
       }
     } catch (e) {
-      console.info(`[MultiGuide Audio] Backend đang offline/cold start hoặc chưa có audio file thật. Áp dụng âm thanh chuông di sản 432Hz.`);
+      console.warn(`[MultiGuide Audio] Không thể tải audio thật (${e.message}). Áp dụng âm thanh chuông di sản 432Hz.`);
     }
 
     // Fallback mượt mà bằng âm thanh chuông hòa âm thiền định
