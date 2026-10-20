@@ -1,7 +1,7 @@
 import { CONFIG } from './config.js';
 import { store } from './state.js';
 import { apiService } from './api.js';
-import { initLanguageSwitcher, initPassCheckout } from './ui.js';
+import { initLanguageSwitcher, initPassCheckout, initAdminLogin } from './ui.js';
 import { initI18n } from './i18n.js';
 
 console.log('[MultiGuide PWA] Khởi tạo ứng dụng di sản...');
@@ -18,8 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // 3. Khởi tạo Language Switcher Pill (FE-2.2)
   initLanguageSwitcher();
 
-  // 3. Khởi tạo Thẻ vé số & Nút kích hoạt 1-chạm (FE-2.3 + FE-2.4)
+  // 4. Khởi tạo Thẻ vé số & Nút kích hoạt 1-chạm (FE-2.3 + FE-2.4)
   initPassCheckout();
+
+  // 5. Khởi tạo Nút nổi Admin & Modal đăng nhập
+  initAdminLogin();
 
   // 4. Đăng ký Service Worker PWA (FE-7.1)
   if ('serviceWorker' in navigator) {

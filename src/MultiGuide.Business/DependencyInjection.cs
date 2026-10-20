@@ -16,6 +16,7 @@ public static class DependencyInjection
         services.AddScoped<IPoiService, PoiService>();
         services.AddScoped<IContentService, ContentService>();
         services.AddScoped<IPlayLogService, PlayLogService>();
+        services.AddScoped<IAnalyticsService, AnalyticsService>();
         return services;
     }
 }

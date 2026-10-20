@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MultiGuide Portal — Bảng Điều Khiển Quản Trị Di Sản</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/logo-mark.svg">
+
+  <!-- Typography: Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Design System -->
+  <link rel="stylesheet" href="css/variables.css?v=2.9">
+  <link rel="stylesheet" href="css/admin.css?v=3.2">
+</head>
+<body class="admin-body">
+
+  <!-- ==========================================
+       ADMIN NAVIGATION TOPBAR
+       ========================================== -->
+  <header class="admin-topbar">
+    <div class="admin-brand">
+      <img src="assets/icons/logo-mark.svg" alt="MultiGuide" class="admin-logo-img">
+      <div class="admin-brand-info">
+        <h1 class="admin-brand-title">MultiGuide <span>Admin Portal</span></h1>
+        <p class="admin-brand-edition">HỆ THỐNG QUẢN TRỊ NỘI DUNG DI SẢN SỐ</p>
+      </div>
+    </div>
+
+    <!-- Tab Switching Navigation -->
+    <nav class="admin-nav-tabs" aria-label="Menu quản trị">
+      <button type="button" class="admin-tab-btn is-active" data-tab="analytics" id="tabBtnAnalytics">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        <span>Thống Kê Hành Vi</span>
+      </button>
+      <button type="button" class="admin-tab-btn" data-tab="areas" id="tabBtnAreas">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M3 7v1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7m0 1a3 3 0 0 0 6 0V7H3l2-4h14l2 4"/></svg>
+        <span>Khu Di Tích (Tour Areas)</span>
+      </button>
+      <button type="button" class="admin-tab-btn" data-tab="pois" id="tabBtnPois">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span>Điểm Dừng (POIs & Audio)</span>
+      </button>
+    </nav>
+
+    <!-- Admin User Badge & Actions -->
+    <div class="admin-user-menu">
+      <div class="admin-user-badge">
+        <span class="user-role-tag">ADMIN</span>
+        <span class="user-email-text" id="adminUserEmail">quanghi176@gmail.com</span>
+      </div>
+      <a href="index.html" class="btn-portal-action" title="Quay lại giao diện người dùng">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+        <span>Xem App Khách</span>
+      </a>
+      <button type="button" class="btn-portal-action btn-logout" id="btnAdminLogout" title="Đăng xuất">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+        <span>Đăng Xuất</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN CONTENT CONTAINER
+       ========================================== -->
+  <main class="admin-main-container">
+
+    <!-- TAB 1: THỐNG KÊ HÀNH VI DU KHÁCH (ANALYTICS) -->
+    <section class="admin-tab-panel is-active" id="panelAnalytics">
+      <div class="panel-header-row">
+        <div>
+          <h2 class="panel-title">Báo Cáo Hiệu Suất & Hành Vi Du Khách</h2>
+          <p class="panel-subtitle">Dữ liệu thực tế từ tương tác quét vé, nghe thuyết minh và phân khúc ngôn ngữ.</p>
+        </div>
+        <button type="button" class="btn-refresh" id="btnRefreshAnalytics">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>Làm Mới Số Liệu</span>
+        </button>
+      </div>
+
+      <!-- KPI Cards Grid -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap" style="color: #2563eb; background: #eff6ff;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-label">Tổng Vé Tham Quan</span>
+            <h3 class="kpi-value" id="kpiTotalPasses">--</h3>
+            <span class="kpi-subtext">AccessPass đã cấp</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap" style="color: #16a34a; background: #f0fdf4;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-label">Doanh Thu Vé (Mock)</span>
+            <h3 class="kpi-value" id="kpiTotalRevenue">--</h3>
+            <span class="kpi-subtext">Giao dịch thành công</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap" style="color: #d97706; background: #fffbeb;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-label">Tổng Lượt Nghe Audio</span>
+            <h3 class="kpi-value" id="kpiTotalPlays">--</h3>
+            <span class="kpi-subtext">Lượt kích hoạt thuyết minh</span>
+          </div>
+        </div>
+
+        <div class="kpi-card">
+          <div class="kpi-icon-wrap" style="color: #9333ea; background: #faf5ff;">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <div class="kpi-details">
+            <span class="kpi-label">Tổng Thời Lượng Nghe</span>
+            <h3 class="kpi-value" id="kpiTotalListened">--</h3>
+            <span class="kpi-subtext">Thời gian du khách trải nghiệm</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts & Tables Split Section -->
+      <div class="analytics-split-layout">
+        <!-- Top POIs Section -->
+        <div class="admin-card">
+          <div class="card-header">
+            <h3 class="card-title">Top Địa Điểm Được Du Khách Nghe Nhiều Nhất</h3>
+            <p class="card-desc">Xếp hạng theo lượt nghe và thời lượng để ưu tiên đầu tư nội dung.</p>
+          </div>
+          <div class="table-responsive">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Hạng</th>
+                  <th>Điểm Thuyết Minh (POI)</th>
+                  <th>Khu Di Tích</th>
+                  <th class="text-right">Lượt Nghe</th>
+                  <th class="text-right">Thời Gian</th>
+                  <th class="text-right">Nghe Xong</th>
+                </tr>
+              </thead>
+              <tbody id="topPoisTableBody">
+                <tr><td colspan="6" class="text-center text-muted">Đang tải dữ liệu...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Language Distribution Section -->
+        <div class="admin-card">
+          <div class="card-header">
+            <h3 class="card-title">Phân Bổ Ngôn Ngữ Khách Lựa Chọn</h3>
+            <p class="card-desc">Tỷ lệ sử dụng giúp xác định nguồn khách du lịch chính.</p>
+          </div>
+          <div class="language-stats-container" id="languageStatsList">
+            <p class="text-muted">Đang phân tích dữ liệu...</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: QUẢN LÝ KHU DI TÍCH (TOUR AREAS) -->
+    <section class="admin-tab-panel" id="panelAreas">
+      <div class="panel-header-row">
+        <div>
+          <h2 class="panel-title">Quản Lý Khu Di Tích & Danh Thắng</h2>
+          <p class="panel-subtitle">Tạo khu di tích mới, tự động tìm tọa độ và xuất mã QR phục vụ bán vé tại cổng.</p>
+        </div>
+        <button type="button" class="btn-primary" id="btnOpenNewAreaModal">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Thêm Khu Di Tích Mới</span>
+        </button>
+      </div>
+
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Tên Khu Di Tích</th>
+                <th>Mã (Code)</th>
+                <th>Tọa Độ Trung Tâm</th>
+                <th>Bán Kính</th>
+                <th>Giá Vé</th>
+                <th>Thời Hạn</th>
+                <th>Trạng Thái</th>
+                <th class="text-right">Hành Động</th>
+              </tr>
+            </thead>
+            <tbody id="areasTableBody">
+              <tr><td colspan="8" class="text-center text-muted">Đang tải danh sách khu...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: QUẢN LÝ ĐIỂM DỪNG (POIS & AUDIO) -->
+    <section class="admin-tab-panel" id="panelPois">
+      <div class="panel-header-row">
+        <div>
+          <h2 class="panel-title">Quản Lý Điểm Dừng Thuyết Minh (POIs)</h2>
+          <p class="panel-subtitle">Định vị ghim trên bản đồ chuẩn xác từng mét và sinh âm thanh Neural TTS tự động.</p>
+        </div>
+        <div class="filter-actions-group">
+          <select id="selectFilterArea" class="admin-select" aria-label="Lọc theo khu di tích">
+            <option value="">-- Đang nạp danh sách khu --</option>
+          </select>
+          <button type="button" class="btn-primary" id="btnOpenNewPoiModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm Điểm POI Mới</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="admin-card">
+        <div class="table-responsive">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Ảnh</th>
+                <th>Tên Điểm Thuyết Minh</th>
+                <th>Tọa Độ (Lat, Lng)</th>
+                <th>Trigger (m)</th>
+                <th>Ưu Tiên</th>
+                <th>Audio Bản Dịch</th>
+                <th>Trạng Thái</th>
+                <th class="text-right">Hành Động</th>
+              </tr>
+            </thead>
+            <tbody id="poisTableBody">
+              <tr><td colspan="8" class="text-center text-muted">Vui lòng chọn khu di tích...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       MODAL 1: THÊM KHU DI TÍCH (TOUR AREA)
+       KÈM TỰ ĐỘNG TÌM KIẾM TỌA ĐỘ NOMINATIM
+       ========================================== -->
+  <div class="portal-modal-overlay" id="modalNewArea" style="display: none;">
+    <div class="portal-modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">Thêm Khu Di Tích Mới</h3>
+        <button type="button" class="modal-close-btn" id="btnCloseNewAreaModal">&times;</button>
+      </div>
+
+      <form id="formNewArea" class="modal-form">
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="areaNameInput">Tên Khu Di Tích *</label>
+            <input type="text" id="areaNameInput" class="admin-input" placeholder="Ví dụ: Hoàng Thành Thăng Long" required>
+          </div>
+          <div class="form-group">
+            <label for="areaCodeInput">Mã Định Danh (Code) *</label>
+            <input type="text" id="areaCodeInput" class="admin-input" placeholder="hoang-thanh-thang-long" required>
+            <small class="form-hint">Dùng trong đường dẫn QR (chữ thường, gạch ngang)</small>
+          </div>
+        </div>
+
+        <!-- Smart Geocoding Search Box -->
+        <div class="form-group geocode-search-group">
+          <label>Tìm Kiếm Địa Điểm & Tự Động Lấy Tọa Độ (OpenStreetMap)</label>
+          <div class="search-input-wrap">
+            <input type="text" id="areaSearchInput" class="admin-input" placeholder="Nhập địa chỉ, tên di tích (ví dụ: 19C Hoàng Diệu, Ba Đình, Hà Nội)...">
+            <button type="button" class="btn-search-location" id="btnSearchAreaLocation">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <span>Tìm Vị Trí</span>
+            </button>
+          </div>
+          <div class="search-results-dropdown" id="areaSearchResults" style="display: none;"></div>
+        </div>
+
+        <!-- Coordinates & Radius -->
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="areaLatInput">Vĩ Độ (Center Lat) *</label>
+            <input type="number" step="any" id="areaLatInput" class="admin-input" placeholder="21.0338" required>
+          </div>
+          <div class="form-group">
+            <label for="areaLngInput">Kinh Độ (Center Lng) *</label>
+            <input type="number" step="any" id="areaLngInput" class="admin-input" placeholder="105.8433" required>
+          </div>
+          <div class="form-group">
+            <label for="areaRadiusInput">Bán Kính Hoạt Động (m) *</label>
+            <input type="number" id="areaRadiusInput" class="admin-input" value="300" min="50" max="5000" required>
+          </div>
+        </div>
+
+        <!-- Mini-Map Preview -->
+        <div class="form-group">
+          <label>Bản Đồ Định Vị Khu Vực</label>
+          <div id="areaMiniMap" class="mini-map-container"></div>
+          <small class="form-hint">Click trên bản đồ để thay đổi tâm vị trí của khu di tích.</small>
+        </div>
+
+        <!-- Price & TTL -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="areaPriceInput">Giá Vé Pass (USD) *</label>
+            <input type="number" step="0.01" id="areaPriceInput" class="admin-input" value="5.00" required>
+          </div>
+          <div class="form-group">
+            <label for="areaTtlInput">Thời Hạn Hiệu Lực (Giờ) *</label>
+            <input type="number" id="areaTtlInput" class="admin-input" value="24" required>
+          </div>
+        </div>
+
+        <div class="modal-form-actions">
+          <button type="button" class="btn-secondary" id="btnCancelNewArea">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" id="btnSaveNewArea">Lưu Khu Di Tích</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       MODAL 2: THÊM / SỬA POI & SINH AUDIO TTS
+       ========================================== -->
+  <div class="portal-modal-overlay" id="modalPoiDetail" style="display: none;">
+    <div class="portal-modal-card modal-xl">
+      <div class="modal-header">
+        <h3 class="modal-title" id="poiModalTitle">Thêm Điểm Thuyết Minh POI Mới</h3>
+        <button type="button" class="modal-close-btn" id="btnClosePoiModal">&times;</button>
+      </div>
+
+      <form id="formPoiDetail" class="modal-form">
+        <input type="hidden" id="editingPoiId">
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label for="poiAreaSelect">Thuộc Khu Di Tích *</label>
+            <select id="poiAreaSelect" class="admin-select" required></select>
+          </div>
+          <div class="form-group">
+            <label for="poiImageUrlInput">Link Ảnh Hiện Vật / Di Tích (URL)</label>
+            <input type="url" id="poiImageUrlInput" class="admin-input" placeholder="https://example.com/anh-di-tich.jpg">
+          </div>
+        </div>
+
+        <!-- Map Location Picker for POI -->
+        <div class="form-group">
+          <label>Định Vị Tọa Độ POI (Kéo thả ghim hoặc click trên bản đồ)</label>
+          <div class="geocode-search-group" style="margin-bottom: 8px;">
+            <div class="search-input-wrap">
+              <input type="text" id="poiSearchInput" class="admin-input" placeholder="Tìm tên điểm hoặc hiện vật...">
+              <button type="button" class="btn-search-location" id="btnSearchPoiLocation">Tìm Kiếm</button>
+            </div>
+            <div class="search-results-dropdown" id="poiSearchResults" style="display: none;"></div>
+          </div>
+          <div id="poiMiniMap" class="mini-map-container" style="height: 240px;"></div>
+        </div>
+
+        <div class="form-grid-3">
+          <div class="form-group">
+            <label for="poiLatInput">Vĩ Độ (Lat) *</label>
+            <input type="number" step="any" id="poiLatInput" class="admin-input" placeholder="21.0282" required>
+          </div>
+          <div class="form-group">
+            <label for="poiLngInput">Kinh Độ (Lng) *</label>
+            <input type="number" step="any" id="poiLngInput" class="admin-input" placeholder="105.8355" required>
+          </div>
+          <div class="form-group">
+            <label for="poiTriggerInput">Bán Kính Trigger (m) *</label>
+            <input type="number" id="poiTriggerInput" class="admin-input" value="30" min="5" max="200" required>
+          </div>
+        </div>
+
+        <!-- Content & Audio Translation Section -->
+        <div class="poi-translation-box">
+          <div class="translation-header">
+            <h4>Nội Dung Thuyết Minh & Giọng Đọc Đa Ngôn Ngữ</h4>
+            <div class="lang-pills-row">
+              <button type="button" class="btn-lang-tab is-active" data-lang="vi">🇻🇳 Tiếng Việt</button>
+              <button type="button" class="btn-lang-tab" data-lang="en">🇬🇧 English</button>
+              <button type="button" class="btn-lang-tab" data-lang="ja">🇯🇵 日本語</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="poiTitleInput">Tiêu Đề Điểm Dừng *</label>
+            <input type="text" id="poiTitleInput" class="admin-input" placeholder="Ví dụ: Khuê Văn Các" required>
+          </div>
+
+          <div class="form-group">
+            <label for="poiSummaryInput">Nội Dung Tóm Tắt Hiển Thị Cho Khách (2-3 câu)</label>
+            <textarea id="poiSummaryInput" class="admin-textarea" rows="2" placeholder="Tóm tắt ngắn gọn cốt lõi để hiển thị trên thẻ giao diện của du khách..."></textarea>
+          </div>
+
+          <div class="form-group">
+            <div class="label-with-action">
+              <label for="poiScriptInput">Kịch Bản Thuyết Minh Chi Tiết (Dùng để đọc Audio) *</label>
+              <button type="button" class="btn-ai-gen" id="btnAiGenSummary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                <span>Gợi ý bằng Gemini AI</span>
+              </button>
+            </div>
+            <textarea id="poiScriptInput" class="admin-textarea" rows="5" placeholder="Soạn kịch bản thuyết minh đầy đủ cảm xúc văn hóa..." required></textarea>
+          </div>
+
+          <!-- Audio Generator Tool -->
+          <div class="audio-control-card">
+            <div class="audio-control-details">
+              <div class="audio-status-badge" id="audioStatusBadge">
+                <span class="dot-badge"></span>
+                <span id="audioStatusText">Chưa có file Audio</span>
+              </div>
+              <audio id="audioPreviewPlayer" controls style="display: none; height: 36px;"></audio>
+            </div>
+
+            <button type="button" class="btn-tts-generate" id="btnGenerateNeuralTts">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+              <span>🎙️ Sinh Giọng Đọc Tự Động (Edge Neural)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="modal-form-actions">
+          <button type="button" class="btn-secondary" id="btnCancelPoi">Hủy Bỏ</button>
+          <button type="submit" class="btn-primary" id="btnSavePoi">Lưu Điểm POI</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Admin Controller JS -->
+  <script type="module" src="js/admin.js?v=3.2"></script>
+</body>
+</html>

@@ -2,17 +2,20 @@
  * Service Worker cho MultiGuide Heritage PWA
  * Hỗ trợ lưu cache tài nguyên tĩnh, font chữ và chạy offline khi mất sóng di động
  */
-const CACHE_NAME = 'multiguide-v2.8';
+const CACHE_NAME = 'multiguide-v3.3';
 
 const STATIC_ASSETS = [
   './',
   './index.html',
+  './admin.html',
   './manifest.json',
-  './css/variables.css?v=2.8',
-  './css/base.css?v=2.8',
-  './css/components.css?v=2.8',
-  './css/map.css?v=2.8',
-  './js/app.js?v=2.8',
+  './css/variables.css?v=2.9',
+  './css/base.css?v=2.9',
+  './css/components.css?v=2.9',
+  './css/map.css?v=2.9',
+  './css/admin.css?v=3.2',
+  './js/app.js?v=2.9',
+  './js/admin.js?v=3.2',
   './js/i18n.js',
   './js/config.js',
   './js/state.js',
@@ -61,10 +64,16 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Chỉ xử lý các request GET cục bộ
   if (event.request.method !== 'GET') return;
+  
+  // Bỏ qua chrome-extension và các giao thức không phải http/https
+  if (!event.request.url.startsWith('http://') && !event.request.url.startsWith('https://')) {
+    return;
+  }
+  
   const url = new URL(event.request.url);
 
   // Không cache API Backend động (để luôn lấy dữ liệu mới nhất)
-  if (url.pathname.includes('/api/') || url.hostname.includes('render.com')) {
+  if (url.pathname.includes('/api/') || url.hostname.includes('render.com') || url.hostname.includes('supabase.co')) {
     return;
   }
 

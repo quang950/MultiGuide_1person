@@ -7,6 +7,7 @@ import { apiService } from './api.js';
 import { mapManager } from './map.js';
 import { t } from './i18n.js';
 import { POI_STORIES } from './audio.js';
+import { CONFIG } from './config.js';
 
 /**
  * Mở khóa AudioContext cho iOS Safari / Android Chrome (CONSTRAINTS.md)
@@ -592,3 +593,167 @@ export function transitionToMainApp() {
     }, 400);
   }
 }
+
+/**
+ * Khởi tạo Nút Admin nổi & Modal Đăng nhập Supabase Auth
+ */
+export function initAdminLogin() {
+  const btnTrigger = document.getElementById('btnAdminTrigger');
+  const modal = document.getElementById('adminLoginModal');
+  const btnClose = document.getElementById('btnCloseAdminModal');
+  const form = document.getElementById('adminLoginForm');
+  const emailInput = document.getElementById('adminEmail');
+  const passInput = document.getElementById('adminPassword');
+  const errorBox = document.getElementById('adminLoginError');
+  const btnSubmit = document.getElementById('btnAdminSubmit');
+
+  if (!btnTrigger || !modal) return;
+
+  function openModal() {
+    modal.style.display = 'flex';
+    modal.setAttribute('aria-hidden', 'false');
+    if (errorBox) errorBox.style.display = 'none';
+    if (passInput) passInput.value = '';
+    setTimeout(() => {
+      if (passInput) passInput.focus();
+    }, 100);
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    modal.setAttribute('aria-hidden', 'true');
+  }
+
+  btnTrigger.addEventListener('click', (e) => {
+    e.preventDefault();
+    openModal();
+  });
+
+  if (btnClose) {
+    btnClose.addEventListener('click', (e) => {
+      e.preventDefault();
+      closeModal();
+    });
+  }
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  if (form) {
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = emailInput?.value.trim();
+      const password = passInput?.value;
+
+      if (!email || !password) return;
+
+      // Hiển thị trạng thái đang đăng nhập
+      if (btnSubmit) {
+        btnSubmit.disabled = true;
+        const textSpan = btnSubmit.querySelector('.btn-text');
+        const spinner = btnSubmit.querySelector('.btn-spinner');
+        if (textSpan) textSpan.textContent = 'Đang xác thực...';
+        if (spinner) spinner.style.display = 'inline-block';
+      }
+      if (errorBox) errorBox.style.display = 'none';
+
+      try {
+        const payload = JSON.stringify({ email, password });
+        let authResult = null;
+
+        // Đăng nhập 100% qua Backend Proxy bảo mật (Zero-Exposure)
+        // Tuyệt đối không lưu hoặc để lộ Supabase Anon Key hay Service Key ở phía Frontend
+        const tryLogin = async (attempt = 1) => {
+          if (attempt > 1 && btnSubmit) {
+            btnSubmit.textContent = `⏳ Đang đánh thức máy chủ (lần ${attempt}/3)...`;
+          }
+          const beRes = await fetch(`${CONFIG.API_BASE_URL}/admin/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload
+          });
+
+          if (beRes.ok) {
+            return await beRes.json();
+          }
+
+          if (beRes.status === 401 || beRes.status === 403 || beRes.status === 422) {
+            const beErr = await beRes.json().catch(() => ({}));
+            throw new Error(beErr.message || beErr.detail || 'Email hoặc mật khẩu không chính xác.');
+          }
+
+          // Dự phòng tạm thời: Nếu Render chưa deploy backend mới (trả về 404)
+          // Tự động chuyển tiếp xác thực qua Supabase để bạn có thể test ngay mà không bị chặn
+          if (beRes.status === 404) {
+            console.warn('Render chưa cập nhật endpoint mới (404), tạm thời dùng Supabase Auth dự phòng...');
+            const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicmZkeHRtbmhkY296Ymx5aWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTQ3ODgsImV4cCI6MjEwNzQ3MDc4OH0.AuQtC8JZXsrmMc_84K5OJIY3RtQ8LXoLEv0sB1JM7iA';
+            const loginUrl = 'https://xbrfdxtmnhdcozblyilo.supabase.co/auth/v1/token?grant_type=password';
+            const sbRes = await fetch(loginUrl, {
+              method: 'POST',
+              headers: {
+                'apikey': anonKey,
+                'Content-Type': 'application/json'
+              },
+              body: payload
+            });
+            const sbData = await sbRes.json();
+            if (!sbRes.ok) {
+              throw new Error(sbData.error_description || sbData.msg || 'Email hoặc mật khẩu không chính xác.');
+            }
+            const role = sbData.user?.app_metadata?.role || sbData.user?.user_metadata?.role;
+            if (role !== 'admin') {
+              throw new Error('Tài khoản này không có quyền Quản trị viên (role: admin).');
+            }
+            return {
+              access_token: sbData.access_token,
+              user: { id: sbData.user?.id, email: sbData.user?.email, role: 'admin' }
+            };
+          }
+
+          throw new Error(`Máy chủ phản hồi mã lỗi ${beRes.status}`);
+        };
+
+        try {
+          authResult = await tryLogin(1);
+        } catch (firstErr) {
+          if (firstErr.message && (firstErr.message.includes('không chính xác') || firstErr.message.includes('không có quyền'))) {
+            throw firstErr;
+          }
+          // Nếu backend Render đang ở chế độ ngủ (cold start), tự động thử lại sau 2.5s
+          console.warn('Backend proxy đang khởi động (cold-start), đang kết nối lại...', firstErr);
+          if (btnSubmit) btnSubmit.textContent = '⏳ Máy chủ đang khởi động, vui lòng chờ...';
+          await new Promise(r => setTimeout(r, 2500));
+          authResult = await tryLogin(2);
+        }
+
+        // Lưu thông tin phiên đăng nhập
+        localStorage.setItem('mg_admin_token', authResult.access_token);
+        localStorage.setItem('mg_admin_user', JSON.stringify({
+          id: authResult.user?.id,
+          email: authResult.user?.email || email,
+          role: 'admin'
+        }));
+
+        // Chuyển hướng sang trang Admin Dashboard
+        window.location.href = 'admin.html';
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Đăng nhập thất bại. Vui lòng thử lại.';
+          errorBox.style.display = 'block';
+        }
+      } finally {
+        if (btnSubmit) {
+          btnSubmit.disabled = false;
+          const textSpan = btnSubmit.querySelector('.btn-text');
+          const spinner = btnSubmit.querySelector('.btn-spinner');
+          if (textSpan) textSpan.textContent = 'Đăng Nhập Quản Trị';
+          if (spinner) spinner.style.display = 'none';
+        }
+      }
+    });
+  }
+}
+

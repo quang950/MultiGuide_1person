@@ -53,6 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentRepository, PaymentRepository>();
         services.AddScoped<IAccessPassRepository, AccessPassRepository>();
         services.AddScoped<IPlayLogRepository, PlayLogRepository>();
+        services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
         services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
 
@@ -76,6 +77,7 @@ public static class DependencyInjection
 
         services.AddHttpClient<IFileStorage, SupabaseFileStorage>();
         services.AddHttpClient<IAiService, GeminiAiService>();
+        services.AddHttpClient<IAdminAuthService, SupabaseAdminAuthService>();
 
         return services;
     }
