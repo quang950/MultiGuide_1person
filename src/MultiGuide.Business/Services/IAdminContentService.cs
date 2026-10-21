@@ -30,8 +30,14 @@ public interface IAdminContentService
         string? contentType,
         CancellationToken cancellationToken = default);
 
+    Task<GenerateAudioResponse> GenerateTranslationAudioAsync(
+        Guid translationId,
+        string? text = null,
+        CancellationToken cancellationToken = default);
+
     Task<AiSummaryResponse> GeneratePoiSummaryAsync(
         Guid poiId,
         string? language = "vi",
         CancellationToken cancellationToken = default);
 }
+

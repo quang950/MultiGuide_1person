@@ -2,22 +2,28 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 21/10/2026 — Bổ sung Logo Di Sản & Nút Đăng Xuất Vé trong Tab My Pass)
-- **Đang làm:** Sẵn sàng kiểm thử giao diện mới.
-- **Vừa xong:** Hoàn thành xuất sắc 2 tính năng trải nghiệm người dùng:
-  - **Bổ sung Logo Di Sản (`logo-mark.svg`) đồng bộ**:
-    - Thêm Favicon chuẩn SVG cho trang khách `index.html`.
-    - Thêm thanh Topbar nổi mờ kính (`map-brand-hud`) trên Màn hình Bản đồ (Logo + `MultiGuide · HANOI EDITION`).
-    - Thay icon ổ khóa mặc định bằng Logo hoàng gia mạ vàng đồng trong Admin Modal.
-    - Gắn Logo di sản vào header của Tab Lộ trình ("All stops").
-  - **Nút Đăng xuất vé trong Tab "Vé Của Tôi" (My pass)**:
-    - Bổ sung nút `[🚪 Đăng xuất vé / Về màn chào đón]` trong Tab My Pass.
-    - Triển khai hàm `transitionToArrivalScreen()`: dừng audio, xóa `mg_access_token`, đóng drawer, tạo animation mờ chuyển cảnh đưa du khách quay về Màn hình Chào đón ban đầu mà không cần refresh trang.
-    - Đa ngữ 4 thứ tiếng (vi, en, zh, ja) cho nút Đăng xuất vé trong `i18n.js`.
-  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **321/321 XANH LÁ (100%)**; `dotnet build MultiGuide.sln -warnaserror` 0 warning 0 error; `dotnet format --verify-no-changes` sạch 100%.
-- **Bước kế tiếp:** Người dùng trải nghiệm và kiểm tra trực tiếp.
+## Trạng thái hiện tại (cập nhật: 21/10/2026 — Hoàn thành sửa lệch POI, Tự động phát âm thanh Neural TTS & Đồng bộ GUID Động)
+- **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
+- **Vừa xong:** Hoàn thành trọn vẹn 3 giải pháp cải tiến lớn:
+  1. **Khắc phục lỗi lệch POI & Audio Thần đạo (Lỗi 1)**:
+     - Phân tích nguyên nhân: Client thiếu Cổng Đại Thành và chèn Cổng Đại Trung làm lệch toàn bộ chỉ số index (1-6) so với Backend; `POI_GUID_MAP` tham chiếu sai thứ tự.
+     - Triển khai chuẩn hóa đầy đủ 7 điểm dừng Thần đạo Văn Miếu - Quốc Tử Giám trên cả Backend (`DbSeeder.cs`) và Client (`HERITAGE_POIS`, `POI_STORIES`, `POI_GUID_MAP`).
+     - Chuyển đổi Client sang cơ chế đồng bộ động bằng GUID (`loadPoisFromBackend`), hỗ trợ ánh xạ ID linh hoạt, loại bỏ hoàn toàn `parseInt(data-poi-id)`.
+  2. **Chuẩn hóa tọa độ thực tế theo Trục Thần đạo (Lỗi 2)**:
+     - Khắc phục độ lệch ~35m về phía Tây do dùng kinh độ cũ 105.83550; chuẩn hóa về đúng trục Thần đạo thực tế kinh độ `105.83580` trên Google Maps.
+     - Bổ sung 2 nhánh nét đứt ôm trọn Giếng Thiên Quang và Vườn bia Tiến Sĩ (`[21.0284, 105.8358]` -> `[21.0288, 105.8358]`).
+  3. **Tính năng Sinh Kịch bản AI & Tự động tạo Audio Neural TTS (Admin)**:
+     - Xây dựng `ITtsService` trong `Business` và `EdgeTtsService` trong `Data` kết nối WebSocket Microsoft Edge Neural TTS (hỗ trợ các giọng HoaiMyNeural, JennyNeural, NanamiNeural, XiaoxiaoNeural).
+     - Bổ sung endpoint `POST /admin/translations/{id}/generate-audio`.
+     - Tích hợp nút **"AI Sinh Audio (TTS)"** trong trang Admin (`client/js/admin.js`), tự động tổng hợp giọng đọc từ văn bản thuyết minh và tải lên Supabase Storage.
+- **Kết quả kiểm thử:**
+  - `dotnet build MultiGuide.sln -warnaserror`: **0 Warning, 0 Error**.
+  - `dotnet test MultiGuide.sln`: **324/324 tests GREEN (100%)**.
+  - `dotnet format MultiGuide.sln --verify-no-changes`: **Đạt chuẩn 100%**.
+  - Browser testing: Cả 7 POI hiển thị chuẩn xác dọc theo trục Thần đạo Văn Miếu trên bản đồ.
+- **Bước kế tiếp:** Người dùng nghiệm thu trực tiếp trên trình duyệt.
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** Mở `http://127.0.0.1:5500/client/index.html` hoặc `https://multiguide1person-client.vercel.app/`
+- **Cách kiểm tra nhanh:** Mở `http://127.0.0.1:5500/client/index.html` hoặc `http://127.0.0.1:5500/client/admin.html`
 
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)

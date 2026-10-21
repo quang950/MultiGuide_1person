@@ -155,7 +155,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = services.GetRequiredService<MultiGuideDbContext>();
-        await DbSeeder.SeedDemoDataAsync(dbContext, app.Configuration);
+        await DbSeeder.SeedDemoDataAsync(dbContext, force: true);
     }
     catch (Exception ex)
     {

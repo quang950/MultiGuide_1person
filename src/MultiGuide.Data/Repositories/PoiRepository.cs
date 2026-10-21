@@ -49,7 +49,7 @@ public class PoiRepository : IPoiRepository
         var total = await query.CountAsync(cancellationToken);
 
         var items = await query
-            .OrderByDescending(p => p.Priority)
+            .OrderBy(p => p.Priority)
             .ThenBy(p => p.CreatedAt)
             .ThenBy(p => p.Id)
             .Skip((page - 1) * pageSize)
@@ -65,6 +65,7 @@ public class PoiRepository : IPoiRepository
             .AsNoTracking()
             .Include(p => p.Translations)
             .Where(p => p.AreaId == areaId && p.IsActive)
+            .OrderBy(p => p.Priority)
             .ToListAsync(cancellationToken);
     }
 

@@ -7,7 +7,7 @@
 import { store } from './state.js';
 import { apiService } from './api.js';
 
-// Dữ liệu nội dung thuyết minh di sản 3 thứ tiếng (Việt, Anh, Nhật) cho 6 POI Thần đạo
+// Dữ liệu nội dung thuyết minh di sản 4 thứ tiếng (Việt, Anh, Nhật, Trung) cho 6 POI Thần đạo chuẩn
 export const POI_STORIES = {
   1: {
     order: 1,
@@ -59,54 +59,8 @@ export const POI_STORIES = {
   2: {
     order: 2,
     vi: {
-      title: 'Cổng Đại Trung',
-      subtitle: 'Điểm 02/06 · Đạo Trung Dung của Nho học',
-      badge: 'KHÔNG GIAN DI SẢN',
-      heading: 'Cổng Đại Trung — Vẻ Đẹp Bình Yên Giữa Lòng Thủ Đô',
-      paragraph: 'Cổng Đại Trung nằm ở cuối khu nhập đạo thứ hai, ẩn mình dưới bóng mát của những hàng muỗm cổ thụ trăm năm tuổi. Tên cổng mang hàm ý sâu xa về tư tưởng "Trung Dung" — giữ gìn sự công bằng, chính trực và hài hòa trong đời sống cũng như trên con đường tầm sư học đạo.',
-      quote: '"Trung dung vi đức — Lấy sự ngay thẳng, chuẩn mực làm gốc rễ tu thân."',
-      subtext: 'Hai bên cổng mở ra hai cửa nhỏ Thành Đức và Đạt Tài, tượng trưng cho sự vẹn toàn cả Tài lẫn Đức của sĩ tử xưa.',
-      duration: '4:10',
-      durationSec: 250
-    },
-    en: {
-      title: 'Great Middle Gate',
-      subtitle: '02 of 06 · The Doctrine of the Golden Mean',
-      badge: 'HERITAGE COURTYARD',
-      heading: 'Great Middle Gate — Serenity and Virtue',
-      paragraph: 'Nestled beneath the shade of centenarian mango-plum trees, the Great Middle Gate embodies the core Confucian philosophy of the "Golden Mean"—advocating moderation, balance, and unwavering moral integrity along the pursuit of wisdom.',
-      quote: '"Virtue lies in harmony; knowledge flourishes in moral righteousness."',
-      subtext: 'Flanked by two side gates—Attaining Virtue and Developing Talent—signifying the twin pillars of holistic education.',
-      duration: '4:10',
-      durationSec: 250
-    },
-    ja: {
-      title: '大中門',
-      subtitle: '02 of 06 · 中庸の徳と緑陰',
-      badge: '歴史空間',
-      heading: '大中門 — 儒学の中庸思想を体現する門',
-      paragraph: '樹齢数百年の古木に囲まれた静寂な空間に佇む大中門は、儒教の根本理念である「中庸」（過不足なく調和を保つこと）を象徴しています。左右には「成徳」「達材」という二つの小門があり、徳と才能を兼ね備えた人物の育成を願って名付けられました。',
-      quote: '「中庸の徳、それ至れるかな — 調和と節度こそ真の学びの礎。」',
-      duration: '4:10',
-      durationSec: 250
-    },
-    zh: {
-      title: '大中门',
-      subtitle: '第 02/06 站 · 儒家中庸之道',
-      badge: '历史空间',
-      heading: '大中门 — 宁静中的中庸哲理',
-      paragraph: '大中门掩映在数百年参天古树的绿荫之中，命名源自儒家经典所倡导的“中庸”之道——秉持公正、不偏不倚的处世修身准则。门两侧各辟有一座小门，分别名为“成德”与“达材”，寄托了培育才德兼备国之栋梁的美好期许。',
-      quote: '“中庸为德 — 处世中正和平，立身以德为本。”',
-      subtext: '漫步于林荫小道，微风轻拂，让来访者洗净心尘，步入更神圣的学问殿堂。',
-      duration: '4:10',
-      durationSec: 250
-    }
-  },
-  3: {
-    order: 3,
-    vi: {
       title: 'Khuê Văn Các',
-      subtitle: 'Điểm 03/06 · Gác ngắm sao Khuê tỏa sáng',
+      subtitle: 'Điểm 02/06 · Gác ngắm sao Khuê tỏa sáng',
       badge: 'BIỂU TƯỢNG HÀ NỘI',
       heading: 'Khuê Văn Các — Tinh Hoa Trí Tuệ Thăng Long',
       paragraph: 'Được xây dựng vào năm 1805 dưới triều vua Gia Long, Khuê Văn Các (Gác sao Khuê) là biểu tượng văn hóa tiêu biểu của thủ đô Hà Nội. Công trình mang kiến trúc độc đáo với tầng trên là lầu gỗ vuông vức sơn son thếp vàng, bốn mặt trổ bốn cửa tròn lớn tượng trưng cho bầu trời và ánh sáng lấp lánh của vì sao chủ quản sự học, soi bóng xuống mặt giếng Thiên Quang vuông vức.',
@@ -117,7 +71,7 @@ export const POI_STORIES = {
     },
     en: {
       title: 'Khuê Văn Pavilion',
-      subtitle: '03 of 06 · The poetry of the stars',
+      subtitle: '02 of 06 · The poetry of the stars',
       badge: 'HANOI ICON',
       heading: 'Khuê Văn Pavilion — Symbol of Thang Long Wisdom',
       paragraph: 'Erected in 1805 during the Nguyen Dynasty, Khue Van Pavilion stands as the timeless cultural insignia of Hanoi Capital. Its upper wooden chamber features four radiant circular windows representing the shining star of literature, casting its reflection onto the square Thien Quang Well to mirror the ancient cosmic harmony of round heaven and square earth.',
@@ -128,7 +82,7 @@ export const POI_STORIES = {
     },
     ja: {
       title: '奎文閣 (けいぶんかく)',
-      subtitle: '03 of 06 · 文学と星の詩',
+      subtitle: '02 of 06 · 文学と星の詩',
       badge: 'ハノイの象徴',
       heading: '奎文閣 — 千年の都を照らす学問の光',
       paragraph: '1805年に建てられた木造二層の美しい楼閣で、ハノイ市の公式文化シンボルです。上層部の四方には太陽の光線を模した円形の窓が穿たれており、学問を司る奎星（けいせい）の輝きを表現しています。四角い天光井の池にその姿を映し、天地の調和を象徴しています。',
@@ -139,7 +93,7 @@ export const POI_STORIES = {
     },
     zh: {
       title: '奎文阁',
-      subtitle: '第 03/06 站 · 奎星璀璨耀文光',
+      subtitle: '第 02/06 站 · 奎星璀璨耀文光',
       badge: '河内文化标志',
       heading: '奎文阁 — 昇龙古都的智慧象征',
       paragraph: '奎文阁建于1805年阮朝时期，是首都河内的文化标志性建筑。木质双层楼阁四面辟有象征奎宿之光的圆形窗扉，倒映在正方形的天光井水面上，完美展现了古代“天圆地方”的宇宙哲学与天人合一境界。',
@@ -149,11 +103,11 @@ export const POI_STORIES = {
       durationSec: 276
     }
   },
-  4: {
-    order: 4,
+  3: {
+    order: 3,
     vi: {
       title: 'Giếng Thiên Quang & Bia Tiến Sĩ',
-      subtitle: 'Điểm 04/06 · Ánh sáng soi tỏ tâm hồn sĩ tử',
+      subtitle: 'Điểm 03/06 · Ánh sáng soi tỏ tâm hồn sĩ tử',
       badge: 'DI SẢN THẾ GIỚI UNESCO',
       heading: 'Giếng Thiên Quang — Tinh Khôi Đất Trời',
       paragraph: 'Giếng Thiên Quang mang ý nghĩa "Ánh sáng bầu trời". Hai bên hồ là khu vườn đặt 82 tấm Bia Tiến Sĩ dựng trên lưng rùa đá — Di sản Tư liệu Thế giới được UNESCO vinh danh. Nơi đây khắc ghi tên tuổi 1.304 vị đỗ đại khoa qua các kỳ thi từ năm 1442 đến 1779, truyền tải chân lý bất hủ.',
@@ -164,7 +118,7 @@ export const POI_STORIES = {
     },
     en: {
       title: 'Heavenly Clarity Well',
-      subtitle: '04 of 06 · UNESCO Memory of the World',
+      subtitle: '03 of 06 · UNESCO Memory of the World',
       badge: 'WORLD MEMORY',
       heading: 'Heavenly Clarity Well & 82 Doctor Stelae',
       paragraph: 'The square Thien Quang Well represents the mirror of heaven. Flanking its serene waters are 82 Doctor Stelae mounted on stone tortoises, an inscribed UNESCO Memory of the World heritage. They immortalize 1,304 doctoral laureates from 1442 to 1779, enshrining an eternal principle.',
@@ -175,7 +129,7 @@ export const POI_STORIES = {
     },
     ja: {
       title: '天光井と進士題名碑',
-      subtitle: '04 of 06 · ユネスコ「世界の記憶」',
+      subtitle: '03 of 06 · ユネスコ「世界の記憶」',
       badge: '世界遺産',
       heading: '天光井 — 天の光を映す鏡',
       paragraph: '天の光を意味する四角い天光井の両脇には、亀の背に乗せられた82基の進士碑が整然と並びます。ユネスコ世界の記憶に登録されており、1442年から1779年までの科挙合格者1,304名の名が刻まれ、「賢才は国家の元気なり」という不滅の哲学を今に伝えています。',
@@ -186,7 +140,7 @@ export const POI_STORIES = {
     },
     zh: {
       title: '天光井与进士题名碑',
-      subtitle: '第 04/06 站 · 联合国教科文组织世界记忆',
+      subtitle: '第 03/06 站 · 联合国教科文组织世界记忆',
       badge: '世界记忆名录',
       heading: '天光井与82座进士碑 — 铭记千秋栋梁',
       paragraph: '天光井意为“映照上天之光的明镜”。水池两侧整齐排列着82座由灵龟驮负的进士题名碑，被列入联合国教科文组织世界记忆名录。碑上镌刻着1442至1779年间1304位进士姓名，昭示着千古不朽的真理。',
@@ -194,6 +148,51 @@ export const POI_STORIES = {
       subtext: '石龟驮碑寓意着学术精神与国家文脉的长青永驻，以及后世对先贤的无限追思。',
       duration: '5:12',
       durationSec: 312
+    }
+  },
+  4: {
+    order: 4,
+    vi: {
+      title: 'Cổng Đại Thành & Sân Đại Bái',
+      subtitle: 'Điểm 04/06 · Cửa ngõ nội điện trang nghiêm',
+      badge: 'CỬA NỘI ĐIỆN',
+      heading: 'Cổng Đại Thành & Sân Đại Bái — Không Gian Nghi Lễ Thiêng Liêng',
+      paragraph: 'Cổng Đại Thành là cửa bước vào khu vực nội điện thờ tự chính. Phía sau cổng là sân Đại Bái rộng lát gạch Bát Tràng cổ kính, nơi diễn ra các nghi lễ tế Nho học trang trọng hàng năm dưới các triều đại phong kiến Lý, Trần, Lê.',
+      quote: '"Đại thành chí thánh — Nơi quy tụ tinh hoa học vấn và đạo đức ngàn đời."',
+      subtext: 'Sân Đại Bái rộng rãi mở ra không gian thanh tịnh trước khi bước vào chánh điện linh thiêng.',
+      duration: '4:20',
+      durationSec: 260
+    },
+    en: {
+      title: 'Dai Thanh Gate & Courtyard',
+      subtitle: '04 of 06 · The Inner Sacred Precinct',
+      badge: 'SACRED PRECINCT',
+      heading: 'Dai Thanh Gate & Great Ceremonial Courtyard',
+      paragraph: 'Dai Thanh Gate opens into the sacred inner precinct of worship. Behind it spreads the vast Dai Bai courtyard paved with ancient Bat Trang bricks, where annual solemn ceremonial rites honoring Confucius and scholars were historically held.',
+      quote: '"Great Success in Wisdom and Virtue — An eternal heritage of scholarship."',
+      subtext: 'The ceremonial courtyard offers a serene threshold before entering the sacred sanctuary.',
+      duration: '4:20',
+      durationSec: 260
+    },
+    ja: {
+      title: '大成門と大拝殿前庭',
+      subtitle: '04 of 06 · 神聖な儀礼の庭',
+      badge: '大成門・中庭',
+      heading: '大成門と大拝殿前庭 — 荘厳なる儀式の場',
+      paragraph: '大成門は神聖な儀礼エリアへの入り口です。門をくぐるとバッチャン焼きのレンガが敷き詰められた広大な中庭が広がり、毎年孔子を祀る厳粛な儀式が執り行われていました。',
+      quote: '「大成至聖 — 学問と徳の極致を仰ぐ。」',
+      duration: '4:20',
+      durationSec: 260
+    },
+    zh: {
+      title: '大成门与大拜庭',
+      subtitle: '第 04/06 站 · 庄严礼仪庭院',
+      badge: '大成门',
+      heading: '大成门与大拜庭 — 肃穆的祭典圣地',
+      paragraph: '大成门是通往核心祭祀区域的庄严之门。门后铺展着由古老钵场砖铺砌的宽阔大拜庭，历代帝王与儒臣曾在此举行隆重的祭孔释奠大礼。',
+      quote: '“大成至圣 — 千秋文脉，盛德巍巍。”',
+      duration: '4:20',
+      durationSec: 260
     }
   },
   5: {
@@ -261,7 +260,7 @@ export const POI_STORIES = {
       subtitle: '06 of 06 · Vietnam’s First Imperial University',
       badge: 'FIRST UNIVERSITY',
       heading: 'Thái Học Academy — Cradle of National Talents',
-      paragraph: 'Established in 1076 under Emperor Ly Nhan Tong, the Imperial Academy is revered as the first university of Vietnam. It pays eternal homage to revered Master Chu Van An alongside three visionary emperors: Ly Thanh Tong, Ly Nhan Tong, and Le Thanh Tong, who established and nurtured nine centuries of national scholarship.',
+      paragraph: 'Established in 1076 under Emperor Ly Nhan Tong, the Imperial Academy is revered as the first university of Vietnam. It pays eternal homage to revered Master Chu Van An alongside three visionary emperors: Ly Thánh Tông, Lý Nhân Tông, and Lê Thánh Tông, who established and nurtured nine centuries of national scholarship.',
       quote: '"Cultivate moral character and intellectual brilliance for the realm."',
       subtext: 'The upper gallery showcases doctoral ceremonial robes, antique slate inkstones, and imperial exam models.',
       duration: '5:30',
@@ -301,6 +300,14 @@ export const POI_GUID_MAP = {
   5: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
   6: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd'
 };
+
+// Ánh xạ ngược lại theo GUID trực tiếp vào POI_STORIES
+POI_STORIES['c1875fb2-84ad-4a5a-936a-173fdbf4f7f3'] = POI_STORIES[1];
+POI_STORIES['3ede2134-c305-4270-9413-39c9743f9cb8'] = POI_STORIES[2];
+POI_STORIES['70dabf88-5450-48e7-9603-b753f5350047'] = POI_STORIES[3];
+POI_STORIES['cc63b968-096f-4b06-b4f8-19f8f829ef42'] = POI_STORIES[4];
+POI_STORIES['0c23b2e0-73d1-4f37-90a0-f95201abf43b'] = POI_STORIES[5];
+POI_STORIES['cd3c98eb-79fe-4980-a870-6f690f9e40cd'] = POI_STORIES[6];
 
 /**
  * Tạo âm thanh chuông cảnh di sản êm dịu (WAV data URI) để phát audio mượt mà
@@ -371,7 +378,7 @@ function formatTime(seconds) {
 export class AudioEngine {
   constructor() {
     this.audioElement = null;
-    this.currentPoiId = 3; // Mặc định POI 3: Khuê Văn Các theo Giao_dien_Chinh.png
+    this.currentPoiId = '3ede2134-c305-4270-9413-39c9743f9cb8'; // Mặc định POI 2: Khuê Văn Các
     this.startTime = null;
     this.fallbackAudioUrl = null;
     this.isSeeking = false;
@@ -550,7 +557,8 @@ export class AudioEngine {
    */
   syncPoiContent(poiId) {
     const lang = store.get().selectedLang || 'vi';
-    const poiData = POI_STORIES[poiId] || POI_STORIES[3];
+    const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
+    const poiData = POI_STORIES[poiId] || (targetPoi ? POI_STORIES[targetPoi.order] : null) || POI_STORIES[2];
     const story = poiData[lang] || poiData['en'] || poiData['vi'];
 
     // 1. Cập nhật Mini Player Header

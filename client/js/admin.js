@@ -11,6 +11,9 @@ let areaMarker = null;
 let poiMiniMap = null;
 let poiMarker = null;
 let poiCircle = null;
+let poiGhostMarkers = [];
+let allCurrentPois = [];
+let currentEditingPoiPriority = 10;
 
 let currentAreaId = null;
 let currentPoiTranslations = { vi: {}, en: {}, ja: {} };
@@ -534,7 +537,11 @@ function initAreaMiniMap(lat, lng) {
   setTimeout(() => {
     if (!areaMiniMap) {
       areaMiniMap = L.map('areaMiniMap', { zoomControl: false }).setView([lat, lng], 16);
-      L.tileLayer(CONFIG.MAP_TILE_URL, { maxZoom: 20 }).addTo(areaMiniMap);
+      L.tileLayer(CONFIG.MAP_TILE_URL, {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        maxZoom: 20,
+        attribution: CONFIG.MAP_ATTRIBUTION || '&copy; Google Maps'
+      }).addTo(areaMiniMap);
       areaMarker = L.marker([lat, lng], { draggable: true }).addTo(areaMiniMap);
 
       areaMarker.on('dragend', () => {
@@ -610,6 +617,9 @@ async function loadPoisForCurrentArea() {
     if (!res.ok) throw new Error('Không thể tải danh sách POI.');
     const result = await res.json();
     const pois = result.items || [];
+    // Sắp xếp thứ tự ưu tiên tăng dần (10 -> 60 tương ứng Trạm #1 -> #6)
+    pois.sort((a, b) => (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
+    allCurrentPois = pois;
 
     if (pois.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Chưa có điểm POI nào trong khu này. Bấm "Thêm Điểm POI Mới" để tạo!</td></tr>`;
@@ -617,6 +627,7 @@ async function loadPoisForCurrentArea() {
     }
 
     tbody.innerHTML = pois.map((poi, idx) => {
+      const stopNum = poi.priority ? Math.round(poi.priority / 10) : (idx + 1);
       const triggerRadius = poi.triggerRadiusM ?? poi.trigger_radius_m ?? 30;
       const lat = typeof poi.lat === 'number' ? poi.lat.toFixed(5) : '0.00000';
       const lng = typeof poi.lng === 'number' ? poi.lng.toFixed(5) : '0.00000';
@@ -630,11 +641,11 @@ async function loadPoisForCurrentArea() {
           <img src="${img}" alt="" class="poi-thumb-img" onerror="this.src='assets/icons/heritage-temple.svg'">
         </td>
         <td>
-          <strong>${poi.title || `Điểm dừng #${idx + 1}`}</strong>
+          <strong>#${stopNum}: ${poi.title || `Điểm dừng #${stopNum}`}</strong>
         </td>
         <td>${lat}, ${lng}</td>
         <td>${triggerRadius}m</td>
-        <td><span class="badge-status">${poi.priority ?? 0}</span></td>
+        <td><span class="badge-status">#${stopNum} (Prio ${poi.priority ?? 0})</span></td>
         <td>
           <span class="badge-status ${hasAudio ? 'is-active' : 'is-inactive'}">
             ${hasAudio ? '✓ Sẵn sàng' : 'Chưa có Audio'}
@@ -771,8 +782,16 @@ function initPoiModalEvents() {
   const btnTts = document.getElementById('btnGenerateNeuralTts');
   btnTts?.addEventListener('click', async () => {
     const script = document.getElementById('poiScriptInput').value.trim();
-    if (!script) {
-      alert('Vui lòng soạn Kịch bản thuyết minh chi tiết trước khi sinh âm thanh.');
+    const title = document.getElementById('poiTitleInput').value.trim();
+    const poiId = document.getElementById('editingPoiId').value;
+
+    if (!script && !title) {
+      alert('Vui lòng soạn Tiêu đề hoặc Kịch bản thuyết minh trước khi sinh âm thanh.');
+      return;
+    }
+
+    if (!poiId) {
+      alert('Vui lòng lưu thông tin điểm POI trước khi sinh âm thanh tự động.');
       return;
     }
 
@@ -780,24 +799,71 @@ function initPoiModalEvents() {
     btnTts.textContent = '⏳ Đang chuyển văn bản thành giọng đọc Neural...';
 
     try {
-      // Giả lập hoặc gọi Edge TTS sinh âm thanh
+      saveCurrentLangDraft();
+      let transId = currentPoiTranslations[currentActiveLang]?.id;
+
+      // Nếu bản dịch ngôn ngữ này chưa có ID, tạo trước
+      if (!transId) {
+        const createRes = await adminFetch(`/admin/pois/${poiId}/translations`, {
+          method: 'POST',
+          body: JSON.stringify({
+            language_code: currentActiveLang,
+            title: title || 'Thuyết minh di tích',
+            description: script || title
+          })
+        });
+
+        if (createRes.ok) {
+          const createdTrans = await createRes.json();
+          transId = createdTrans.id;
+          currentPoiTranslations[currentActiveLang].id = transId;
+        } else {
+          // Có thể bản dịch đã có sẵn trên server -> thử lấy lại
+          const listRes = await adminFetch(`/admin/pois/${poiId}/translations`);
+          if (listRes.ok) {
+            const list = await listRes.json();
+            const matched = list.find(t => (t.languageCode || t.language_code) === currentActiveLang);
+            if (matched) {
+              transId = matched.id;
+              currentPoiTranslations[currentActiveLang].id = transId;
+            }
+          }
+        }
+      }
+
+      if (!transId) {
+        throw new Error('Chưa thể xác định bản dịch để gắn file audio. Vui lòng bấm "Lưu Thay Đổi" POI trước.');
+      }
+
+      // Gọi Backend Edge Neural TTS thật
+      const ttsRes = await adminFetch(`/admin/translations/${transId}/generate-audio`, {
+        method: 'POST',
+        body: JSON.stringify({
+          text: script || title
+        })
+      });
+
+      if (!ttsRes.ok) {
+        const errData = await ttsRes.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Không thể sinh audio từ server.');
+      }
+
+      const ttsData = await ttsRes.json();
+      currentPoiTranslations[currentActiveLang].audio_path = ttsData.audioPath;
+
       const statusBadge = document.getElementById('audioStatusBadge');
       const statusText = document.getElementById('audioStatusText');
       const audioPlayer = document.getElementById('audioPreviewPlayer');
 
-      // Tạm thời tạo stream demo nếu backend chưa expose endpoint trực tiếp
       statusBadge.classList.add('has-audio');
       statusText.textContent = `✓ Đã sinh giọng đọc Neural (${currentActiveLang.toUpperCase()})`;
-      audioPlayer.style.display = 'block';
-
-      // Tạo âm thanh phát thử cho người dùng nghe
-      if ('speechSynthesis' in window && currentActiveLang === 'vi') {
-        const utter = new SpeechSynthesisUtterance(script.slice(0, 100));
-        utter.lang = 'vi-VN';
-        window.speechSynthesis.speak(utter);
+      if (ttsData.audioUrl) {
+        audioPlayer.src = ttsData.audioUrl;
+        audioPlayer.style.display = 'block';
+        audioPlayer.play().catch(() => {});
       }
 
-      alert('Đã sinh giọng đọc thuyết minh thành công! Bạn có thể nghe thử trước khi lưu.');
+      alert('Đã sinh giọng đọc thuyết minh thành công và lưu vào Supabase Storage! Bạn có thể nghe thử trước khi lưu.');
     } catch (e) {
       alert(`Lỗi sinh audio: ${e.message}`);
     } finally {
@@ -816,6 +882,8 @@ function initPoiModalEvents() {
     const lat = parseFloat(document.getElementById('poiLatInput').value);
     const lng = parseFloat(document.getElementById('poiLngInput').value);
     const triggerRadius = parseFloat(document.getElementById('poiTriggerInput').value);
+    const orderVal = parseInt(document.getElementById('poiOrderInput')?.value, 10) || 1;
+    const priority = orderVal * 10;
     const imageUrl = document.getElementById('poiImageUrlInput').value.trim();
 
     try {
@@ -830,7 +898,7 @@ function initPoiModalEvents() {
             lat,
             lng,
             trigger_radius_m: triggerRadius,
-            priority: 10,
+            priority: priority,
             image_url: imageUrl || null
           })
         });
@@ -845,7 +913,7 @@ function initPoiModalEvents() {
             lat,
             lng,
             trigger_radius_m: triggerRadius,
-            priority: 10,
+            priority: priority,
             image_url: imageUrl || null,
             is_active: true
           })
@@ -857,16 +925,42 @@ function initPoiModalEvents() {
         const draft = currentPoiTranslations[lang];
         if (draft && draft.title) {
           try {
-            await adminFetch(`/admin/pois/${savedPoiId}/translations`, {
-              method: 'POST',
-              body: JSON.stringify({
-                language_code: lang,
-                title: draft.title,
-                description: draft.description || draft.summary || draft.title
-              })
-            });
+            if (draft.id) {
+              await adminFetch(`/admin/pois/${savedPoiId}/translations/${draft.id}`, {
+                method: 'PUT',
+                body: JSON.stringify({
+                  title: draft.title,
+                  description: draft.description || draft.summary || draft.title
+                })
+              });
+            } else {
+              const transRes = await adminFetch(`/admin/pois/${savedPoiId}/translations`, {
+                method: 'POST',
+                body: JSON.stringify({
+                  language_code: lang,
+                  title: draft.title,
+                  description: draft.description || draft.summary || draft.title
+                })
+              });
+              if (transRes.status === 409) {
+                const listRes = await adminFetch(`/admin/pois/${savedPoiId}/translations`);
+                if (listRes.ok) {
+                  const existingList = await listRes.json();
+                  const found = existingList.find(t => (t.languageCode || t.language_code) === lang);
+                  if (found) {
+                    await adminFetch(`/admin/pois/${savedPoiId}/translations/${found.id}`, {
+                      method: 'PUT',
+                      body: JSON.stringify({
+                        title: draft.title,
+                        description: draft.description || draft.summary || draft.title
+                      })
+                    });
+                  }
+                }
+              }
+            }
           } catch (tErr) {
-            // Có thể đã tồn tại bản dịch -> update
+            console.warn(`Lỗi cập nhật bản dịch ${lang}:`, tErr);
           }
         }
       }
@@ -886,6 +980,12 @@ function openNewPoiModal() {
   document.getElementById('poiModalTitle').textContent = 'Thêm Điểm Thuyết Minh POI Mới';
   document.getElementById('editingPoiId').value = '';
   form.reset();
+
+  const nextOrder = allCurrentPois.length + 1;
+  if (document.getElementById('poiOrderInput')) {
+    document.getElementById('poiOrderInput').value = nextOrder;
+  }
+  currentEditingPoiPriority = nextOrder * 10;
 
   currentPoiTranslations = { vi: {}, en: {}, ja: {} };
   currentActiveLang = 'vi';
@@ -909,8 +1009,13 @@ window.openEditPoiModal = async function(poiId) {
     const res = await adminFetch(`/admin/pois/${poiId}`);
     if (!res.ok) throw new Error('Không thể tải chi tiết POI.');
     const poi = await res.json();
+    currentEditingPoiPriority = poi.priority ?? 10;
+    const stopNum = poi.priority ? Math.round(poi.priority / 10) : 1;
 
     document.getElementById('poiAreaSelect').value = poi.areaId || poi.area_id || '';
+    if (document.getElementById('poiOrderInput')) {
+      document.getElementById('poiOrderInput').value = stopNum;
+    }
     document.getElementById('poiLatInput').value = poi.lat ?? 0;
     document.getElementById('poiLngInput').value = poi.lng ?? 0;
     document.getElementById('poiTriggerInput').value = poi.triggerRadiusM ?? poi.trigger_radius_m ?? 30;
@@ -995,11 +1100,45 @@ function resetLangTabs() {
   });
 }
 
+function renderGhostMarkers() {
+  if (!poiMiniMap) return;
+  poiGhostMarkers.forEach(m => poiMiniMap.removeLayer(m));
+  poiGhostMarkers = [];
+
+  const editingId = document.getElementById('editingPoiId')?.value;
+  if (!Array.isArray(allCurrentPois)) return;
+
+  allCurrentPois.forEach((p, idx) => {
+    if (p.id === editingId) return;
+    const pLat = typeof p.lat === 'number' ? p.lat : parseFloat(p.lat);
+    const pLng = typeof p.lng === 'number' ? p.lng : parseFloat(p.lng);
+    if (isNaN(pLat) || isNaN(pLng)) return;
+
+    const stopNum = p.priority ? Math.round(p.priority / 10) : (idx + 1);
+
+    const ghostIcon = L.divIcon({
+      html: `<div style="background: rgba(142, 96, 48, 0.9); color: #fff; width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: bold; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.35); cursor: pointer;" title="Trạm #${stopNum}: ${p.title || ''}">${stopNum}</div>`,
+      className: 'poi-ghost-marker',
+      iconSize: [26, 26],
+      iconAnchor: [13, 13]
+    });
+
+    const gm = L.marker([pLat, pLng], { icon: ghostIcon, opacity: 0.9 })
+      .bindTooltip(`<strong>#${stopNum}: ${p.title || 'Điểm di tích'}</strong>`, { permanent: false, direction: 'top' })
+      .addTo(poiMiniMap);
+    poiGhostMarkers.push(gm);
+  });
+}
+
 function initPoiMiniMap(lat, lng, radius) {
   setTimeout(() => {
     if (!poiMiniMap) {
       poiMiniMap = L.map('poiMiniMap', { zoomControl: false }).setView([lat, lng], 18);
-      L.tileLayer(CONFIG.MAP_TILE_URL, { maxZoom: 20 }).addTo(poiMiniMap);
+      L.tileLayer(CONFIG.MAP_TILE_URL, {
+        subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+        maxZoom: 20,
+        attribution: CONFIG.MAP_ATTRIBUTION || '&copy; Google Maps'
+      }).addTo(poiMiniMap);
 
       poiMarker = L.marker([lat, lng], { draggable: true }).addTo(poiMiniMap);
       poiCircle = L.circle([lat, lng], {
@@ -1010,12 +1149,15 @@ function initPoiMiniMap(lat, lng, radius) {
         weight: 2
       }).addTo(poiMiniMap);
 
-      poiMarker.on('drag', () => {
+      const updateCoordsFromMarker = () => {
         const pos = poiMarker.getLatLng();
         poiCircle.setLatLng(pos);
         document.getElementById('poiLatInput').value = pos.lat.toFixed(6);
         document.getElementById('poiLngInput').value = pos.lng.toFixed(6);
-      });
+      };
+
+      poiMarker.on('drag', updateCoordsFromMarker);
+      poiMarker.on('dragend', updateCoordsFromMarker);
 
       poiMiniMap.on('click', (e) => {
         poiMarker.setLatLng(e.latlng);
@@ -1023,10 +1165,31 @@ function initPoiMiniMap(lat, lng, radius) {
         document.getElementById('poiLatInput').value = e.latlng.lat.toFixed(6);
         document.getElementById('poiLngInput').value = e.latlng.lng.toFixed(6);
       });
+
+      // Lắng nghe thay đổi bán kính theo thời gian thực
+      document.getElementById('poiTriggerInput')?.addEventListener('input', (e) => {
+        const r = parseFloat(e.target.value) || 30;
+        if (poiCircle) poiCircle.setRadius(r);
+      });
+
+      // Lắng nghe khi người dùng gõ tay tọa độ
+      const onManualCoordInput = () => {
+        const latVal = parseFloat(document.getElementById('poiLatInput').value);
+        const lngVal = parseFloat(document.getElementById('poiLngInput').value);
+        if (!isNaN(latVal) && !isNaN(lngVal) && poiMarker && poiCircle && poiMiniMap) {
+          poiMarker.setLatLng([latVal, lngVal]);
+          poiCircle.setLatLng([latVal, lngVal]);
+          poiMiniMap.panTo([latVal, lngVal]);
+        }
+      };
+      document.getElementById('poiLatInput')?.addEventListener('input', onManualCoordInput);
+      document.getElementById('poiLngInput')?.addEventListener('input', onManualCoordInput);
     } else {
       poiMiniMap.invalidateSize();
       updatePoiMapPosition(lat, lng, radius);
     }
+
+    renderGhostMarkers();
   }, 200);
 }
 
@@ -1036,6 +1199,7 @@ function updatePoiMapPosition(lat, lng, radius) {
     poiMarker.setLatLng([lat, lng]);
     poiCircle.setLatLng([lat, lng]);
     poiCircle.setRadius(radius || 30);
+    renderGhostMarkers();
   }
 }
 

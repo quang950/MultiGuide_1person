@@ -23,10 +23,10 @@ export const CONFIG = {
   DEFAULT_AREA_CODE: 'van-mieu',
   DEFAULT_LANG: 'vi',
   
-  // Tọa độ trung tâm Văn Miếu - Quốc Tử Giám (cân đối trọn vẹn 6 POI giữa màn hình)
+  // Tọa độ trung tâm Văn Miếu - Quốc Tử Giám (cân đối trọn vẹn 7 POI giữa màn hình)
   MAP_CENTER: {
-    lat: 21.0282,
-    lng: 105.8355,
+    lat: 21.0285,
+    lng: 105.8358,
     zoom: 17.5,
     minZoom: 12,
     maxZoom: 20

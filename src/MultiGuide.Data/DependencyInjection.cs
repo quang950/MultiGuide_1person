@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IAnalyticsRepository, AnalyticsRepository>();
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
         services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
+        services.AddSingleton<ITtsService, EdgeTtsService>();
 
         services.Configure<SupabaseStorageOptions>(options =>
         {

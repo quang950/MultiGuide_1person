@@ -15,6 +15,7 @@ public class AdminContentServiceTranslationTests
     private readonly Mock<ITranslationRepository> _translationRepoMock = new();
     private readonly Mock<ILanguageRepository> _languageRepoMock = new();
     private readonly Mock<IFileStorage> _fileStorageMock = new();
+    private readonly Mock<ITtsService> _ttsServiceMock = new();
     private readonly AdminContentService _service;
 
     public AdminContentServiceTranslationTests()
@@ -25,7 +26,9 @@ public class AdminContentServiceTranslationTests
             _translationRepoMock.Object,
             _languageRepoMock.Object,
             _fileStorageMock.Object,
-            new Mock<IQrCodeGenerator>().Object);
+            new Mock<IQrCodeGenerator>().Object,
+            null,
+            _ttsServiceMock.Object);
     }
 
     private void SetupPoi(Guid poiId) =>
@@ -472,4 +475,89 @@ public class AdminContentServiceTranslationTests
 
         Assert.Equal(ErrorCodes.NotFound, ex.Code);
     }
+
+    [Fact]
+    public async Task GenerateTranslationAudioAsync_HopLe_SinhAudioVaUploadThanhCong()
+    {
+        var translationId = Guid.NewGuid();
+        var poiId = Guid.NewGuid();
+        var translation = new PoiTranslation
+        {
+            Id = translationId,
+            PoiId = poiId,
+            LanguageCode = "vi",
+            Title = "Khuê Văn Các",
+            Description = "Gác Khuê Văn là biểu tượng của Hà Nội."
+        };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        var fakeMp3 = new byte[] { 0x49, 0x44, 0x33, 0x03, 0x00, 0x00, 0x00, 0x00 };
+        _ttsServiceMock.Setup(t => t.SynthesizeSpeechAsync("Đoạn văn đọc", "vi", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fakeMp3);
+
+        _fileStorageMock.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stream _, string p, string _, CancellationToken _) => p);
+        _fileStorageMock.Setup(s => s.CreateSignedUrlAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("https://signed-url/audio.mp3");
+
+        var result = await _service.GenerateTranslationAudioAsync(translationId, "Đoạn văn đọc");
+
+        Assert.Equal(translationId, result.TranslationId);
+        Assert.Equal($"pois/{poiId}/vi.mp3", result.AudioPath);
+        Assert.Equal("https://signed-url/audio.mp3", result.AudioUrl);
+        Assert.Equal("vi", result.LanguageCode);
+        _ttsServiceMock.Verify(t => t.SynthesizeSpeechAsync("Đoạn văn đọc", "vi", It.IsAny<CancellationToken>()), Times.Once);
+        _fileStorageMock.Verify(s => s.UploadAsync(It.IsAny<Stream>(), $"pois/{poiId}/vi.mp3", "audio/mpeg", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GenerateTranslationAudioAsync_KhongCoText_TuLayTitleVaDescription()
+    {
+        var translationId = Guid.NewGuid();
+        var poiId = Guid.NewGuid();
+        var translation = new PoiTranslation
+        {
+            Id = translationId,
+            PoiId = poiId,
+            LanguageCode = "en",
+            Title = "Khue Van Pavilion",
+            Description = "Iconic symbol of Hanoi"
+        };
+        _translationRepoMock.Setup(r => r.GetByIdAsync(translationId, It.IsAny<CancellationToken>())).ReturnsAsync(translation);
+
+        var fakeMp3 = new byte[] { 0xFF, 0xFB, 0x90, 0x44, 0x00, 0x00 };
+        _ttsServiceMock.Setup(t => t.SynthesizeSpeechAsync("Khue Van Pavilion. Iconic symbol of Hanoi", "en", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(fakeMp3);
+
+        _fileStorageMock.Setup(s => s.UploadAsync(It.IsAny<Stream>(), It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Stream _, string p, string _, CancellationToken _) => p);
+        _fileStorageMock.Setup(s => s.CreateSignedUrlAsync(It.IsAny<string>(), It.IsAny<TimeSpan>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("https://signed-url/audio.mp3");
+
+        var result = await _service.GenerateTranslationAudioAsync(translationId, null);
+
+        Assert.Equal(translationId, result.TranslationId);
+        Assert.Equal($"pois/{poiId}/en.mp3", result.AudioPath);
+        _ttsServiceMock.Verify(t => t.SynthesizeSpeechAsync("Khue Van Pavilion. Iconic symbol of Hanoi", "en", It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GenerateTranslationAudioAsync_KhongCoTtsService_NemValidationException()
+    {
+        var serviceWithoutTts = new AdminContentService(
+            new Mock<IAreaRepository>().Object,
+            _poiRepoMock.Object,
+            _translationRepoMock.Object,
+            _languageRepoMock.Object,
+            _fileStorageMock.Object,
+            new Mock<IQrCodeGenerator>().Object,
+            null,
+            null);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            serviceWithoutTts.GenerateTranslationAudioAsync(Guid.NewGuid(), "Sample text"));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+    }
 }
+

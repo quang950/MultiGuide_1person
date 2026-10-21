@@ -404,8 +404,10 @@ export function renderAllStops() {
   const activePoi = store.get().activePoi;
   const activeId = activePoi ? (activePoi.id || activePoi.order) : null;
 
+  const totalStops = String(pois.length).padStart(2, '0');
+
   const html = pois.map(p => {
-    const isNowPlaying = (p.id === activeId);
+    const isNowPlaying = (String(p.id) === String(activeId) || String(p.order) === String(activeId));
     const cardClass = isNowPlaying ? 'poi-journey-card is-active' : 'poi-journey-card';
     
     let statusBadge = '';
@@ -417,7 +419,8 @@ export function renderAllStops() {
       statusBadge = `<span class="journey-status-pill status-pill-listen">${t('stopsTab.statusListen', currentLang)}</span>`;
     }
 
-    const poiStory = POI_STORIES[p.id] ? (POI_STORIES[p.id][currentLang] || POI_STORIES[p.id]['en'] || POI_STORIES[p.id]['vi']) : null;
+    const storyData = POI_STORIES[p.id] || POI_STORIES[p.order];
+    const poiStory = storyData ? (storyData[currentLang] || storyData['en'] || storyData['vi']) : null;
     const mainTitle = poiStory ? poiStory.title : p.title;
     const subTitle = poiStory ? poiStory.subtitle : p.titleEn;
 
@@ -426,7 +429,7 @@ export function renderAllStops() {
         <div class="journey-number-badge">${String(p.order).padStart(2, '0')}</div>
         <div class="journey-info-group">
           <div class="journey-meta-row">
-            <span class="journey-order-tag">${t('stopsTab.stopPrefix', currentLang)} ${p.order} / 06</span>
+            <span class="journey-order-tag">${t('stopsTab.stopPrefix', currentLang)} ${String(p.order).padStart(2, '0')} / ${totalStops}</span>
             <span class="journey-duration">· ${poiStory?.duration || '04:00'}</span>
           </div>
           <div class="journey-title">${mainTitle}</div>
@@ -442,11 +445,11 @@ export function renderAllStops() {
   // Gắn sự kiện click vào từng thẻ: chuyển tab về bản đồ, zoom tới POI và phát thuyết minh
   container.querySelectorAll('.poi-journey-card').forEach(card => {
     card.addEventListener('click', () => {
-      const poiId = parseInt(card.getAttribute('data-poi-id'), 10);
+      const poiId = card.getAttribute('data-poi-id');
       switchTab('explore');
       if (mapManager) {
         mapManager.selectPoi(poiId);
-        const targetPoi = window.HERITAGE_POIS.find(p => p.id === poiId);
+        const targetPoi = window.HERITAGE_POIS.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
         if (targetPoi && window.map) {
           window.map.flyTo([targetPoi.lat, targetPoi.lng], 18.5, { duration: 0.8 });
         }

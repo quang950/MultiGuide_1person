@@ -9,79 +9,97 @@ import { geoService } from './geo.js';
 import { audioEngine, POI_STORIES } from './audio.js';
 import { showProximityBeacon, showBottomSheet, hideBottomSheet } from './ui.js';
 
-// Dữ liệu chuẩn 6 POIs Thần đạo Văn Miếu - Quốc Tử Giám (Khớp 100% DbSeeder Backend)
+// Dữ liệu chuẩn 6 POIs Thần đạo Văn Miếu - Quốc Tử Giám (Khớp 100% DbSeeder Backend & Tọa độ thực địa Google Maps)
 export const HERITAGE_POIS = [
   {
-    id: 1,
+    id: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
     guid: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
     order: 1,
+    priority: 10,
     code: 'cong-van-mieu',
     title: 'Cổng Văn Miếu',
-    titleEn: 'Great Portico',
-    lat: 21.0269,
-    lng: 105.8355,
+    titleEn: 'Van Mieu Gate',
+    lat: 21.02720,
+    lng: 105.83580,
+    triggerRadiusM: 30,
     labelPos: 'left',
     isActive: false,
     isNearby: false
   },
   {
-    id: 2,
+    id: '3ede2134-c305-4270-9413-39c9743f9cb8',
     guid: '3ede2134-c305-4270-9413-39c9743f9cb8',
     order: 2,
-    code: 'cong-dai-trung',
-    title: 'Cổng Đại Trung',
-    titleEn: 'Great Middle Gate',
-    lat: 21.0274,
-    lng: 105.8355,
+    priority: 20,
+    code: 'khue-van-cac',
+    title: 'Khuê Văn Các',
+    titleEn: 'Khue Van Pavilion',
+    lat: 21.02820,
+    lng: 105.83580,
+    triggerRadiusM: 25,
     labelPos: 'right',
     isActive: false,
     isNearby: false
   },
   {
-    id: 3,
+    id: '70dabf88-5450-48e7-9603-b753f5350047',
     guid: '70dabf88-5450-48e7-9603-b753f5350047',
     order: 3,
-    code: 'khue-van-cac',
-    title: 'Khuê Văn Các',
-    titleEn: 'Khuê Văn Pavilion',
-    lat: 21.0279,
-    lng: 105.8355,
+    priority: 30,
+    code: 'gieng-thien-quang',
+    title: 'Giếng Thiên Quang & Vườn Bia Tiến Sĩ',
+    titleEn: 'Thien Quang Well & Stelae',
+    lat: 21.02860,
+    lng: 105.83580,
+    triggerRadiusM: 35,
     labelPos: 'left',
-    isActive: false, // Mặc định không active cho đến khi du khách bấm chọn
+    isActive: false,
     isNearby: false
   },
   {
-    id: 4,
+    id: 'cc63b968-096f-4b06-b4f8-19f8f829ef42',
     guid: 'cc63b968-096f-4b06-b4f8-19f8f829ef42',
     order: 4,
-    code: 'gieng-thien-quang',
-    title: 'Giếng Thiên Quang',
-    titleEn: 'Heavenly Clarity Well',
-    lat: 21.0284,
-    lng: 105.8353,
-    labelPos: 'right'
+    priority: 40,
+    code: 'cong-dai-thanh',
+    title: 'Cổng Đại Thành & Sân Đại Bái',
+    titleEn: 'Dai Thanh Gate & Courtyard',
+    lat: 21.02900,
+    lng: 105.83580,
+    triggerRadiusM: 30,
+    labelPos: 'right',
+    isActive: false,
+    isNearby: false
   },
   {
-    id: 5,
+    id: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
     guid: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
     order: 5,
+    priority: 50,
     code: 'dien-dai-thanh',
     title: 'Điện Đại Thành',
-    titleEn: 'Đại Thành Sanctuary',
-    lat: 21.0288,
-    lng: 105.8355,
-    labelPos: 'left'
+    titleEn: 'Dai Thanh Sanctuary',
+    lat: 21.02940,
+    lng: 105.83580,
+    triggerRadiusM: 30,
+    labelPos: 'left',
+    isActive: false,
+    isNearby: false
   },
   {
-    id: 6,
+    id: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd',
     guid: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd',
     order: 6,
+    priority: 60,
     code: 'nha-thai-hoc',
     title: 'Nhà Thái Học',
-    titleEn: 'Thái Học Academy',
-    lat: 21.0294,
-    lng: 105.8355,
-    labelPos: 'right'
+    titleEn: 'Thai Hoc Academy',
+    lat: 21.02980,
+    lng: 105.83580,
+    triggerRadiusM: 35,
+    labelPos: 'right',
+    isActive: false,
+    isNearby: false
   }
 ];
 
@@ -90,6 +108,7 @@ export class MapManager {
     this.map = null;
     this.poiMarkers = new Map();
     this.sacredAxisLine = null;
+    this.sacredBranches = [];
     this.userMarker = null;
     this.isCheckingGeofence = false;
   }
@@ -97,7 +116,7 @@ export class MapManager {
   /**
    * Khởi tạo bản đồ Leaflet (FE-3.1)
    */
-  init(containerId = 'mapCanvas') {
+  async init(containerId = 'mapCanvas') {
     const container = document.getElementById(containerId);
     if (!container || this.map) return;
 
@@ -121,13 +140,16 @@ export class MapManager {
       attribution: CONFIG.MAP_ATTRIBUTION || '&copy; Google Maps'
     }).addTo(this.map);
 
+    // 2.5 Nạp danh sách POIs động từ Backend API nếu có kết nối
+    await this.loadPoisFromBackend();
+
     // 3. Vẽ đường trục Thần đạo nét đứt màu đồng (FE-3.2)
     this.renderSacredAxis();
 
-    // 4. Vẽ 6 POI Custom Pin Markers bia đá (FE-3.3)
+    // 4. Vẽ 7 POI Custom Pin Markers bia đá (FE-3.3)
     this.renderPoiMarkers();
 
-    // 5. Tự động căn khung hình vừa vặn 6 POI giữa Header và Bottom controls
+    // 5. Tự động căn khung hình vừa vặn 7 POI giữa Header và Bottom controls
     const poiCoords = HERITAGE_POIS.map(p => [p.lat, p.lng]);
     this.map.fitBounds(poiCoords, {
       paddingTopLeft: [40, 115], // Tránh va chạm với Header nổi và GPS pill
@@ -169,13 +191,60 @@ export class MapManager {
   }
 
   /**
+   * Đồng bộ danh sách POIs từ Backend API (RESTful endpoint)
+   */
+  async loadPoisFromBackend() {
+    try {
+      const lang = store.get().selectedLang || 'vi';
+      const center = CONFIG.MAP_CENTER;
+      const data = await apiService.fetchNearbyPois(center.lat, center.lng, 480, lang);
+      if (data && Array.isArray(data) && data.length > 0) {
+        console.log(`[MultiGuide Map] Đã nhận ${data.length} POIs từ Backend API.`);
+        // Sắp xếp theo priority (hoặc toạ độ từ Nam lên Bắc)
+        const sorted = [...data].sort((a, b) => (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
+        
+        // Làm mới sạch sẽ danh sách POIs hiển thị, ngăn chặn triệt để tình trạng trùng lặp POI hoặc nhảy số thứ tự
+        HERITAGE_POIS.length = 0;
+        sorted.forEach((item, index) => {
+          const stopNumber = item.priority ? Math.round(item.priority / 10) : (index + 1);
+          HERITAGE_POIS.push({
+            id: item.id,
+            guid: item.id,
+            order: stopNumber,
+            priority: item.priority || (stopNumber * 10),
+            code: item.code || `poi-${stopNumber}`,
+            title: item.title,
+            titleEn: item.title,
+            lat: item.lat,
+            lng: item.lng,
+            triggerRadiusM: item.triggerRadiusM || item.trigger_radius_m || 30,
+            labelPos: (index % 2 === 0) ? 'left' : 'right',
+            isActive: item.isActive ?? true,
+            isNearby: false
+          });
+        });
+
+        // Cập nhật lại đường trục Thần đạo và các ghim POI theo tọa độ động mới nhất từ Backend
+        if (this.sacredAxisLine) {
+          this.renderSacredAxis();
+        }
+        if (this.poiMarkers && this.poiMarkers.size > 0) {
+          this.renderPoiMarkers();
+        }
+      }
+    } catch (e) {
+      console.warn('[MultiGuide Map] Kết nối backend gián đoạn, sử dụng danh sách 6 POIs mặc định:', e.message);
+    }
+  }
+
+  /**
    * Khởi tạo Marker Vị Trí Du Khách với Xung Sóng Radar Thở Đôi (FE-4.1)
    */
   initUserMarker() {
     if (!this.map) return;
 
-    // Vị trí mặc định chuẩn ảnh mẫu: Giữa Cổng Đại Trung (2) và Khuê Văn Các (3)
-    const initialLocation = [21.02765, 105.8356];
+    // Vị trí mặc định chuẩn ảnh mẫu: Trước Cổng Đại Trung (2)
+    const initialLocation = [21.02765, 105.8358];
 
     const radarHtml = `
       <div class="user-radar-container">
@@ -237,11 +306,10 @@ export class MapManager {
    */
   findPoiMatch(nearbyItem) {
     if (!nearbyItem) return null;
+    const targetGuid = nearbyItem.id || nearbyItem.poiId;
     return HERITAGE_POIS.find(p => 
-      p.id === nearbyItem.id ||
-      p.id === nearbyItem.poiId ||
-      p.title === nearbyItem.title ||
-      p.titleEn === nearbyItem.title ||
+      (targetGuid && (p.id === targetGuid || p.guid === targetGuid)) ||
+      (nearbyItem.title && (p.title === nearbyItem.title || p.titleEn === nearbyItem.title)) ||
       (nearbyItem.lat && Math.abs(p.lat - nearbyItem.lat) < 0.0004 && Math.abs(p.lng - nearbyItem.lng) < 0.0004)
     );
   }
@@ -310,8 +378,17 @@ export class MapManager {
   renderSacredAxis() {
     if (!this.map) return;
 
-    // Tuyến đường trục chính nối thẳng từ Cổng Văn Miếu (Nam) lên Nhà Thái Học (Bắc)
-    const mainAxisCoords = HERITAGE_POIS.map(p => [p.lat, p.lng]);
+    if (this.sacredAxisLine) {
+      this.map.removeLayer(this.sacredAxisLine);
+    }
+    if (this.sacredBranches) {
+      this.sacredBranches.forEach(b => this.map.removeLayer(b));
+    }
+    this.sacredBranches = [];
+
+    // Tuyến đường trục chính nối thẳng từ Cổng Văn Miếu (Nam) lên Nhà Thái Học (Bắc) theo thứ tự trạm
+    const sortedPois = [...HERITAGE_POIS].sort((a, b) => (a.order || 0) - (b.order || 0) || a.lat - b.lat);
+    const mainAxisCoords = sortedPois.map(p => [p.lat, p.lng]);
 
     this.sacredAxisLine = L.polyline(mainAxisCoords, {
       color: '#C28E58',
@@ -323,32 +400,34 @@ export class MapManager {
 
     // 2 nhánh nét đứt vòng quanh hồ Giếng Thiên Quang và Vườn bia Tiến Sĩ
     const westPondBranch = [
-      [21.0280, 105.8355],
-      [21.0280, 105.8349],
-      [21.0287, 105.8349],
-      [21.0287, 105.8355]
+      [21.0284, 105.8358],
+      [21.0284, 105.8352],
+      [21.0288, 105.8352],
+      [21.0288, 105.8358]
     ];
 
     const eastPondBranch = [
-      [21.0280, 105.8355],
-      [21.0280, 105.8361],
-      [21.0287, 105.8361],
-      [21.0287, 105.8355]
+      [21.0284, 105.8358],
+      [21.0284, 105.8364],
+      [21.0288, 105.8364],
+      [21.0288, 105.8358]
     ];
 
-    L.polyline(westPondBranch, {
+    const b1 = L.polyline(westPondBranch, {
       color: '#C28E58',
       weight: 1.5,
       dashArray: '4, 6',
       opacity: 0.65
     }).addTo(this.map);
 
-    L.polyline(eastPondBranch, {
+    const b2 = L.polyline(eastPondBranch, {
       color: '#C28E58',
       weight: 1.5,
       dashArray: '4, 6',
       opacity: 0.65
     }).addTo(this.map);
+
+    this.sacredBranches.push(b1, b2);
   }
 
   /**
@@ -408,6 +487,11 @@ export class MapManager {
    */
   renderPoiMarkers() {
     if (!this.map) return;
+
+    if (this.poiMarkers && this.poiMarkers.size > 0) {
+      this.poiMarkers.forEach(m => this.map.removeLayer(m));
+      this.poiMarkers.clear();
+    }
 
     HERITAGE_POIS.forEach(poi => {
       const state = poi.isActive ? 'active' : (poi.isNearby ? 'nearby' : 'idle');
@@ -469,10 +553,11 @@ export class MapManager {
     const labelClass = p.labelPos === 'left' ? 'label-left' : 'label-right';
     const currentLang = store.get().selectedLang || 'vi';
 
-    // Lấy tiêu đề đa ngữ từ POI_STORIES
-    let displayTitle = p.titleEn;
-    if (POI_STORIES && POI_STORIES[p.id] && POI_STORIES[p.id][currentLang]) {
-      displayTitle = POI_STORIES[p.id][currentLang].title;
+    // Lấy tiêu đề đa ngữ từ POI_STORIES hoặc thuộc tính POI
+    let displayTitle = p.titleEn || p.title;
+    const story = (POI_STORIES && (POI_STORIES[p.id] || POI_STORIES[p.order]));
+    if (story && story[currentLang]) {
+      displayTitle = story[currentLang].title;
     } else if (currentLang === 'vi') {
       displayTitle = p.title;
     }
@@ -512,7 +597,7 @@ export class MapManager {
       // Nếu POI này đang phát audio thì giữ nguyên active
       if (p.isActive) return;
 
-      const isNear = (p.id === poiId);
+      const isNear = (String(p.id) === String(poiId) || String(p.order) === String(poiId));
       if (p.isNearby !== isNear) {
         p.isNearby = isNear;
         this.updateMarkerVisual(p);
@@ -539,19 +624,19 @@ export class MapManager {
    */
   selectPoi(poiId) {
     HERITAGE_POIS.forEach(p => {
-      p.isActive = (p.id === poiId);
+      p.isActive = (String(p.id) === String(poiId) || String(p.order) === String(poiId));
       p.isNearby = false; // Khi đã chọn thì không còn là trạng thái chờ
       this.updateMarkerVisual(p);
     });
 
-    const activePoi = HERITAGE_POIS.find(p => p.id === poiId);
+    const activePoi = HERITAGE_POIS.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
     store.set({ activePoi });
 
     if (activePoi) {
       // 1. Mở khung Bottom Sheet trượt lên (Nấc 1)
-      showBottomSheet(poiId);
+      showBottomSheet(activePoi.id);
       // 2. Đồng bộ phát âm thanh di sản
-      audioEngine.playPoi(poiId);
+      audioEngine.playPoi(activePoi.id);
     }
   }
 

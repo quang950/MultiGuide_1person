@@ -53,6 +53,13 @@ export const apiService = {
 
   async getNearbyPois(lat, lng, radius, lang) {
     let token = store.get().accessToken;
+    if (!token) {
+      try {
+        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
+        token = pass.accessToken || pass.token;
+        store.setAccessToken(token, pass);
+      } catch {}
+    }
     if (!token) return [];
     const url = `${this.baseUrl}/pois/nearby?lat=${lat}&lng=${lng}&radius=${radius}&lang=${lang}`;
     let res = await fetch(url, {

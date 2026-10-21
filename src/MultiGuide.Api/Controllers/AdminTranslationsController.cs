@@ -139,4 +139,28 @@ public class AdminTranslationsController : AdminBaseController
 
         return Ok(result);
     }
+
+    /// <summary>
+    /// Sinh file audio MP3 tự động bằng Edge Neural TTS từ kịch bản văn bản (AI Voice).
+    /// </summary>
+    [HttpPost("/admin/translations/{id:guid}/generate-audio")]
+    [HttpPost("/api/v1/admin/translations/{id:guid}/generate-audio")]
+    [ProducesResponseType(typeof(GenerateAudioResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
+    public async Task<ActionResult<GenerateAudioResponse>> GenerateAudio(
+        Guid id,
+        [FromBody] GenerateAudioRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _adminContentService.GenerateTranslationAudioAsync(
+            id,
+            request?.Text,
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
+

@@ -44,39 +44,56 @@ public static class DbSeeder
         const string areaCode = "van-mieu";
         var existingArea = await context.TourAreas.FirstOrDefaultAsync(a => a.Code == areaCode);
 
-        if (existingArea != null && !force)
-        {
-            return; // Demo data already seeded
-        }
-
         // 3. Seed TourArea: Văn Miếu - Quốc Tử Giám
-        var area = existingArea ?? new TourArea
+        var area = existingArea;
+        if (area == null)
         {
-            Id = Guid.NewGuid(),
-            Code = areaCode,
-            Name = "Văn Miếu - Quốc Tử Giám",
-            CenterLat = 21.0276,
-            CenterLng = 105.8355,
-            RadiusM = 300,
-            PriceUsd = 5.00m,
-            PassTtlHours = 24,
-            IsActive = true
-        };
-
-        if (existingArea == null)
-        {
+            area = new TourArea
+            {
+                Id = Guid.Parse("a0000000-0000-0000-0000-000000000001"),
+                Code = areaCode,
+                Name = "Văn Miếu - Quốc Tử Giám",
+                CenterLat = 21.0285,
+                CenterLng = 105.8358,
+                RadiusM = 300,
+                PriceUsd = 5.00m,
+                PassTtlHours = 24,
+                IsActive = true
+            };
             context.TourAreas.Add(area);
+            await context.SaveChangesAsync();
+        }
+        else
+        {
+            area.CenterLat = 21.0285;
+            area.CenterLng = 105.8358;
             await context.SaveChangesAsync();
         }
 
         // 4. Seed 6 POIs and 18 PoiTranslations
         var poiDataList = GetDemoPoisWithTranslations(area.Id);
+        var validPoiIds = poiDataList.Select(x => x.Poi.Id).ToList();
+
+        // Xóa bất kỳ POI thừa nào không thuộc danh sách 6 điểm chuẩn (ví dụ Cổng Đại Trung trước đây)
+        var extraPois = await context.Pois
+            .Include(p => p.Translations)
+            .Where(p => p.AreaId == area.Id && !validPoiIds.Contains(p.Id))
+            .ToListAsync();
+        if (extraPois.Count > 0)
+        {
+            foreach (var extra in extraPois)
+            {
+                context.PoiTranslations.RemoveRange(extra.Translations);
+                context.Pois.Remove(extra);
+            }
+            await context.SaveChangesAsync();
+        }
 
         foreach (var (poi, translations) in poiDataList)
         {
             var existingPoi = await context.Pois
                 .Include(p => p.Translations)
-                .FirstOrDefaultAsync(p => p.AreaId == area.Id && Math.Abs(p.Lat - poi.Lat) < 0.0001 && Math.Abs(p.Lng - poi.Lng) < 0.0001);
+                .FirstOrDefaultAsync(p => p.Id == poi.Id);
 
             if (existingPoi == null)
             {
@@ -85,6 +102,35 @@ public static class DbSeeder
                 {
                     trans.PoiId = poi.Id;
                     context.PoiTranslations.Add(trans);
+                }
+            }
+            else
+            {
+                if (existingPoi.Lat == 0 && existingPoi.Lng == 0)
+                {
+                    existingPoi.Lat = poi.Lat;
+                    existingPoi.Lng = poi.Lng;
+                }
+                existingPoi.Priority = poi.Priority;
+                existingPoi.TriggerRadiusM = poi.TriggerRadiusM;
+                existingPoi.IsActive = poi.IsActive;
+
+                foreach (var trans in translations)
+                {
+                    var existingTrans = existingPoi.Translations.FirstOrDefault(t => t.LanguageCode == trans.LanguageCode);
+                    if (existingTrans == null)
+                    {
+                        trans.PoiId = existingPoi.Id;
+                        context.PoiTranslations.Add(trans);
+                    }
+                    else
+                    {
+                        existingTrans.Title = trans.Title;
+                        if (!string.IsNullOrWhiteSpace(trans.Description))
+                        {
+                            existingTrans.Description = trans.Description;
+                        }
+                    }
                 }
             }
         }
@@ -96,14 +142,14 @@ public static class DbSeeder
     {
         return new List<(Poi, List<PoiTranslation>)>
         {
-            // POI 1: Cổng Văn Miếu
+            // POI 1: Cổng Văn Miếu (Văn Miếu Môn)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("c1875fb2-84ad-4a5a-936a-173fdbf4f7f3"),
                     AreaId = areaId,
-                    Lat = 21.0269,
-                    Lng = 105.8355,
+                    Lat = 21.02720,
+                    Lng = 105.83580,
                     TriggerRadiusM = 30,
                     Priority = 10,
                     IsActive = true
@@ -121,7 +167,7 @@ public static class DbSeeder
                     {
                         Id = Guid.NewGuid(),
                         LanguageCode = "en",
-                        Title = "Van Mieu Gate (Great Middle Gate)",
+                        Title = "Van Mieu Gate (Văn Miếu Môn)",
                         Description = "The imposing main three-entrance gate of the Temple of Literature, built in 1070 under Emperor Ly Thanh Tong. In front of the gate stand two Stone Stele reminding visitors of all ranks to dismount their horses to pay respect to Confucian scholars and teachers."
                     },
                     new()
@@ -134,16 +180,16 @@ public static class DbSeeder
                 }
             ),
 
-            // POI 2: Khuê Văn Các
+            // POI 2: Khuê Văn Các (Gắn chuẩn với GUID 3ede2134...)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("3ede2134-c305-4270-9413-39c9743f9cb8"),
                     AreaId = areaId,
-                    Lat = 21.0274,
-                    Lng = 105.8355,
+                    Lat = 21.02820,
+                    Lng = 105.83580,
                     TriggerRadiusM = 25,
-                    Priority = 30,
+                    Priority = 20,
                     IsActive = true
                 },
                 new List<PoiTranslation>
@@ -172,16 +218,16 @@ public static class DbSeeder
                 }
             ),
 
-            // POI 3: Giếng Thiên Quang & Vườn Bia Tiến Sĩ
+            // POI 3: Giếng Thiên Quang & Vườn Bia Tiến Sĩ (Gắn chuẩn với GUID 70dabf88...)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("70dabf88-5450-48e7-9603-b753f5350047"),
                     AreaId = areaId,
-                    Lat = 21.0279,
-                    Lng = 105.8353,
+                    Lat = 21.02860,
+                    Lng = 105.83580,
                     TriggerRadiusM = 35,
-                    Priority = 40,
+                    Priority = 30,
                     IsActive = true
                 },
                 new List<PoiTranslation>
@@ -210,16 +256,16 @@ public static class DbSeeder
                 }
             ),
 
-            // POI 4: Cổng Đại Thành & Sân Đại Bái
+            // POI 4: Cổng Đại Thành & Sân Đại Bái (Gắn chuẩn với GUID cc63b968...)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("cc63b968-096f-4b06-b4f8-19f8f829ef42"),
                     AreaId = areaId,
-                    Lat = 21.0284,
-                    Lng = 105.8355,
+                    Lat = 21.02900,
+                    Lng = 105.83580,
                     TriggerRadiusM = 30,
-                    Priority = 20,
+                    Priority = 40,
                     IsActive = true
                 },
                 new List<PoiTranslation>
@@ -229,7 +275,7 @@ public static class DbSeeder
                         Id = Guid.NewGuid(),
                         LanguageCode = "vi",
                         Title = "Cổng Đại Thành & Sân Đại Bái",
-                        Description = "Cổng Đại Thành là cửa bước vào khu vực nội điện thờ tự chính. Phía sau cổng là sân Đại Bái rộng lát gạch Bát Tràng cổ kính, nơi diễn ra các nghi lễ tế tế Nho học trang trọng hàng năm dưới các triều đại phong kiến Lý, Trần, Lê."
+                        Description = "Cổng Đại Thành là cửa bước vào khu vực nội điện thờ tự chính. Phía sau cổng là sân Đại Bái rộng lát gạch Bát Tràng cổ kính, nơi diễn ra các nghi lễ tế Nho học trang trọng hàng năm dưới các triều đại phong kiến Lý, Trần, Lê."
                     },
                     new()
                     {
@@ -248,14 +294,14 @@ public static class DbSeeder
                 }
             ),
 
-            // POI 5: Điện Đại Thành
+            // POI 5: Điện Đại Thành (Gắn chuẩn với GUID 0c23b2e0...)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("0c23b2e0-73d1-4f37-90a0-f95201abf43b"),
                     AreaId = areaId,
-                    Lat = 21.0288,
-                    Lng = 105.8355,
+                    Lat = 21.02940,
+                    Lng = 105.83580,
                     TriggerRadiusM = 30,
                     Priority = 50,
                     IsActive = true
@@ -286,14 +332,14 @@ public static class DbSeeder
                 }
             ),
 
-            // POI 6: Nhà Thái Học
+            // POI 6: Nhà Thái Học (Gắn chuẩn với GUID cd3c98eb...)
             (
                 new Poi
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.Parse("cd3c98eb-79fe-4980-a870-6f690f9e40cd"),
                     AreaId = areaId,
-                    Lat = 21.0294,
-                    Lng = 105.8355,
+                    Lat = 21.02980,
+                    Lng = 105.83580,
                     TriggerRadiusM = 35,
                     Priority = 60,
                     IsActive = true

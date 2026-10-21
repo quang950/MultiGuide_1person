@@ -682,8 +682,14 @@ html, body.admin-body {
   gap: 16px;
 }
 
+.form-grid-4 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 12px;
+}
+
 @media (max-width: 640px) {
-  .form-grid-2, .form-grid-3 {
+  .form-grid-2, .form-grid-3, .form-grid-4 {
     grid-template-columns: 1fr;
   }
 }

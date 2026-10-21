@@ -24,6 +24,7 @@ public class AdminContentService : IAdminContentService
     private readonly IFileStorage _fileStorage;
     private readonly IQrCodeGenerator _qrCodeGenerator;
     private readonly IAiService? _aiService;
+    private readonly ITtsService? _ttsService;
 
     public AdminContentService(
         IAreaRepository areaRepository,
@@ -32,7 +33,8 @@ public class AdminContentService : IAdminContentService
         ILanguageRepository languageRepository,
         IFileStorage fileStorage,
         IQrCodeGenerator qrCodeGenerator,
-        IAiService? aiService = null)
+        IAiService? aiService = null,
+        ITtsService? ttsService = null)
     {
         _areaRepository = areaRepository;
         _poiRepository = poiRepository;
@@ -41,6 +43,7 @@ public class AdminContentService : IAdminContentService
         _fileStorage = fileStorage;
         _qrCodeGenerator = qrCodeGenerator;
         _aiService = aiService;
+        _ttsService = ttsService;
     }
 
     public async Task<IReadOnlyList<AreaResponse>> GetAreasAsync(bool? isActive = null, CancellationToken cancellationToken = default)
@@ -410,6 +413,60 @@ public class AdminContentService : IAdminContentService
 
         await _translationRepository.UpdateAsync(translation, cancellationToken);
         return MapToResponse(translation);
+    }
+
+    public async Task<GenerateAudioResponse> GenerateTranslationAudioAsync(
+        Guid translationId,
+        string? text = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (_ttsService == null)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Dịch vụ TTS chưa được khởi tạo trong hệ thống.");
+        }
+
+        var translation = await _translationRepository.GetByIdAsync(translationId, cancellationToken);
+        if (translation == null)
+        {
+            throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy bản dịch với mã định danh '{translationId}'.");
+        }
+
+        var inputText = string.IsNullOrWhiteSpace(text)
+            ? $"{translation.Title}. {translation.Description}"
+            : text.Trim();
+
+        if (string.IsNullOrWhiteSpace(inputText))
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Nội dung văn bản để sinh giọng đọc không được để trống.");
+        }
+
+        byte[] mp3Bytes = await _ttsService.SynthesizeSpeechAsync(inputText, translation.LanguageCode, cancellationToken);
+        if (mp3Bytes == null || mp3Bytes.Length == 0)
+        {
+            throw new ValidationException(ErrorCodes.ValidationError, "Không thể sinh file âm thanh từ văn bản đã cung cấp.");
+        }
+
+        using var ms = new MemoryStream(mp3Bytes);
+        var uploadResult = await UploadTranslationAudioAsync(
+            translationId,
+            ms,
+            mp3Bytes.Length,
+            "audio/mpeg",
+            cancellationToken);
+
+        var signedUrl = await _fileStorage.CreateSignedUrlAsync(
+            uploadResult.AudioPath!,
+            TimeSpan.FromHours(1),
+            cancellationToken);
+
+        return new GenerateAudioResponse
+        {
+            TranslationId = translationId,
+            AudioPath = uploadResult.AudioPath!,
+            AudioUrl = signedUrl,
+            AudioSizeBytes = mp3Bytes.Length,
+            LanguageCode = translation.LanguageCode
+        };
     }
 
     private static void ValidateAudioStream(Stream audioStream, long contentLength)
