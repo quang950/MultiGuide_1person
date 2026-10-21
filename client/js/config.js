@@ -1,9 +1,25 @@
 /**
  * MultiGuide - Frontend Configuration
  */
+const isLocalhost = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+let savedApi = typeof localStorage !== 'undefined' ? localStorage.getItem('mg_api_url') : null;
+
+// Nếu đang chạy trên localhost / 127.0.0.1 mà cache cũ đang lưu render -> xóa để ưu tiên backend local 5267
+if (isLocalhost && savedApi && savedApi.includes('onrender.com')) {
+  try {
+    localStorage.removeItem('mg_api_url');
+  } catch {}
+  savedApi = null;
+}
+
+const DEFAULT_API_URL = isLocalhost ? 'http://localhost:5267' : 'https://multiguide-1person.onrender.com';
+
 export const CONFIG = {
-  // Mặc định kết nối API Render Production, cho phép override qua localStorage
-  API_BASE_URL: localStorage.getItem('mg_api_url') || 'https://multiguide-1person.onrender.com',
+  // Tự động nhận diện local (http://localhost:5267) hoặc cloud Render
+  API_BASE_URL: savedApi || DEFAULT_API_URL,
+  IS_LOCAL: isLocalhost,
   DEFAULT_AREA_CODE: 'van-mieu',
   DEFAULT_LANG: 'vi',
   

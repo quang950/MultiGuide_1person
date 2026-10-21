@@ -2,9 +2,9 @@
  * MultiGuide - Admin Portal Controller
  * Xử lý dữ liệu quản trị, thống kê hành vi, bản đồ tương tác và sinh audio TTS
  */
-import { CONFIG } from './config.js';
+import { CONFIG } from './config.js?v=3.6';
 
-const API_BASE = CONFIG.API_BASE_URL || 'https://multiguide-1person.onrender.com';
+const API_BASE = CONFIG.API_BASE_URL;
 
 let areaMiniMap = null;
 let areaMarker = null;
@@ -16,11 +16,41 @@ let currentAreaId = null;
 let currentPoiTranslations = { vi: {}, en: {}, ja: {} };
 let currentActiveLang = 'vi';
 
+// Cập nhật huy hiệu môi trường kết nối API
+const envBadge = document.getElementById('adminApiEnvBadge');
+if (envBadge) {
+  const isLocal = API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1') || API_BASE.includes('5267');
+  if (isLocal) {
+    envBadge.textContent = 'API: Local (5267)';
+    envBadge.style.color = '#15803d';
+    envBadge.style.background = 'rgba(34, 197, 94, 0.15)';
+    envBadge.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+  } else {
+    envBadge.textContent = 'API: Cloud Render';
+    envBadge.style.color = '#0284c7';
+    envBadge.style.background = 'rgba(2, 132, 199, 0.15)';
+    envBadge.style.borderColor = 'rgba(2, 132, 199, 0.3)';
+  }
+
+  envBadge.style.cursor = 'pointer';
+  envBadge.title = 'Bấm để đổi API giữa Local và Render';
+  envBadge.addEventListener('click', () => {
+    const isNowLocal = API_BASE.includes('localhost') || API_BASE.includes('127.0.0.1') || API_BASE.includes('5267');
+    const newTarget = isNowLocal ? 'https://multiguide-1person.onrender.com' : 'http://localhost:5267';
+    if (confirm(`Bạn có muốn đổi API sang: ${newTarget}? (Trang sẽ tải lại)`)) {
+      localStorage.setItem('mg_api_url', newTarget);
+      window.location.reload();
+    }
+  });
+}
+
 // ========================================================
-// 1. KIỂM TRA PHIÊN ĐĂNG NHẬP (AUTH GUARD)
+// 1. KIỂM TRA PHIÊN ĐĂNG NHẬP (AUTH GUARD & REFRESH TOKEN)
 // ========================================================
-const adminToken = localStorage.getItem('mg_admin_token');
-if (!adminToken) {
+const initialToken = localStorage.getItem('mg_admin_token');
+const initialRefreshToken = localStorage.getItem('mg_admin_refresh_token');
+
+if (!initialToken && !initialRefreshToken) {
   alert('Vui lòng đăng nhập với quyền Quản trị viên.');
   window.location.href = 'index.html';
 }
@@ -34,18 +64,116 @@ if (adminUserStr) {
   } catch (e) {}
 }
 
-async function adminFetch(endpoint, options = {}) {
-  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${adminToken}`,
-    ...options.headers
-  };
+let isRefreshingPromise = null;
 
-  const res = await fetch(url, { ...options, headers });
+async function refreshAdminToken() {
+  if (isRefreshingPromise) return isRefreshingPromise;
+
+  const refreshToken = localStorage.getItem('mg_admin_refresh_token');
+  if (!refreshToken) {
+    return null;
+  }
+
+  isRefreshingPromise = (async () => {
+    try {
+      // 1. Thử refresh qua Backend proxy bảo mật
+      const res = await fetch(`${API_BASE}/admin/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const newAccess = data.access_token || data.accessToken;
+        const newRefresh = data.refresh_token || data.refreshToken || refreshToken;
+        const exp = Number(data.expires_in || data.expiresIn || 3600);
+
+        if (newAccess) {
+          localStorage.setItem('mg_admin_token', newAccess);
+          localStorage.setItem('mg_admin_refresh_token', newRefresh);
+          localStorage.setItem('mg_admin_token_expires_at', (Date.now() + exp * 1000).toString());
+          return newAccess;
+        }
+      }
+
+      // 2. Dự phòng trực tiếp qua Supabase Auth nếu backend trả về lỗi mạng hoặc 404
+      const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicmZkeHRtbmhkY296Ymx5aWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTQ3ODgsImV4cCI6MjEwNzQ3MDc4OH0.AuQtC8JZXsrmMc_84K5OJIY3RtQ8LXoLEv0sB1JM7iA';
+      const sbRes = await fetch('https://xbrfdxtmnhdcozblyilo.supabase.co/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST',
+        headers: {
+          'apikey': anonKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ refresh_token: refreshToken })
+      });
+
+      if (sbRes.ok) {
+        const sbData = await sbRes.json();
+        const newAccess = sbData.access_token;
+        const newRefresh = sbData.refresh_token || refreshToken;
+        const exp = Number(sbData.expires_in || 3600);
+
+        if (newAccess) {
+          localStorage.setItem('mg_admin_token', newAccess);
+          localStorage.setItem('mg_admin_refresh_token', newRefresh);
+          localStorage.setItem('mg_admin_token_expires_at', (Date.now() + exp * 1000).toString());
+          return newAccess;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      console.warn('Không thể làm mới token:', e);
+      return null;
+    } finally {
+      isRefreshingPromise = null;
+    }
+  })();
+
+  return isRefreshingPromise;
+}
+
+async function ensureFreshToken() {
+  const expiresAt = Number(localStorage.getItem('mg_admin_token_expires_at') || 0);
+  // Nếu token còn dưới 5 phút (300.000 ms) hoặc đã quá hạn -> chủ động gia hạn ngầm
+  if (expiresAt > 0 && (expiresAt - Date.now() < 300000)) {
+    await refreshAdminToken();
+  }
+}
+
+// Kiểm tra định kỳ mỗi 10 phút để tự động gia hạn token ngầm, giữ phiên làm việc lâu dài
+setInterval(() => {
+  ensureFreshToken().catch(() => {});
+}, 10 * 60 * 1000);
+
+async function adminFetch(endpoint, options = {}) {
+  await ensureFreshToken();
+  let token = localStorage.getItem('mg_admin_token');
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+  const buildHeaders = (t) => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${t}`,
+    ...options.headers
+  });
+
+  let res = await fetch(url, { ...options, headers: buildHeaders(token) });
+
+  // Nếu bị 401: cố gắng tự động refresh token 1 lần và gửi lại request
+  if (res.status === 401) {
+    console.warn('Phiên làm việc hết hạn (401), đang tự động gia hạn token ngầm...');
+    const newToken = await refreshAdminToken();
+    if (newToken) {
+      res = await fetch(url, { ...options, headers: buildHeaders(newToken) });
+    }
+  }
+
   if (res.status === 401 || res.status === 403) {
     alert('Phiên làm việc hết hạn hoặc bạn không có quyền Quản trị viên. Vui lòng đăng nhập lại.');
     localStorage.removeItem('mg_admin_token');
+    localStorage.removeItem('mg_admin_refresh_token');
+    localStorage.removeItem('mg_admin_token_expires_at');
     localStorage.removeItem('mg_admin_user');
     window.location.href = 'index.html';
     throw new Error('Unauthorized');
@@ -106,6 +234,8 @@ function initLogout() {
     btnLogout.addEventListener('click', () => {
       if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi trang Quản trị?')) {
         localStorage.removeItem('mg_admin_token');
+        localStorage.removeItem('mg_admin_refresh_token');
+        localStorage.removeItem('mg_admin_token_expires_at');
         localStorage.removeItem('mg_admin_user');
         window.location.href = 'index.html';
       }

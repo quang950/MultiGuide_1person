@@ -1,7 +1,7 @@
 /**
  * MultiGuide - Reactive State Management
  */
-import { CONFIG } from './config.js';
+import { CONFIG } from './config.js?v=3.6';
 
 class StateStore {
   constructor() {

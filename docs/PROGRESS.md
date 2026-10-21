@@ -2,21 +2,16 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 15/10/2026 — HOÀN THÀNH TOÀN BỘ NGÀY 1, 2, 3 VÀ 4 — 100% CÁC TASK HOÀN TẤT)
-- **Đang làm:** Tất cả các task Ngày 1, Ngày 2, Ngày 3, Ngày 4 (kể cả 2 task nâng cao T-4.2 và T-4.4) đã hoàn thành xuất sắc 100%!
-- **Vừa xong:** Hoàn thành trọn vẹn **Task T-4.2 — Integration test với Testcontainers Postgres**:
-  - Tích hợp package `Testcontainers.PostgreSql` (v4.16.0) vào dự án kiểm thử `MultiGuide.Integration.Tests`.
-  - Khởi tạo container PostgreSQL 16 thật (`postgres:16-alpine`) độc lập và tự động qua Docker.
-  - Tự động thực thi toàn bộ EF Core Migrations trên PostgreSQL thật để tạo bảng, quan hệ và khóa ngoại.
-  - Nạp dữ liệu seed chuẩn (Khu Văn Miếu, Ngôn ngữ, POIs) qua `DbSeeder`.
-  - Kiểm thử end-to-end trọn vẹn luồng:
-    1. `POST /areas/van-mieu/passes` kèm header `Idempotency-Key` -> Cấp vé 201 Created.
-    2. Xác minh trực tiếp trong CSDL PostgreSQL: Payment ghi nhận `Succeeded`, AccessPass lưu chính xác chuỗi SHA-256 hash của AccessToken, quan hệ khóa ngoại toàn vẹn.
-    3. `GET /pois/nearby` truyền `Bearer <AccessToken>` trên PostgreSQL container -> Trả về 200 OK với danh sách POI, cờ `within_trigger` và tính toán khoảng cách Haversine chính xác.
-    4. Kiểm tra Idempotency trên PostgreSQL thật: Gửi lại cùng `Idempotency-Key` -> Trả về 409 Conflict với mã lỗi chuẩn `DUPLICATE_REQUEST`.
-    5. Kiểm tra bảo mật AccessPass trên PostgreSQL thật: Truy vấn với token không hợp lệ -> Trả về 403 Forbidden với mã lỗi chuẩn `PASS_INVALID`.
-  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **314/314 XANH LÁ (100%)** (151 Business, 145 Integration, 18 Architecture); Code Coverage tầng Business đạt **96.41%** Line Coverage và **98.96%** Branch Coverage (vượt xa ngưỡng yêu cầu 60%); `dotnet build -warnaserror` 0 warning 0 error; `dotnet format` sạch 100%.
-- **Bước kế tiếp:** Sẵn sàng cho người dùng nghiệm thu, demo và đẩy code lên remote repository.
+## Trạng thái hiện tại (cập nhật: 21/10/2026 — Hoàn tất MultiGuide Admin JWT 30 ngày & Bộ chuyển đổi API Local/Cloud)
+- **Đang làm:** Sẵn sàng kiểm thử và sử dụng.
+- **Vừa xong:** Hoàn thành xuất sắc giải pháp phiên làm việc và môi trường test Local:
+  - Chỉ dùng Supabase Auth để xác thực credentials và phân quyền `role === 'admin'`.
+  - Backend MultiGuide tự động ký phát hành JWT Token riêng của hệ thống có thời hạn sống **30 ngày (2,592,000 giây)** bằng khóa bí mật HMAC-SHA256, loại bỏ hoàn toàn sự phụ thuộc vào giới hạn 1 giờ của gói Supabase Free Tier.
+  - Tự động nhận diện môi trường: Khi chạy trên `localhost` hoặc `127.0.0.1` (port 5500, 3000...), Client tự động kết nối Backend Local `http://localhost:5267`.
+  - Hủy Service Worker và xóa cache tự động khi chạy dev local, chống kẹt file JS cũ.
+  - Tích hợp bộ chuyển đổi API (API Switcher) linh hoạt trên cả Modal Đăng nhập (`index.html`) và Thanh Menu Quản trị (`admin.html`).
+  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **321/321 XANH LÁ (100%)** (151 Business, 152 Integration, 18 Architecture); `dotnet build MultiGuide.sln -warnaserror` 0 warning 0 error; `dotnet format --verify-no-changes` sạch 100%.
+- **Bước kế tiếp:** Người dùng tiếp tục phát triển hoặc kiểm thử các tính năng tiếp theo.
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
 

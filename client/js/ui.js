@@ -7,7 +7,7 @@ import { apiService } from './api.js';
 import { mapManager } from './map.js';
 import { t } from './i18n.js';
 import { POI_STORIES } from './audio.js';
-import { CONFIG } from './config.js';
+import { CONFIG } from './config.js?v=3.6';
 
 /**
  * Mở khóa AudioContext cho iOS Safari / Android Chrome (CONSTRAINTS.md)
@@ -614,9 +614,34 @@ export function initAdminLogin() {
     modal.setAttribute('aria-hidden', 'false');
     if (errorBox) errorBox.style.display = 'none';
     if (passInput) passInput.value = '';
+    renderApiEnvDisplay();
     setTimeout(() => {
       if (passInput) passInput.focus();
     }, 100);
+  }
+
+  function renderApiEnvDisplay() {
+    const urlSpan = document.getElementById('adminModalApiUrl');
+    const box = document.getElementById('adminModalApiEnv');
+    if (!urlSpan) return;
+    const isLocal = CONFIG.API_BASE_URL.includes('localhost') || CONFIG.API_BASE_URL.includes('5267');
+    urlSpan.textContent = isLocal ? 'API: Local (http://localhost:5267)' : 'API: Cloud Render';
+    if (box) {
+      box.style.background = isLocal ? 'rgba(34, 197, 94, 0.1)' : 'rgba(2, 132, 199, 0.1)';
+      box.style.borderColor = isLocal ? 'rgba(34, 197, 94, 0.25)' : 'rgba(2, 132, 199, 0.25)';
+      urlSpan.style.color = isLocal ? '#15803d' : '#0284c7';
+    }
+  }
+
+  const btnToggleApi = document.getElementById('btnToggleApiEnv');
+  if (btnToggleApi) {
+    btnToggleApi.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isLocal = CONFIG.API_BASE_URL.includes('localhost') || CONFIG.API_BASE_URL.includes('5267');
+      CONFIG.API_BASE_URL = isLocal ? 'https://multiguide-1person.onrender.com' : 'http://localhost:5267';
+      localStorage.setItem('mg_api_url', CONFIG.API_BASE_URL);
+      renderApiEnvDisplay();
+    });
   }
 
   function closeModal() {
@@ -709,6 +734,8 @@ export function initAdminLogin() {
             }
             return {
               access_token: sbData.access_token,
+              refresh_token: sbData.refresh_token,
+              expires_in: sbData.expires_in || 3600,
               user: { id: sbData.user?.id, email: sbData.user?.email, role: 'admin' }
             };
           }
@@ -729,11 +756,24 @@ export function initAdminLogin() {
           authResult = await tryLogin(2);
         }
 
+        // Bóc tách token linh hoạt (hỗ trợ cả camelCase và snake_case)
+        const token = authResult.access_token || authResult.accessToken;
+        const refreshToken = authResult.refresh_token || authResult.refreshToken;
+        const expiresIn = Number(authResult.expires_in || authResult.expiresIn || 3600);
+
+        if (!token) {
+          throw new Error('Không nhận được mã xác thực hợp lệ từ máy chủ.');
+        }
+
         // Lưu thông tin phiên đăng nhập
-        localStorage.setItem('mg_admin_token', authResult.access_token);
+        localStorage.setItem('mg_admin_token', token);
+        if (refreshToken) {
+          localStorage.setItem('mg_admin_refresh_token', refreshToken);
+        }
+        localStorage.setItem('mg_admin_token_expires_at', (Date.now() + expiresIn * 1000).toString());
         localStorage.setItem('mg_admin_user', JSON.stringify({
-          id: authResult.user?.id,
-          email: authResult.user?.email || email,
+          id: authResult.user?.id || authResult.id,
+          email: authResult.user?.email || authResult.email || email,
           role: 'admin'
         }));
 

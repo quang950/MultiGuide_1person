@@ -1,7 +1,7 @@
 /**
  * MultiGuide - API Service
  */
-import { CONFIG } from './config.js';
+import { CONFIG } from './config.js?v=3.6';
 import { store } from './state.js';
 
 export const apiService = {

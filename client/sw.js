@@ -2,7 +2,7 @@
  * Service Worker cho MultiGuide Heritage PWA
  * Hỗ trợ lưu cache tài nguyên tĩnh, font chữ và chạy offline khi mất sóng di động
  */
-const CACHE_NAME = 'multiguide-v3.3';
+const CACHE_NAME = 'multiguide-v3.5';
 
 const STATIC_ASSETS = [
   './',
@@ -71,6 +71,11 @@ self.addEventListener('fetch', (event) => {
   }
   
   const url = new URL(event.request.url);
+
+  // Khi phát triển trên localhost / 127.0.0.1: luôn lấy trực tiếp từ network để không bị dính cache file JS/CSS cũ
+  if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+    return;
+  }
 
   // Không cache API Backend động (để luôn lấy dữ liệu mới nhất)
   if (url.pathname.includes('/api/') || url.hostname.includes('render.com') || url.hostname.includes('supabase.co')) {
