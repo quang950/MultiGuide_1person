@@ -148,18 +148,27 @@ app.UseExceptionHandler();
 app.UseCors("AllowClient");
 
 // Run seeder if enabled via configuration (Seed:Enabled or Seed__Enabled)
-using (var scope = app.Services.CreateScope())
+// Do not auto-seed when running integration tests (USE_IN_MEMORY_DB=true or Testing environment)
+var useInMemory = string.Equals(app.Configuration["USE_IN_MEMORY_DB"], "true", StringComparison.OrdinalIgnoreCase);
+var isTesting = app.Environment.IsEnvironment("Testing") || useInMemory;
+var seedConfig = app.Configuration["Seed:Enabled"] ?? app.Configuration["Seed__Enabled"];
+var isSeedEnabled = bool.TryParse(seedConfig, out var enabled) ? enabled : (!isTesting);
+
+if (isSeedEnabled && !isTesting)
 {
-    var services = scope.ServiceProvider;
-    var logger = services.GetRequiredService<ILogger<Program>>();
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        var dbContext = services.GetRequiredService<MultiGuideDbContext>();
-        await DbSeeder.SeedDemoDataAsync(dbContext, force: true);
-    }
-    catch (Exception ex)
-    {
-        logger.LogError(ex, "An error occurred while seeding the database.");
+        var services = scope.ServiceProvider;
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        try
+        {
+            var dbContext = services.GetRequiredService<MultiGuideDbContext>();
+            await DbSeeder.SeedDemoDataAsync(dbContext, force: true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while seeding the database.");
+        }
     }
 }
 

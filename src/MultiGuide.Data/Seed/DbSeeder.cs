@@ -148,8 +148,8 @@ public static class DbSeeder
                 {
                     Id = Guid.Parse("c1875fb2-84ad-4a5a-936a-173fdbf4f7f3"),
                     AreaId = areaId,
-                    Lat = 21.02720,
-                    Lng = 105.83580,
+                    Lat = 21.0269,
+                    Lng = 105.8355,
                     TriggerRadiusM = 30,
                     Priority = 10,
                     IsActive = true

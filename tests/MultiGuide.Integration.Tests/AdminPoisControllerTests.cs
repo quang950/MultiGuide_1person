@@ -71,9 +71,18 @@ public class AdminPoisControllerTests : IClassFixture<WebApplicationFactory<Prog
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MultiGuide.Data.Context.MultiGuideDbContext>();
-        db.Languages.AddRange(
+        var languages = new[]
+        {
             new MultiGuide.Domain.Entities.Language { Code = "vi", Name = "Tiếng Việt", IsActive = true },
-            new MultiGuide.Domain.Entities.Language { Code = "en", Name = "English", IsActive = true });
+            new MultiGuide.Domain.Entities.Language { Code = "en", Name = "English", IsActive = true }
+        };
+        foreach (var lang in languages)
+        {
+            if (!db.Languages.Any(l => l.Code == lang.Code))
+            {
+                db.Languages.Add(lang);
+            }
+        }
         db.SaveChanges();
     }
 

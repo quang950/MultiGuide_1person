@@ -82,10 +82,19 @@ public class AdminTranslationsControllerTests : IClassFixture<WebApplicationFact
     {
         using var scope = _factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<MultiGuideDbContext>();
-        db.Languages.AddRange(
+        var languages = new[]
+        {
             new Language { Code = "vi", Name = "Tiếng Việt", IsActive = true },
             new Language { Code = "en", Name = "English", IsActive = true },
-            new Language { Code = "ja", Name = "日本語", IsActive = false });
+            new Language { Code = "ja", Name = "日本語", IsActive = false }
+        };
+        foreach (var lang in languages)
+        {
+            if (!db.Languages.Any(l => l.Code == lang.Code))
+            {
+                db.Languages.Add(lang);
+            }
+        }
         db.SaveChanges();
     }
 
