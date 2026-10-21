@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MultiGuide — Thuyết Minh Di Tích Văn Miếu</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/logo-mark.svg">
   
   <meta name="theme-color" content="#F8F6F0">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -168,6 +169,13 @@
     <!-- 1. Canvas Bản đồ Leaflet Zen (FE-3.1) -->
     <div id="mapCanvas"></div>
 
+    <!-- 2. Thanh Thương Hiệu MultiGuide Nổi (Glassmorphism Heritage Brand) -->
+    <header class="map-brand-hud" aria-label="Thương hiệu MultiGuide">
+      <img src="assets/icons/logo-mark.svg" alt="MultiGuide Logo" class="map-brand-logo">
+      <span class="map-brand-title">MultiGuide</span>
+      <span class="map-brand-edition">HANOI EDITION</span>
+    </header>
+
 
 
     <!-- 3. Pill trạng thái GPS Audio ON (FE-3.4) -->
@@ -277,7 +285,10 @@
     <section class="tab-view-overlay" id="tabViewStops" aria-label="Danh sách điểm tham quan">
       <div class="tab-view-header">
         <div class="tab-view-heading-group">
-          <span class="tab-view-badge" data-i18n="stopsTab.badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
+          <div class="tab-view-brand-row">
+            <img src="assets/icons/logo-mark.svg" alt="" class="tab-view-brand-icon">
+            <span class="tab-view-badge" data-i18n="stopsTab.badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
+          </div>
           <h2 class="tab-view-title" data-i18n="stopsTab.title">Hành Trình Di Sản</h2>
           <p class="tab-view-subtitle" data-i18n="stopsTab.subtitle">Chạm vào bất kỳ điểm nào để xem vị trí trên bản đồ và lắng nghe thuyết minh</p>
         </div>
@@ -375,6 +386,11 @@
             <span class="action-icon">🔄</span>
             <span data-i18n="passTab.btnRefresh">Làm mới trạng thái vé</span>
           </button>
+
+          <button type="button" class="btn-pass-action btn-logout-pass" id="btnLogoutPass">
+            <span class="action-icon">🚪</span>
+            <span data-i18n="passTab.btnLogout">Đăng xuất vé / Về màn chào đón</span>
+          </button>
         </div>
       </div>
     </section>
@@ -414,10 +430,7 @@
       
       <div class="admin-modal-header">
         <div class="admin-modal-icon-badge">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-          </svg>
+          <img src="assets/icons/logo-mark.svg" alt="MultiGuide Logo" class="admin-modal-brand-icon" style="width: 28px; height: 28px;">
         </div>
         <h3 class="admin-modal-title">Quản Trị Viên</h3>
         <p class="admin-modal-subtitle">Đăng nhập tài khoản quản trị MultiGuide Portal</p>
@@ -451,6 +464,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Modular JS Application Controller -->
-  <script type="module" src="js/app.js?v=3.6"></script>
+  <script type="module" src="js/app.js?v=3.7"></script>
 </body>
 </html>

@@ -384,6 +384,8 @@ export function switchTab(tabName) {
     if (btnPass) btnPass.classList.add('is-active');
     if (viewPass) {
       initPassCountdown();
+      initPassLangSwitcher();
+      initPassActions();
       viewPass.classList.add('is-open');
     }
     if (viewStops) viewStops.classList.remove('is-open');
@@ -522,13 +524,15 @@ function initPassLangSwitcher() {
 }
 
 /**
- * Tiện ích tải offline & làm mới vé trong tab My Pass
+ * Tiện ích tải offline, làm mới vé & đăng xuất vé trong tab My Pass
  */
 function initPassActions() {
   const btnDownload = document.getElementById('btnDownloadOffline');
   const btnRefresh = document.getElementById('btnRefreshPass');
+  const btnLogout = document.getElementById('btnLogoutPass');
 
-  if (btnDownload) {
+  if (btnDownload && !btnDownload._hasListener) {
+    btnDownload._hasListener = true;
     btnDownload.addEventListener('click', () => {
       btnDownload.innerHTML = '<span>⏳ Đang đồng bộ tài nguyên di sản...</span>';
       setTimeout(() => {
@@ -539,13 +543,23 @@ function initPassActions() {
     });
   }
 
-  if (btnRefresh) {
+  if (btnRefresh && !btnRefresh._hasListener) {
+    btnRefresh._hasListener = true;
     btnRefresh.addEventListener('click', () => {
       btnRefresh.innerHTML = '<span>⏳ Đang kiểm tra hệ thống...</span>';
       setTimeout(() => {
         btnRefresh.innerHTML = '<span>✓ Vé di sản đang kích hoạt</span>';
         initPassCountdown();
       }, 800);
+    });
+  }
+
+  if (btnLogout && !btnLogout._hasListener) {
+    btnLogout._hasListener = true;
+    btnLogout.addEventListener('click', () => {
+      if (confirm('Bạn có muốn đăng xuất vé và quay lại màn hình chào đón ban đầu?')) {
+        transitionToArrivalScreen();
+      }
     });
   }
 }
@@ -593,6 +607,56 @@ export function transitionToMainApp() {
     }, 400);
   }
 }
+
+/**
+ * Chuyển đổi trạng thái từ Màn hình Bản đồ (Main) quay về Màn hình ngoài (Arrival)
+ */
+export function transitionToArrivalScreen() {
+  const arrivalScreen = document.getElementById('arrivalScreen');
+  const mainAppContainer = document.getElementById('mainAppContainer');
+
+  // 1. Dừng phát âm thanh nếu đang phát
+  try {
+    const audioEl = document.getElementById('heritageAudioElement');
+    if (audioEl) {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    }
+  } catch {}
+
+  // 2. Xóa access token của khách trong localStorage
+  localStorage.removeItem('mg_access_token');
+  localStorage.removeItem('mg_pass_code');
+  localStorage.removeItem('mg_pass_expires_at');
+  store.set({ accessToken: null, passData: null, activeTab: 'explore', isPlaying: false });
+
+  // 3. Đóng bottom sheet và các tab overlay nếu đang mở
+  hideBottomSheet();
+  document.querySelectorAll('.tab-view-overlay').forEach(tab => tab.classList.remove('is-open'));
+
+  // 4. Chuyển cảnh mượt mà trở về Màn hình chào đón
+  if (mainAppContainer) {
+    mainAppContainer.style.transition = 'opacity 0.3s ease';
+    mainAppContainer.style.opacity = '0';
+
+    setTimeout(() => {
+      mainAppContainer.style.display = 'none';
+      if (arrivalScreen) {
+        arrivalScreen.style.display = 'block';
+        arrivalScreen.style.opacity = '0';
+        arrivalScreen.style.transform = 'translateY(12px)';
+
+        requestAnimationFrame(() => {
+          arrivalScreen.style.transition = 'opacity 0.35s ease, transform 0.35s ease';
+          arrivalScreen.style.opacity = '1';
+          arrivalScreen.style.transform = 'translateY(0)';
+        });
+      }
+    }, 300);
+  }
+}
+
+window.transitionToArrivalScreen = transitionToArrivalScreen;
 
 /**
  * Khởi tạo Nút Admin nổi & Modal Đăng nhập Supabase Auth

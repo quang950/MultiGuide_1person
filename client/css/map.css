@@ -105,10 +105,52 @@
   background: rgba(24, 24, 22, 0.08);
 }
 
+/* Thanh thương hiệu MultiGuide nổi trên đỉnh bản đồ (Heritage Brand HUD) */
+.map-brand-hud {
+  position: absolute;
+  top: calc(18px + var(--safe-top));
+  left: 18px;
+  z-index: 35;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(194, 142, 88, 0.35);
+  box-shadow: 0 4px 16px rgba(24, 24, 22, 0.08);
+  user-select: none;
+}
+
+.map-brand-logo {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.map-brand-title {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-ink, #2C2416);
+  letter-spacing: 0.01em;
+}
+
+.map-brand-edition {
+  font-family: var(--font-sans);
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #C28E58;
+  letter-spacing: 0.06em;
+  margin-left: 2px;
+}
+
 /* Pill chỉ báo GPS audio */
 .map-gps-pill {
   position: absolute;
-  top: calc(96px + var(--safe-top));
+  top: calc(68px + var(--safe-top));
   left: 18px;
   z-index: 35;
   display: inline-flex;

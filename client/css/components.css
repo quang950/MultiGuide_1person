@@ -1577,6 +1577,30 @@
   color: #9D6E3F;
 }
 
+.btn-logout-pass {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  margin-top: 6px;
+}
+
+.btn-logout-pass:hover {
+  background: rgba(220, 38, 38, 0.14);
+  border-color: rgba(220, 38, 38, 0.4);
+}
+
+.tab-view-brand-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.tab-view-brand-icon {
+  width: 18px;
+  height: 18px;
+}
+
 /* ========================================================
    11. Tablet & Desktop Mobile-First App Frame (FE-6.1)
    ======================================================== */

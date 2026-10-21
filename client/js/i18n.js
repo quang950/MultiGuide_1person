@@ -69,7 +69,8 @@ export const TRANSLATIONS = {
       langLabel: 'NGÔN NGỮ THUYẾT MINH',
       btnDownload: 'Tải trước nội dung Offline',
       btnDownloadDone: '✓ Đã lưu Offline thành công',
-      btnRefresh: 'Làm mới trạng thái vé'
+      btnRefresh: 'Làm mới trạng thái vé',
+      btnLogout: 'Đăng xuất vé / Về màn chào đón'
     }
   },
 
@@ -134,7 +135,8 @@ export const TRANSLATIONS = {
       langLabel: 'AUDIO LANGUAGE',
       btnDownload: 'Download offline audio pack',
       btnDownloadDone: '✓ Offline pack saved successfully',
-      btnRefresh: 'Refresh pass status'
+      btnRefresh: 'Refresh pass status',
+      btnLogout: 'Exit Pass / Return to Welcome'
     }
   },
 
@@ -199,7 +201,8 @@ export const TRANSLATIONS = {
       langLabel: '语音导览语种',
       btnDownload: '离线下载语音资源包',
       btnDownloadDone: '✓ 离线资源包已成功缓存',
-      btnRefresh: '刷新通票状态'
+      btnRefresh: '刷新通票状态',
+      btnLogout: '退出通行证 / 返回欢迎页'
     }
   },
 
@@ -264,7 +267,8 @@ export const TRANSLATIONS = {
       langLabel: '音声言語の選択',
       btnDownload: 'オフライン音声を事前保存',
       btnDownloadDone: '✓ オフライン保存完了',
-      btnRefresh: 'パス状態を更新'
+      btnRefresh: 'パス状態を更新',
+      btnLogout: 'パスを終了 / ようこそ画面へ'
     }
   }
 };

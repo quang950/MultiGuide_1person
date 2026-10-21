@@ -2,18 +2,22 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 21/10/2026 — Hoàn tất MultiGuide Admin JWT 30 ngày & Bộ chuyển đổi API Local/Cloud)
-- **Đang làm:** Sẵn sàng kiểm thử và sử dụng.
-- **Vừa xong:** Hoàn thành xuất sắc giải pháp phiên làm việc và môi trường test Local:
-  - Chỉ dùng Supabase Auth để xác thực credentials và phân quyền `role === 'admin'`.
-  - Backend MultiGuide tự động ký phát hành JWT Token riêng của hệ thống có thời hạn sống **30 ngày (2,592,000 giây)** bằng khóa bí mật HMAC-SHA256, loại bỏ hoàn toàn sự phụ thuộc vào giới hạn 1 giờ của gói Supabase Free Tier.
-  - Tự động nhận diện môi trường: Khi chạy trên `localhost` hoặc `127.0.0.1` (port 5500, 3000...), Client tự động kết nối Backend Local `http://localhost:5267`.
-  - Hủy Service Worker và xóa cache tự động khi chạy dev local, chống kẹt file JS cũ.
-  - Tích hợp bộ chuyển đổi API (API Switcher) linh hoạt trên cả Modal Đăng nhập (`index.html`) và Thanh Menu Quản trị (`admin.html`).
-  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **321/321 XANH LÁ (100%)** (151 Business, 152 Integration, 18 Architecture); `dotnet build MultiGuide.sln -warnaserror` 0 warning 0 error; `dotnet format --verify-no-changes` sạch 100%.
-- **Bước kế tiếp:** Người dùng tiếp tục phát triển hoặc kiểm thử các tính năng tiếp theo.
+## Trạng thái hiện tại (cập nhật: 21/10/2026 — Bổ sung Logo Di Sản & Nút Đăng Xuất Vé trong Tab My Pass)
+- **Đang làm:** Sẵn sàng kiểm thử giao diện mới.
+- **Vừa xong:** Hoàn thành xuất sắc 2 tính năng trải nghiệm người dùng:
+  - **Bổ sung Logo Di Sản (`logo-mark.svg`) đồng bộ**:
+    - Thêm Favicon chuẩn SVG cho trang khách `index.html`.
+    - Thêm thanh Topbar nổi mờ kính (`map-brand-hud`) trên Màn hình Bản đồ (Logo + `MultiGuide · HANOI EDITION`).
+    - Thay icon ổ khóa mặc định bằng Logo hoàng gia mạ vàng đồng trong Admin Modal.
+    - Gắn Logo di sản vào header của Tab Lộ trình ("All stops").
+  - **Nút Đăng xuất vé trong Tab "Vé Của Tôi" (My pass)**:
+    - Bổ sung nút `[🚪 Đăng xuất vé / Về màn chào đón]` trong Tab My Pass.
+    - Triển khai hàm `transitionToArrivalScreen()`: dừng audio, xóa `mg_access_token`, đóng drawer, tạo animation mờ chuyển cảnh đưa du khách quay về Màn hình Chào đón ban đầu mà không cần refresh trang.
+    - Đa ngữ 4 thứ tiếng (vi, en, zh, ja) cho nút Đăng xuất vé trong `i18n.js`.
+  - **Kết quả kiểm thử:** Toàn bộ test suite đạt **321/321 XANH LÁ (100%)**; `dotnet build MultiGuide.sln -warnaserror` 0 warning 0 error; `dotnet format --verify-no-changes` sạch 100%.
+- **Bước kế tiếp:** Người dùng trải nghiệm và kiểm tra trực tiếp.
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** `dotnet test MultiGuide.sln`
+- **Cách kiểm tra nhanh:** Mở `http://127.0.0.1:5500/client/index.html` hoặc `https://multiguide1person-client.vercel.app/`
 
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
