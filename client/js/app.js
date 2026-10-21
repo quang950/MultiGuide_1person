@@ -42,10 +42,22 @@ document.addEventListener('DOMContentLoaded', () => {
         navigator.serviceWorker.register('./sw.js')
           .then(reg => {
             console.log('[MultiGuide PWA] Service Worker đăng ký thành công với scope:', reg.scope);
+            // Chủ động kiểm tra cập nhật trên Vercel mỗi khi mở trang
+            reg.update().catch(() => {});
           })
           .catch(err => {
             console.warn('[MultiGuide PWA] Service Worker đăng ký thất bại:', err);
           });
+      });
+
+      // Khi có Service Worker mới được kích hoạt, tự động làm mới trang 1 lần duy nhất để người dùng luôn có bản mới
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (!refreshing) {
+          refreshing = true;
+          console.log('[MultiGuide PWA] Đã phát hiện phiên bản mới, đang tự động làm mới ứng dụng...');
+          window.location.reload();
+        }
       });
     }
   }

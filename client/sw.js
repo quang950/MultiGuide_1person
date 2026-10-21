@@ -1,8 +1,9 @@
 /**
  * Service Worker cho MultiGuide Heritage PWA
- * Hỗ trợ lưu cache tài nguyên tĩnh, font chữ và chạy offline khi mất sóng di động
+ * Chiến lược: Network-First cho HTML/JS/CSS (luôn lấy bản mới nhất trên Vercel),
+ * Fallback sang Cache Storage khi mất sóng / offline ngoài thực địa di tích.
  */
-const CACHE_NAME = 'multiguide-v3.7';
+const CACHE_NAME = 'multiguide-v4.0';
 
 const STATIC_ASSETS = [
   './',
@@ -42,7 +43,7 @@ const STATIC_ASSETS = [
 ];
 
 self.addEventListener('install', (event) => {
-  console.log('[MultiGuide SW] Đang cài đặt Service Worker và lưu cache tĩnh...');
+  console.log('[MultiGuide SW v4.0] Cài đặt Service Worker mới và lưu cache tĩnh...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(STATIC_ASSETS);
@@ -51,18 +52,21 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('activate', (event) => {
-  console.log('[MultiGuide SW] Kích hoạt phiên bản mới...');
+  console.log('[MultiGuide SW v4.0] Kích hoạt và dọn dẹp toàn bộ cache cũ...');
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => {
+          console.log('[MultiGuide SW] Xóa bỏ cache cũ:', key);
+          return caches.delete(key);
+        })
       );
     }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
-  // Chỉ xử lý các request GET cục bộ
+  // Chỉ xử lý các request GET
   if (event.request.method !== 'GET') return;
   
   // Bỏ qua chrome-extension và các giao thức không phải http/https
@@ -72,41 +76,68 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url);
 
-  // Khi phát triển trên localhost / 127.0.0.1: luôn lấy trực tiếp từ network để không bị dính cache file JS/CSS cũ
+  // Khi phát triển trên localhost / 127.0.0.1: luôn lấy trực tiếp từ network
   if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
     return;
   }
 
-  // Để trình duyệt tự xử lý điều hướng trang (navigate) nguyên bản, tránh lỗi xung đột redirect trên Vercel
-  if (event.request.mode === 'navigate') {
-    return;
-  }
-
-  // Không cache API Backend động (để luôn lấy dữ liệu mới nhất)
+  // Không cache API Backend động (Render, Supabase)
   if (url.pathname.includes('/api/') || url.hostname.includes('render.com') || url.hostname.includes('supabase.co')) {
     return;
   }
 
+  // 1. Với các tài nguyên Code/Nội dung (HTML, JS, CSS, JSON, Navigations):
+  // ÁP DỤNG NETWORK-FIRST: Luôn hỏi Vercel trước để lấy bản mới nhất ngay khi vừa deploy!
+  const isCodeOrDoc = 
+    event.request.mode === 'navigate' ||
+    event.request.destination === 'script' ||
+    event.request.destination === 'style' ||
+    event.request.destination === 'document' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('.js') ||
+    url.pathname.endsWith('.css') ||
+    url.pathname.endsWith('.json') ||
+    url.pathname === '/' ||
+    url.pathname.endsWith('/');
+
+  if (isCodeOrDoc) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          // Khi lấy được bản mới nhất từ mạng thành công, cập nhật đè vào Cache
+          if (networkResponse && networkResponse.status === 200) {
+            const responseClone = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseClone);
+            });
+          }
+          return networkResponse;
+        })
+        .catch(() => {
+          // MẤT MẠNG / OFFLINE NGOÀI THỰC ĐỊA: Lấy từ Cache Storage dự phòng
+          return caches.match(event.request).then((cached) => {
+            if (cached) return cached;
+            if (event.request.headers.get('accept')?.includes('text/html') || event.request.mode === 'navigate') {
+              return caches.match('./index.html');
+            }
+          });
+        })
+    );
+    return;
+  }
+
+  // 2. Với các tài nguyên tĩnh Media/Images/Icons: Áp dụng Stale-While-Revalidate
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request).then((networkResponse) => {
-        // Lưu tạm vào cache nếu request hợp lệ
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+      const fetchPromise = fetch(event.request).then((networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache);
-          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseToCache));
         }
         return networkResponse;
-      }).catch(() => {
-        // Nếu offline và yêu cầu file HTML -> trả về cache trang chính
-        if (event.request.headers.get('accept').includes('text/html')) {
-          return caches.match('./index.html');
-        }
-      });
+      }).catch(() => {});
+
+      return cachedResponse || fetchPromise;
     })
   );
 });
