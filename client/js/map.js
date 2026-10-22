@@ -205,8 +205,10 @@ export class MapManager {
         
         // Làm mới sạch sẽ danh sách POIs hiển thị, ngăn chặn triệt để tình trạng trùng lặp POI hoặc nhảy số thứ tự
         HERITAGE_POIS.length = 0;
+        const currentActive = (typeof store !== 'undefined' && store.get().activePoi);
         sorted.forEach((item, index) => {
           const stopNumber = item.priority ? Math.round(item.priority / 10) : (index + 1);
+          const isCurrentlyActive = currentActive && (String(currentActive.id) === String(item.id) || String(currentActive.guid) === String(item.id));
           HERITAGE_POIS.push({
             id: item.id,
             guid: item.id,
@@ -214,12 +216,12 @@ export class MapManager {
             priority: item.priority || (stopNumber * 10),
             code: item.code || `poi-${stopNumber}`,
             title: item.title,
-            titleEn: item.title,
+            titleEn: item.titleEn || item.title,
             lat: item.lat,
             lng: item.lng,
             triggerRadiusM: item.triggerRadiusM || item.trigger_radius_m || 30,
             labelPos: (index % 2 === 0) ? 'left' : 'right',
-            isActive: item.isActive ?? true,
+            isActive: isCurrentlyActive ? true : false,
             isNearby: false
           });
         });
@@ -508,22 +510,39 @@ export class MapManager {
 
       // Nhãn địa danh hai bên (Side Labels)
       const labelClass = poi.labelPos === 'left' ? 'label-left' : 'label-right';
-      const statusHtml = poi.isActive ? '<span class="poi-label-status">NOW PLAYING</span>' : '';
-      
-      const labelContent = `
-        <div class="poi-side-label ${labelClass}">
-          <span class="poi-label-title">${poi.titleEn}</span>
-          ${statusHtml}
-        </div>
-      `;
+      const currentLang = (typeof store !== 'undefined' && store.get().selectedLang) || 'vi';
 
-      // Tạo nhãn đính kèm marker
-      marker.bindTooltip(labelContent, {
-        permanent: true,
-        direction: poi.labelPos,
-        className: 'poi-tooltip-transparent',
-        offset: poi.labelPos === 'left' ? [-16, -24] : [16, -24]
-      });
+      let displayTitle = poi.title;
+      const story = (POI_STORIES && (POI_STORIES[poi.id] || POI_STORIES[poi.order]));
+      if (story && story[currentLang]) {
+        displayTitle = story[currentLang].title;
+      } else if (currentLang !== 'vi' && poi.titleEn) {
+        displayTitle = poi.titleEn;
+      }
+
+      let statusHtml = '';
+      if (poi.isActive) {
+        const playingText = currentLang === 'vi' ? 'ĐANG PHÁT' : (currentLang === 'zh' ? '正在播放' : (currentLang === 'ja' ? '再生中' : 'NOW PLAYING'));
+        statusHtml = `<span class="poi-label-status">${playingText}</span>`;
+      } else if (poi.isNearby) {
+        const nearbyText = currentLang === 'vi' ? 'Ở GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
+        statusHtml = `<span class="poi-label-status status-nearby">${nearbyText}</span>`;
+      }
+      
+      // Chỉ gắn nhãn trạng thái khi POI đang active hoặc nearby (đã xóa tên địa danh in đậm trên map)
+      if (statusHtml) {
+        const labelContent = `
+          <div class="poi-side-label ${labelClass}">
+            ${statusHtml}
+          </div>
+        `;
+        marker.bindTooltip(labelContent, {
+          permanent: true,
+          direction: poi.labelPos,
+          className: 'poi-tooltip-transparent',
+          offset: poi.labelPos === 'left' ? [-16, -24] : [16, -24]
+        });
+      }
 
       // Tương tác bấm chọn POI -> Kích hoạt Trạng thái 3
       marker.on('click', () => {
@@ -553,15 +572,6 @@ export class MapManager {
     const labelClass = p.labelPos === 'left' ? 'label-left' : 'label-right';
     const currentLang = store.get().selectedLang || 'vi';
 
-    // Lấy tiêu đề đa ngữ từ POI_STORIES hoặc thuộc tính POI
-    let displayTitle = p.titleEn || p.title;
-    const story = (POI_STORIES && (POI_STORIES[p.id] || POI_STORIES[p.order]));
-    if (story && story[currentLang]) {
-      displayTitle = story[currentLang].title;
-    } else if (currentLang === 'vi') {
-      displayTitle = p.title;
-    }
-
     let statusHtml = '';
     if (p.isActive) {
       const playingText = currentLang === 'vi' ? 'ĐANG PHÁT' : (currentLang === 'zh' ? '正在播放' : (currentLang === 'ja' ? '再生中' : 'NOW PLAYING'));
@@ -571,13 +581,27 @@ export class MapManager {
       statusHtml = `<span class="poi-label-status status-nearby">${nearbyText}</span>`;
     }
 
-    const labelContent = `
-      <div class="poi-side-label ${labelClass}">
-        <span class="poi-label-title">${displayTitle}</span>
-        ${statusHtml}
-      </div>
-    `;
-    marker.setTooltipContent(labelContent);
+    if (statusHtml) {
+      const labelContent = `
+        <div class="poi-side-label ${labelClass}">
+          ${statusHtml}
+        </div>
+      `;
+      if (marker.getTooltip()) {
+        marker.setTooltipContent(labelContent);
+      } else {
+        marker.bindTooltip(labelContent, {
+          permanent: true,
+          direction: p.labelPos,
+          className: 'poi-tooltip-transparent',
+          offset: p.labelPos === 'left' ? [-16, -24] : [16, -24]
+        });
+      }
+    } else {
+      if (marker.getTooltip()) {
+        marker.unbindTooltip();
+      }
+    }
   }
 
   /**

@@ -348,12 +348,7 @@
 }
 
 .poi-label-title {
-  font-family: var(--font-serif);
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #181816;
-  line-height: 1.25;
-  text-shadow: 0 1px 4px rgba(255, 255, 255, 0.95), 0 0 8px rgba(255, 255, 255, 0.9);
+  display: none !important;
 }
 
 /* Tùy biến Leaflet Tooltip trong suốt */
