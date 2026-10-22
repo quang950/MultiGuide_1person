@@ -14,6 +14,8 @@ Môn Công nghệ phần mềm · Phiên bản 1.3 · 22/10/2026 · Tác giả: 
   3. *Tự động sinh audio qua Microsoft Edge Neural TTS*: Endpoint `POST /admin/translations/{id}/generate-audio` kết nối WebSocket Edge TTS không tốn phí, giải quyết bài toán thiếu audio mẫu.
   4. *Trợ lý AI Gemini 2.5 Flash*: Endpoint `POST /admin/pois/{id}/ai-summary` hỗ trợ Admin sinh tóm tắt lịch sử hiện vật tự động.
   5. *Bổ sung trường `image_url` cho POI*: Phục vụ hiển thị hình ảnh di tích/hiện vật trên bản đồ & giao diện du khách.
+  6. *Xác thực Admin an toàn (Zero-Exposure Auth Proxy)*: Endpoint `POST /api/v1/admin/auth/login` và `/refresh` ủy quyền qua Supabase Auth, bảo vệ tuyệt đối API key không phơi bày ra trình duyệt.
+  7. *Giao diện Quản trị tương tác & Trải nghiệm PWA*: Xây dựng hoàn chỉnh SPA Admin (`client/admin.html`), hỗ trợ nút Đăng xuất/Xóa vé du khách và PWA Service Worker với cơ chế dọn dẹp cache chủ động.
 
 ## 1. Tổng quan
 
@@ -25,24 +27,26 @@ Khách du lịch quốc tế thiếu hướng dẫn viên đúng ngôn ngữ; th
 
 **MultiGuide** là hệ thống hướng dẫn tham quan: khách quét QR tại cổng, trả phí một lần (2 USD, cổng thanh toán mock ở MVP) để nhận AccessPass; thiết bị gửi tọa độ lên server, server trả các điểm tham quan (POI) nằm trong bán kính cấu hình (ví dụ 100 m), khách xem thông tin và nghe audio đúng ngôn ngữ. Admin quản lý nội dung qua API và theo dõi lưu lượng du khách trực tuyến.
 
-**Tài liệu này chỉ đặc tả Backend** (REST API + CSDL + CI/CD). Một **web test client đơn giản** (Leaflet, deploy Vercel) dùng để kiểm thử API và mô phỏng trải nghiệm thực tế của du khách và admin.
+**Tài liệu này đặc tả Backend** (REST API + CSDL + CI/CD) cùng sự phối hợp với **Web Client du khách & Cổng quản trị Admin Web SPA** (Leaflet, Service Worker dọn dẹp cache).
 
 ### 1.3 Phạm vi chốt
 
-| **Hạng mục**     | **Giá trị chốt (MVP v1.2 & Mở rộng v1.3)**                                                           |
-|------------------|-----------------------------------------------------------------------------------------------------|
-| Khu du lịch demo | 1 khu (Văn Miếu - Quốc Tử Giám / demo area)                                                        |
-| Số POI           | 6 POI thực tế                                                                                       |
-| Ngôn ngữ         | vi, en, ja (thêm ngôn ngữ = thêm dữ liệu, không sửa code)                                           |
-| Thanh toán       | Mock, qua interface IPaymentGateway                                                                 |
-| AccessPass       | Hạn 24 giờ từ issued_at, mỗi pass gắn 1 khu                                                         |
-| Stack            | ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Render, GitHub Actions |
-| Tìm POI gần      | Server stateless: nhận lat/lng, trả POI trong bán kính; tính Haversine trong Service                |
-| Live Telemetry   | Đo khách online thời gian thực: Heartbeat 15s + In-Memory Sliding Window 30s + Auto-poll 15s        |
-| Auto-play Geo    | Khách vào $\le 30$m tự mở Drawer & phát audio; có Anti-jitter và Hysteresis buffer (+8m)           |
-| AI & TTS         | Edge Neural TTS tự sinh file MP3; Gemini 2.5 Flash tóm tắt lịch sử POI                              |
+| **Hạng mục**         | **Giá trị chốt (MVP v1.2 & Mở rộng v1.3)**                                                           |
+|----------------------|-----------------------------------------------------------------------------------------------------|
+| Khu du lịch demo     | 1 khu (Văn Miếu - Quốc Tử Giám / demo area)                                                        |
+| Số POI               | 6 POI thực tế                                                                                       |
+| Ngôn ngữ             | vi, en, ja (thêm ngôn ngữ = thêm dữ liệu, không sửa code)                                           |
+| Thanh toán           | Mock, qua interface IPaymentGateway                                                                 |
+| AccessPass           | Hạn 24 giờ từ issued_at, mỗi pass gắn 1 khu                                                         |
+| Stack                | ASP.NET Core (.NET 10), EF Core + Npgsql, Supabase (Postgres, Storage, Auth), Render, GitHub Actions |
+| Tìm POI gần          | Server stateless: nhận lat/lng, trả POI trong bán kính; tính Haversine trong Service                |
+| Live Telemetry       | Đo khách online thời gian thực: Heartbeat 15s + In-Memory Sliding Window 30s + Auto-poll 15s        |
+| Auto-play Geo        | Khách vào $\le 30$m tự mở Drawer & phát audio; có Anti-jitter và Hysteresis buffer (+8m)           |
+| AI & TTS             | Edge Neural TTS tự sinh file MP3; Gemini 2.5 Flash tóm tắt lịch sử POI                              |
+| Admin Authentication | Zero-Exposure Proxy: `POST /api/v1/admin/auth/login` và `/refresh` (tự động gia hạn 30 ngày)        |
+| Quản lý phiên & PWA  | Client có nút Thoát vé/Đăng xuất; PWA Service Worker hỗ trợ dọn dẹp cache chủ động khi deploy mới  |
 
-**Ngoài phạm vi:** thanh toán thật (Stripe/PayOS), offline pack, PostGIS, quản lý tài khoản admin (làm trên Supabase Dashboard).
+**Ngoài phạm vi:** thanh toán thật (Stripe/PayOS), offline pack trọn gói toàn bộ audio trước, PostGIS.
 
 ### 1.4 Actor
 
@@ -99,6 +103,7 @@ Acceptance Criteria chi tiết, mã lỗi và phân quyền của từng endpoin
 | E3       | US-07  | Nhận audio_url tạm thời (signed URL) từ Supabase Storage                                                  | Must        | MVP v1.2      |
 | E3       | US-08  | Ghi PlayLog lượt nghe                                                                                     | Should      | MVP v1.2      |
 | E4       | US-09  | Xác thực admin bằng JWT của Supabase Auth, chỉ role admin được vào                                        | Must        | MVP v1.2      |
+| E4       | US-22  | Đăng nhập Quản trị viên qua Proxy API (Zero-Exposure) và tự động làm mới Refresh Token (30 ngày)          | Must        | v1.3          |
 | E4       | US-10  | CRUD khu du lịch                                                                                          | Must        | MVP v1.2      |
 | E4       | US-11  | CRUD POI (có phân trang, hỗ trợ image_url)                                                                | Must        | v1.3          |
 | E4       | US-12  | CRUD bản dịch                                                                                             | Must        | MVP v1.2      |
@@ -123,6 +128,8 @@ Bảng ma trận này dùng để đối chiếu xuyên suốt giữa bản đ�
 | **US-13 & US-20 (Audio TTS)** | Bắt buộc Admin phải thu âm sẵn file MP3 và tải thủ công lên Supabase Storage qua `POST /admin/translations/{id}/audio`. | Tích hợp **Microsoft Edge Neural TTS** qua WebSocket: tự động sinh giọng đọc tự nhiên (vi, en, ja...) và lưu trữ trực tiếp vào Supabase Storage qua 1 click. | Giải quyết rào cản chi phí và công sức thu âm đa ngôn ngữ cho 6 POI trong thời gian ngắn (4 ngày). | `ITtsService.cs` (Business), `EdgeTtsService.cs` (Data), `AdminTranslationsController.cs` (`POST /admin/translations/{id}/generate-audio`). | Tách interface chuẩn 3 lớp; NetArchTest đảm bảo Business không phụ thuộc SDK. |
 | **US-19 (AI Assistant)** | Dự kiến (Could): Tích hợp AI hỗ trợ sinh tóm tắt lịch sử POI. | Triển khai hoàn chỉnh **Google Gemini 2.5 Flash** (Free tier qua Google AI Studio REST API) để tự động sinh tóm tắt lịch sử và câu chuyện di tích 150–200 từ. | Giúp Admin nhanh chóng tạo nội dung thuyết minh chất lượng cao, chuẩn xác mà không cần biên soạn thủ công. | `IAiService.cs` (Business), `GeminiAiService.cs` (Data), `AdminPoisController.cs` (`POST /admin/pois/{id}/ai-summary`). | HttpClient thuần, không phụ thuộc thư viện ngoài nặng; cấu hình API Key qua Secret. |
 | **US-21 (Live Telemetry)** | Chỉ có PlayLog tĩnh sau khi nghe xong (`POST /play-logs`). Dashboard chỉ xem lịch sử nghe tích lũy. | **Live Active Visitors Telemetry:** Khách gửi Heartbeat định kỳ 15s (`POST /passes/heartbeat`). Server quản lý phiên bằng **In-Memory Sliding Window 30s** (`ConcurrentDictionary`). Admin Dashboard auto-poll 15s hiển thị widget trực tuyến. | Ban quản lý cần biết chính xác số lượng du khách đang có mặt trong khu di tích ngay tại thời điểm thực để điều phối và kiểm soát an ninh. | `IVisitorTracker.cs` (Business), `ActiveVisitorTracker.cs` (Data - Singleton), `PassesController.cs`, `AdminAnalyticsController.cs`. | Không ghi vào CSDL $\rightarrow$ 0 I/O disk, không nghẽn connection pooler Supabase, không lưu GPS hay token nhạy cảm. |
+| **US-22 (Admin Auth Proxy)** | Admin đăng nhập trực tiếp trên Supabase Dashboard; Backend không có endpoint auth; API chỉ kiểm tra JWT có sẵn. | **Zero-Exposure Admin Auth Proxy:** `POST /api/v1/admin/auth/login` và `POST /api/v1/admin/auth/refresh`. Tự động cấp access_token và refresh_token gia hạn 30 ngày. | Bảo vệ tuyệt đối Supabase Keys (không để lộ Anon Key/Service Key ra client); Admin đăng nhập trực tiếp ngay trên trang web quản trị SPA. | `AdminAuthController.cs` (Presentation), `IAdminAuthService.cs` (Business), `SupabaseAdminAuthService.cs` (Data). | Chuẩn 3 lớp qua DI; không lưu mật khẩu ở CSDL backend; ủy quyền xác thực cho Supabase Auth. |
+| **Admin SPA & PWA Cache** | Web client chỉ là bản thử nghiệm Leaflet đơn giản; Admin quản lý qua API/Swagger; chưa có dọn cache PWA. | Hoàn thiện **Single Page App Admin** (`client/admin.html`) có bản đồ chọn vị trí POI trực quan, preview ảnh, phát audio; bổ sung nút Thoát vé và PWA Service Worker (`client/sw.js`) dọn cache chủ động. | Giúp ban quản lý vận hành trực quan; khách du lịch có thể xóa vé mua vé mới; người dùng không bị kẹt cache UI cũ khi deploy. | `client/admin.html`, `client/js/admin.js`, `client/sw.js`, `client/js/ui.js`. | Kiến trúc tách biệt Client - Server; Client tương tác 100% qua REST API chuẩn. |
 
 ### 2.4 Backlog tương lai (Later)
 
@@ -357,6 +364,8 @@ Tài khoản admin nằm trong **auth.users của Supabase**, không có bảng 
 | US-07     | (trong response US-06)                       | AccessPass                                   | audio_url là signed URL hết hạn sau 1 giờ; thiếu audio → audio_url = null; Range/streaming do Supabase Storage đảm nhiệm                                                                                                                                                                                                    |
 | US-08     | POST /play-logs                              | AccessPass                                   | Body: poi_id, language_code, listened_sec, completed; pass lấy từ token chứ không tin body; listened_sec ∈ \[0, 6 giờ\]; không lưu tọa độ                                                                                                                                                                                   |
 | US-09     | (mọi /admin/\*)                              | JWT Supabase                                 | Thiếu hoặc sai JWT → 401 AUTH_REQUIRED; không có role admin → 403 FORBIDDEN                                                                                                                                                                                                                                                 |
+| US-22     | POST /admin/auth/login                       | Public                                       | Body: email, password. Xác thực qua Supabase Auth; thành công trả 200 kèm access_token, refresh_token, expires_in (30 ngày), user_id, email, role=admin; sai mật khẩu/email → 401; không có role admin → 403 FORBIDDEN; trống thông tin → 422 VALIDATION_ERROR. Giúp client không bao giờ phơi bày Supabase Key            |
+| US-22     | POST /admin/auth/refresh                     | Public                                       | Body: refresh_token. Tự động gia hạn phiên đăng nhập; thành công trả 200 kèm access_token mới và refresh_token mới; token sai hoặc hết hạn → 401; trống token → 422 VALIDATION_ERROR                                                                                                                                       |
 | US-10     | CRUD /admin/areas                            | Admin                                        | code unique (chữ thường, số, gạch ngang); giá \> 0; xóa = is_active=false                                                                                                                                                                                                                                                   |
 | US-11     | CRUD /admin/pois                             | Admin                                        | Validate lat/lng; trigger_radius_m ∈ \[5, 200\]; priority 0–100; image_url nullable (≤ 500 ký tự); xóa mềm; phân trang (page, page_size ≤ 100) và lọc theo khu                                                                                                                                                             |
 | US-12     | CRUD /admin/pois/{id}/translations           | Admin                                        | Tối đa 1 bản dịch cho mỗi (poi_id, language_code) (trùng → 409 TRANSLATION_EXISTS); title ≤ 200 ký tự                                                                                                                                                                                                                       |
