@@ -168,6 +168,25 @@
   font-weight: 600;
   color: #4A4A46;
   user-select: none;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.map-gps-pill:hover {
+  background: rgba(255, 255, 255, 0.96);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(24, 24, 22, 0.08);
+}
+
+.map-gps-pill.is-disabled {
+  opacity: 0.75;
+  color: #888880;
+  background: rgba(245, 245, 240, 0.88);
+}
+
+.map-gps-pill.is-disabled .gps-dot {
+  background-color: #A0A09A;
+  box-shadow: none;
 }
 
 .map-gps-pill .gps-dot {
@@ -175,6 +194,7 @@
   height: 6.5px;
   border-radius: 50%;
   background-color: #C28E58;
+  transition: background-color 0.25s ease;
 }
 
 /* La bàn hướng Bắc */

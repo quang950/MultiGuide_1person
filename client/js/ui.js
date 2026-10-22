@@ -170,7 +170,7 @@ let proximityToastTimer = null;
 /**
  * Hiển thị thông báo nhẹ nhàng Calm Technology khi đến gần POI (Cụm 4)
  */
-export function showProximityBeacon(poi) {
+export function showProximityBeacon(poi, isAutoPlaying = false) {
   const toast = document.getElementById('proximityToast');
   const toastText = document.getElementById('proximityToastText');
   if (!toast || !toastText || !poi) return;
@@ -185,11 +185,20 @@ export function showProximityBeacon(poi) {
     } catch (e) {}
   }
 
-  const message = lang === 'en'
-    ? `Nearby: ${poiName} · Tap to explore`
-    : lang === 'ja'
-      ? `近くに ${poiName} があります · タップして探索`
-      : `Bạn đang ở gần ${poiName} · Chạm để khám phá`;
+  let message = '';
+  if (isAutoPlaying) {
+    message = lang === 'en'
+      ? `🎙️ Auto-playing: ${poiName}`
+      : lang === 'ja'
+        ? `🎙️ 自動再生中: ${poiName}`
+        : `🎙️ Đang tự động thuyết minh: ${poiName}`;
+  } else {
+    message = lang === 'en'
+      ? `Nearby: ${poiName} · Tap to explore`
+      : lang === 'ja'
+        ? `近くに ${poiName} があります · タップして探索`
+        : `Bạn đang ở gần ${poiName} · Chạm để khám phá`;
+  }
 
   toastText.textContent = message;
   toast.classList.add('is-visible');

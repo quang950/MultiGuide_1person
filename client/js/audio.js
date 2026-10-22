@@ -508,10 +508,18 @@ export class AudioEngine {
       await this.loadAudioForPoi(poiId);
       await this.audioElement.play();
     } catch (err) {
+      if (err && err.name === 'NotAllowedError') {
+        console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi tự động phát âm thanh. Bảng thông tin đã mở sẵn, du khách có thể chạm nút Phát bất kỳ lúc nào.`);
+        return;
+      }
       console.warn(`[MultiGuide Audio] Lỗi phát POI ${poiId}, sử dụng âm thanh di sản:`, err);
       if (this.fallbackAudioUrl) {
         this.audioElement.src = this.fallbackAudioUrl;
-        await this.audioElement.play().catch(() => {});
+        await this.audioElement.play().catch((playErr) => {
+          if (playErr && playErr.name === 'NotAllowedError') {
+            console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi phát âm thanh tự động.`);
+          }
+        });
       }
     }
   }

@@ -111,6 +111,8 @@ export class MapManager {
     this.sacredBranches = [];
     this.userMarker = null;
     this.isCheckingGeofence = false;
+    this.lastAutoTriggeredPoiId = null; // Tránh lặp âm thanh và giật popup (Anti-jitter)
+    this.isAutoPlayAudio = true; // Mặc định tự động thuyết minh & mở thông tin khi đến gần
   }
 
   /**
@@ -160,6 +162,9 @@ export class MapManager {
     // 6. Gắn sự kiện nút Recenter GPS (FE-3.4)
     this.bindRecenterButton();
 
+    // 6.5 Gắn sự kiện bật/tắt Tự động thuyết minh GPS Audio Pill
+    this.bindGpsAudioPill();
+
     // 7. Khởi tạo Marker Vị Trí Du Khách & Radar Sóng Thở Đôi (FE-4.1)
     this.initUserMarker();
 
@@ -176,10 +181,11 @@ export class MapManager {
       }
     });
 
-    // 11. Đăng ký lắng nghe thay đổi ngôn ngữ để cập nhật nhãn Marker trên bản đồ
+    // 11. Đăng ký lắng nghe thay đổi ngôn ngữ để cập nhật nhãn Marker trên bản đồ & GPS pill
     store.subscribe((state) => {
       if (state.selectedLang) {
         this.updateAllMarkerLabels();
+        this.updateGpsAudioPillUI();
       }
     });
 
@@ -339,12 +345,12 @@ export class MapManager {
         if (triggeredPoi) {
           const matched = this.findPoiMatch(triggeredPoi);
           if (matched) {
-            console.log(`[MultiGuide Geofence] Du khách đã vào vùng trigger của POI ${matched.id}: ${matched.titleEn}!`);
-            this.setNearbyPoi(matched.id);
-            showProximityBeacon(matched);
+            this.handlePoiTriggered(matched);
+          } else {
+            this.handlePoiLeftTrigger(lat, lng);
           }
         } else {
-          this.clearNearbyPoi();
+          this.handlePoiLeftTrigger(lat, lng);
         }
       }
     } catch (err) {
@@ -364,10 +370,9 @@ export class MapManager {
 
       if (closestPoi) {
         console.log(`[MultiGuide Geofence Fallback] Đã phát hiện ở gần POI ${closestPoi.id}: ${closestPoi.titleEn} (Cách ${minDistance.toFixed(1)}m)`);
-        this.setNearbyPoi(closestPoi.id);
-        showProximityBeacon(closestPoi);
+        this.handlePoiTriggered(closestPoi);
       } else {
-        this.clearNearbyPoi();
+        this.handlePoiLeftTrigger(lat, lng);
       }
     } finally {
       this.isCheckingGeofence = false;
@@ -677,6 +682,56 @@ export class MapManager {
   }
 
   /**
+   * Xử lý khi du khách bước vào vùng trigger của một POI (Tự động thuyết minh + hiện bảng thông tin)
+   */
+  handlePoiTriggered(matched) {
+    if (!matched) return;
+
+    // Chống lặp / Anti-jitter: nếu vẫn là POI vừa tự động kích hoạt thì bỏ qua, không ngắt quãng audio
+    if (this.lastAutoTriggeredPoiId && String(this.lastAutoTriggeredPoiId) === String(matched.id)) {
+      this.setNearbyPoi(matched.id);
+      return;
+    }
+
+    this.lastAutoTriggeredPoiId = matched.id;
+    this.setNearbyPoi(matched.id);
+
+    if (this.isAutoPlayAudio) {
+      console.log(`[MultiGuide Auto-Tour] Tự động thuyết minh & mở bảng thông tin cho POI ${matched.id}: ${matched.titleEn || matched.title}`);
+      // 1. Tự động chọn POI (mở Bottom Sheet Drawer Nấc 1 + phát thuyết minh)
+      this.selectPoi(matched.id);
+
+      // 2. Hiển thị thông báo Toast với chỉ báo đang phát tự động
+      showProximityBeacon(matched, true);
+    } else {
+      console.log(`[MultiGuide Geofence] Du khách đã vào vùng trigger của POI ${matched.id}: ${matched.titleEn} (Chế độ tự động tắt)`);
+      showProximityBeacon(matched, false);
+    }
+  }
+
+  /**
+   * Xử lý khi du khách di chuyển ra khỏi vùng trigger của mọi POI
+   */
+  handlePoiLeftTrigger(lat, lng) {
+    this.clearNearbyPoi();
+
+    // Hysteresis buffer: Nếu đã rời xa POI trước đó quá bán kính trigger + 8m thì reset cờ
+    if (this.lastAutoTriggeredPoiId) {
+      const lastPoi = HERITAGE_POIS.find(p => String(p.id) === String(this.lastAutoTriggeredPoiId));
+      if (lastPoi) {
+        const dist = geoService.calculateDistance(lat, lng, lastPoi.lat, lastPoi.lng);
+        const exitThreshold = (lastPoi.triggerRadiusM || 30) + 8;
+        if (dist > exitThreshold) {
+          console.log(`[MultiGuide Geofence] Du khách đã rời xa POI ${lastPoi.title || lastPoi.titleEn} (${dist.toFixed(1)}m > ${exitThreshold}m). Sẵn sàng tự động kích hoạt lại khi quay lại.`);
+          this.lastAutoTriggeredPoiId = null;
+        }
+      } else {
+        this.lastAutoTriggeredPoiId = null;
+      }
+    }
+  }
+
+  /**
    * Gắn sự kiện nút Recenter GPS (FE-3.4)
    */
   bindRecenterButton() {
@@ -694,6 +749,49 @@ export class MapManager {
       });
       console.log('[MultiGuide Map] Đang căn giữa bản đồ về vị trí...');
     });
+  }
+
+  /**
+   * Gắn sự kiện nút Toggle Bật / Tắt Tự động thuyết minh GPS (FE-3.4)
+   */
+  bindGpsAudioPill() {
+    const pill = document.getElementById('gpsAudioStatusPill');
+    if (!pill) return;
+
+    pill.addEventListener('click', () => {
+      this.isAutoPlayAudio = !this.isAutoPlayAudio;
+      this.updateGpsAudioPillUI();
+
+      const lang = store.get().selectedLang || 'vi';
+      const toast = document.getElementById('proximityToast');
+      const toastText = document.getElementById('proximityToastText');
+      if (toast && toastText) {
+        toastText.textContent = this.isAutoPlayAudio
+          ? (lang === 'en' ? '🎙️ GPS Auto-play: ENABLED' : lang === 'ja' ? '🎙️ GPS自動音声ガイド: 有効' : '🎙️ Tự động thuyết minh GPS: ĐÃ BẬT')
+          : (lang === 'en' ? '⏸️ GPS Auto-play: DISABLED' : lang === 'ja' ? '⏸️ GPS自動音声ガイド: 停止中' : '⏸️ Tự động thuyết minh GPS: ĐÃ TẮT');
+        toast.classList.add('is-visible');
+        setTimeout(() => toast.classList.remove('is-visible'), 2500);
+      }
+    });
+  }
+
+  updateGpsAudioPillUI() {
+    const pill = document.getElementById('gpsAudioStatusPill');
+    if (!pill) return;
+    const textSpan = pill.querySelector('span:not(.gps-dot)');
+    const lang = store.get().selectedLang || 'vi';
+
+    if (this.isAutoPlayAudio) {
+      pill.classList.remove('is-disabled');
+      if (textSpan) {
+        textSpan.textContent = lang === 'en' ? 'GPS audio on' : lang === 'ja' ? 'GPS音声ガイド稼働中' : 'Âm thanh GPS đang bật';
+      }
+    } else {
+      pill.classList.add('is-disabled');
+      if (textSpan) {
+        textSpan.textContent = lang === 'en' ? 'GPS audio off' : lang === 'ja' ? 'GPS音声ガイド停止中' : 'Âm thanh GPS đang tắt';
+      }
+    }
   }
 }
 
