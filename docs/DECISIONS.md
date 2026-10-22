@@ -21,6 +21,9 @@
 | D15 | Dùng .NET 10 (LTS), net10.0; ghim SDK bằng global.json | Máy dev chỉ có SDK 9/10 |
 | D16 | Tích hợp Google Gemini 2.5 Flash qua Google AI Studio REST API (Free tier, HttpClient) cho tính năng sinh tóm tắt lịch sử / câu chuyện POI | Tiện lợi, chuẩn, free, không cài thêm SDK nặng; phục vụ Admin pre-generate hoặc on-demand cache |
 | D17 | Bổ sung trường `image_url` (varchar 500, nullable) vào POI | Phục vụ FE hiển thị hình ảnh hiện vật/di tích trên bản đồ và bottom sheet |
+| D18 | Tích hợp **Microsoft Edge Neural TTS** qua WebSocket (`ITtsService` -> `EdgeTtsService`) sinh audio tự động cho bản dịch | Giải quyết bài toán thiếu file audio thu âm sẵn; tự động lưu file MP3 lên Supabase Storage qua endpoint `POST /admin/translations/{id}/generate-audio` |
+| D19 | Đo lường **Du khách trực tuyến thời gian thực (Live Active Visitors)** bằng cơ chế Heartbeat 15s kết hợp **In-Memory Sliding Window 30s** (`ConcurrentDictionary<Guid, DateTime>`) và Auto-polling 15s tại Admin Dashboard | Đảm bảo phản ánh đúng người dùng đang truy cập thực tế với độ trễ tối đa 15-30s; tuân thủ nghiêm ngặt bảo mật không lưu GPS/token; không tốn I/O đĩa DB |
+| D20 | Tự động hóa trải nghiệm thuyết minh Geofencing (**Auto-play Calm Tech**): khách vào bán kính $\le 30$m tự động mở Bottom Sheet và stream audio; áp dụng chống lặp tín hiệu (**Anti-jitter**) và đệm thoát (**Hysteresis buffer +8m**) | Nâng tầm trải nghiệm thực tế (khách đi bộ không cần bấm tay); chống giật popup và ngắt quãng âm thanh khi đứng yên |
 
 ## Thứ tự cắt nếu trễ
 US-14 (QR) → US-19 (Gemini AI Story) → US-04 (/passes/current) → US-08 (play-log) → integration test.

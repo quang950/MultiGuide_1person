@@ -3,7 +3,7 @@
 > **Đồ án môn Công nghệ phần mềm**  
 > **Nền tảng:** .NET 10 (C# 14) / ASP.NET Core / EF Core / Supabase / Render / GitHub Actions / Leaflet.js  
 > **Kiến trúc:** Modular Monolith 3 lớp nghiêm ngặt (`Api` -> `Business` <- `Data`; cả ba -> `Domain`)  
-> **Độ phủ kiểm thử:** 297/297 Tests Xanh lá (100%), Line Coverage tầng Business đạt **96.41%** (CI fail khi < 60%)
+> **Độ phủ kiểm thử:** 331/331 Tests Xanh lá (100%), Line Coverage tầng Business đạt **96.41%** (CI fail khi < 60%)
 
 ---
 
@@ -43,6 +43,7 @@ MultiGuide.Domain (Core)       ──┘               │
 | `GET` | `/areas/{code}` | Lấy thông tin khu tham quan và danh sách ngôn ngữ hỗ trợ (US-01) |
 | `POST` | `/areas/{code}/passes` | Mua thẻ tham quan mock (US-02, US-03, Rate Limited 5 req/min/IP) |
 | `GET` | `/passes/current` | Kiểm tra trạng thái và thời hạn vé hiện tại (US-04, `Bearer <token>`) |
+| `POST` | `/passes/heartbeat` | Gửi tín hiệu nhịp tim xác nhận du khách đang trực tuyến (US-21, In-Memory 30s) |
 | `GET` | `/pois/nearby` | Tìm điểm tham quan gần vị trí GPS (US-05, Bounding Box + Haversine, `within_trigger`) |
 | `GET` | `/pois/{id}` | Lấy chi tiết thuyết minh và Signed URL audio 1h (US-06, US-07, fallback vi/en) |
 | `POST` | `/play-logs` | Ghi nhận thời gian khách nghe thuyết minh (US-08) |
@@ -55,9 +56,12 @@ MultiGuide.Domain (Core)       ──┘               │
 | `GET` | `/admin/areas/{id}/qr` | Xuất mã QR ảnh PNG dạng `image/png` dẫn tới Web Client (US-14) |
 | `GET, POST` | `/admin/pois` | Xem danh sách phân trang (`page`, `page_size`) và tạo POI (US-11) |
 | `GET, PUT, DELETE`| `/admin/pois/{id}` | Chi tiết, cập nhật tọa độ/bán kính và xóa mềm POI |
+| `POST` | `/admin/pois/{id}/ai-summary` | Sinh tóm tắt lịch sử POI bằng Google Gemini 2.5 Flash (US-19) |
 | `GET, POST` | `/admin/translations` | Xem danh sách và tạo bản dịch POI đa ngôn ngữ (US-12) |
 | `GET, PUT, DELETE`| `/admin/translations/{id}` | Chi tiết, cập nhật văn bản và xóa bản dịch |
 | `POST` | `/admin/translations/{id}/audio` | Tải lên file âm thanh MP3 (US-13, ≤ 10MB, kiểm tra magic bytes) |
+| `POST` | `/admin/translations/{id}/generate-audio` | Tự động sinh audio MP3 bằng Microsoft Edge Neural TTS (US-20) |
+| `GET` | `/admin/analytics/dashboard` | Báo cáo hiệu suất, phân bổ ngôn ngữ và du khách trực tuyến (US-21) |
 
 ### 3.3. Hệ thống & Giám sát
 | Method | Endpoint | Mô tả |
