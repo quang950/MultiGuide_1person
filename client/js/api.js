@@ -51,6 +51,17 @@ export const apiService = {
     return await res.json();
   },
 
+  async sendHeartbeat() {
+    const token = store.get().accessToken;
+    if (!token) return;
+    try {
+      await fetch(`${this.baseUrl}/passes/heartbeat`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch {}
+  },
+
   async getNearbyPois(lat, lng, radius, lang) {
     let token = store.get().accessToken;
     if (!token) {

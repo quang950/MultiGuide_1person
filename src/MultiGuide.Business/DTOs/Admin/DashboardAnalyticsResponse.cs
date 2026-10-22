@@ -8,6 +8,7 @@ public record DashboardAnalyticsResponse
     public decimal TotalRevenueUsd { get; init; }
     public int TotalPlayLogs { get; init; }
     public int TotalListenedSec { get; init; }
+    public int ActiveVisitorsCount { get; init; }
     public IReadOnlyList<PoiStatDto> TopPois { get; init; } = Array.Empty<PoiStatDto>();
     public IReadOnlyList<LanguageStatDto> LanguageDistribution { get; init; } = Array.Empty<LanguageStatDto>();
 }

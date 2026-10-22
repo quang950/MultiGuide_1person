@@ -2,25 +2,25 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 21/10/2026 — Hoàn thành sửa lệch POI, Tự động phát âm thanh Neural TTS & Đồng bộ GUID Động)
+## Trạng thái hiện tại (cập nhật: 22/10/2026 — Hoàn thành Thống kê Du Khách Trực Tuyến Live 15-30s & Heartbeat)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
-- **Vừa xong:** Hoàn thành trọn vẹn 3 giải pháp cải tiến lớn:
-  1. **Khắc phục lỗi lệch POI & Audio Thần đạo (Lỗi 1)**:
-     - Phân tích nguyên nhân: Client thiếu Cổng Đại Thành và chèn Cổng Đại Trung làm lệch toàn bộ chỉ số index (1-6) so với Backend; `POI_GUID_MAP` tham chiếu sai thứ tự.
-     - Triển khai chuẩn hóa đầy đủ 7 điểm dừng Thần đạo Văn Miếu - Quốc Tử Giám trên cả Backend (`DbSeeder.cs`) và Client (`HERITAGE_POIS`, `POI_STORIES`, `POI_GUID_MAP`).
-     - Chuyển đổi Client sang cơ chế đồng bộ động bằng GUID (`loadPoisFromBackend`), hỗ trợ ánh xạ ID linh hoạt, loại bỏ hoàn toàn `parseInt(data-poi-id)`.
-  2. **Chuẩn hóa tọa độ thực tế theo Trục Thần đạo (Lỗi 2)**:
-     - Khắc phục độ lệch ~35m về phía Tây do dùng kinh độ cũ 105.83550; chuẩn hóa về đúng trục Thần đạo thực tế kinh độ `105.83580` trên Google Maps.
-     - Bổ sung 2 nhánh nét đứt ôm trọn Giếng Thiên Quang và Vườn bia Tiến Sĩ (`[21.0284, 105.8358]` -> `[21.0288, 105.8358]`).
-  3. **Tính năng Sinh Kịch bản AI & Tự động tạo Audio Neural TTS (Admin)**:
-     - Xây dựng `ITtsService` trong `Business` và `EdgeTtsService` trong `Data` kết nối WebSocket Microsoft Edge Neural TTS (hỗ trợ các giọng HoaiMyNeural, JennyNeural, NanamiNeural, XiaoxiaoNeural).
-     - Bổ sung endpoint `POST /admin/translations/{id}/generate-audio`.
-     - Tích hợp nút **"AI Sinh Audio (TTS)"** trong trang Admin (`client/js/admin.js`), tự động tổng hợp giọng đọc từ văn bản thuyết minh và tải lên Supabase Storage.
+- **Vừa xong:** Hoàn thành trọn vẹn tính năng Thống kê Du Khách Trực Tuyến (Live Active Visitors):
+  1. **Tầng Business & Data (.NET 10)**:
+     - Định nghĩa `IVisitorTracker` trong Business.
+     - Bổ sung trường `ActiveVisitorsCount` vào DTO `DashboardAnalyticsResponse`.
+     - Hiện thực `ActiveVisitorTracker` trong Data bằng cơ chế In-Memory Sliding Window (`ConcurrentDictionary<Guid, DateTime>`), độ trễ cửa sổ trượt 30 giây, tự động dọn dẹp bộ nhớ (RAM < vài KB).
+     - Đăng ký DI Singleton `IVisitorTracker, ActiveVisitorTracker`.
+     - Tích hợp vào `AnalyticsRepository` tự động cung cấp `ActiveVisitorsCount` cho Dashboard.
+  2. **Tầng Api & Middleware**:
+     - Thêm endpoint `POST /passes/heartbeat` trong `PassesController`.
+     - Tích hợp `visitorTracker.RecordHeartbeat` vào `AccessPassMiddleware` để tự động ghi nhận mọi request của du khách (`/pois/nearby`, `/pois/{id}`, v.v.).
+  3. **Tầng Client Frontend**:
+     - Khách (`ui.js`, `api.js`): Tự động phát tín hiệu nhịp tim Heartbeat định kỳ 15 giây/lần khi đang ở màn hình bản đồ.
+     - Admin (`admin.html`, `admin.css`, `admin.js`): Thêm thẻ KPI Card mới bên cạnh *Tổng Thời Lượng Nghe* với icon người dùng, hiệu ứng chấm xanh nhấp nháy `• Live (trong 30s qua)`; tự động Polling làm mới số liệu mỗi 15 giây, hỗ trợ tạm dừng khi ẩn tab qua Page Visibility API.
 - **Kết quả kiểm thử:**
   - `dotnet build MultiGuide.sln -warnaserror`: **0 Warning, 0 Error**.
-  - `dotnet test MultiGuide.sln`: **324/324 tests GREEN (100%)**.
+  - `dotnet test MultiGuide.sln`: **331/331 tests GREEN (100%)** (thêm bộ test `ActiveVisitorTrackerTests` và `Heartbeat` endpoints).
   - `dotnet format MultiGuide.sln --verify-no-changes`: **Đạt chuẩn 100%**.
-  - Browser testing: Cả 7 POI hiển thị chuẩn xác dọc theo trục Thần đạo Văn Miếu trên bản đồ.
 - **Bước kế tiếp:** Người dùng nghiệm thu trực tiếp trên trình duyệt.
 - **Đang vướng:** không
 - **Cách kiểm tra nhanh:** Mở `http://127.0.0.1:5500/client/index.html` hoặc `http://127.0.0.1:5500/client/admin.html`

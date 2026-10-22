@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MultiGuide.Business.DTOs.Admin;
 using MultiGuide.Business.Repositories;
+using MultiGuide.Business.Services;
 using MultiGuide.Data.Context;
 
 namespace MultiGuide.Data.Repositories;
@@ -8,10 +9,12 @@ namespace MultiGuide.Data.Repositories;
 public class AnalyticsRepository : IAnalyticsRepository
 {
     private readonly MultiGuideDbContext _context;
+    private readonly IVisitorTracker? _visitorTracker;
 
-    public AnalyticsRepository(MultiGuideDbContext context)
+    public AnalyticsRepository(MultiGuideDbContext context, IVisitorTracker? visitorTracker = null)
     {
         _context = context;
+        _visitorTracker = visitorTracker;
     }
 
     public async Task<DashboardAnalyticsResponse> GetDashboardAnalyticsAsync(CancellationToken cancellationToken = default)
@@ -87,6 +90,8 @@ public class AnalyticsRepository : IAnalyticsRepository
         .OrderByDescending(x => x.PlayCount)
         .ToList();
 
+        var activeVisitors = _visitorTracker?.GetActiveVisitorCount(TimeSpan.FromSeconds(30)) ?? 0;
+
         return new DashboardAnalyticsResponse
         {
             TotalAreas = totalAreas,
@@ -95,6 +100,7 @@ public class AnalyticsRepository : IAnalyticsRepository
             TotalRevenueUsd = totalRevenueUsd,
             TotalPlayLogs = totalPlayLogs,
             TotalListenedSec = totalListenedSec,
+            ActiveVisitorsCount = activeVisitors,
             TopPois = topPois,
             LanguageDistribution = languageDistribution
         };

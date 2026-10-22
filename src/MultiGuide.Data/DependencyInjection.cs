@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentGateway, MockPaymentGateway>();
         services.AddSingleton<IQrCodeGenerator, QrCodeGenerator>();
         services.AddSingleton<ITtsService, EdgeTtsService>();
+        services.AddSingleton<IVisitorTracker, ActiveVisitorTracker>();
 
         services.Configure<SupabaseStorageOptions>(options =>
         {

@@ -156,4 +156,32 @@ public class PassCurrentEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         Assert.True(pass.RemainingSeconds > 0);
         Assert.True(pass.ExpiresAt > DateTime.UtcNow);
     }
+
+    [Fact]
+    public async Task Heartbeat_KhongCoToken_TraVe401()
+    {
+        // Arrange
+        var (client, _) = CreateTestClient();
+
+        // Act
+        var res = await client.PostAsync("/passes/heartbeat", null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Unauthorized, res.StatusCode);
+    }
+
+    [Fact]
+    public async Task Heartbeat_TokenHopLe_TraVe200VaAlive()
+    {
+        // Arrange
+        var (client, dbName) = CreateTestClient();
+        var (_, _, token) = await SeedAreaAndPassAsync(dbName);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var res = await client.PostAsync("/passes/heartbeat", null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, res.StatusCode);
+    }
 }

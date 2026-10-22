@@ -581,6 +581,23 @@ window.showBottomSheet = showBottomSheet;
 window.hideBottomSheet = hideBottomSheet;
 window.switchTab = switchTab;
 
+let heartbeatInterval = null;
+
+export function startVisitorHeartbeat() {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  apiService.sendHeartbeat();
+  heartbeatInterval = setInterval(() => {
+    apiService.sendHeartbeat();
+  }, 15000);
+}
+
+export function stopVisitorHeartbeat() {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval);
+    heartbeatInterval = null;
+  }
+}
+
 /**
  * Chuyển đổi trạng thái từ Màn hình ngoài (Arrival) sang Màn hình Bản đồ (Main)
  */
@@ -610,6 +627,8 @@ export function transitionToMainApp() {
           audioEngine.init();
           // Khởi tạo Bottom Navigation & 3 Tab views (FE-6.1, FE-6.2, FE-6.3)
           initBottomNavigation();
+          // Bắt đầu nhịp tim trực tuyến Heartbeat 15s
+          startVisitorHeartbeat();
 
           if (window.map) {
             window.map.invalidateSize();
@@ -624,6 +643,7 @@ export function transitionToMainApp() {
  * Chuyển đổi trạng thái từ Màn hình Bản đồ (Main) quay về Màn hình ngoài (Arrival)
  */
 export function transitionToArrivalScreen() {
+  stopVisitorHeartbeat();
   const arrivalScreen = document.getElementById('arrivalScreen');
   const mainAppContainer = document.getElementById('mainAppContainer');
 

@@ -108,5 +108,6 @@ public class AdminAnalyticsControllerTests : IClassFixture<WebApplicationFactory
         Assert.NotNull(result);
         Assert.NotNull(result.TopPois);
         Assert.NotNull(result.LanguageDistribution);
+        Assert.True(result.ActiveVisitorsCount >= 0);
     }
 }

@@ -20,7 +20,7 @@ public class AccessPassMiddleware
         _next = next;
     }
 
-    public async Task InvokeAsync(HttpContext context, IPassService passService)
+    public async Task InvokeAsync(HttpContext context, IPassService passService, IVisitorTracker? visitorTracker = null)
     {
         var endpoint = context.GetEndpoint();
         var requiresPass = endpoint?.Metadata.GetMetadata<RequireAccessPassAttribute>() != null;
@@ -59,6 +59,7 @@ public class AccessPassMiddleware
         {
             var passContext = await passService.ValidateTokenAsync(token, context.RequestAborted);
             context.Items[HttpContextItemKey] = passContext;
+            visitorTracker?.RecordHeartbeat(passContext.PassId);
             await _next(context);
         }
         catch (ForbiddenException ex)

@@ -43,4 +43,25 @@ public class PassesController : BaseApiController
         var pass = await _passService.GetCurrentPassAsync(passContext.PassId, cancellationToken);
         return Ok(pass);
     }
+
+    /// <summary>
+    /// Gửi tín hiệu nhịp tim (Heartbeat) xác nhận du khách đang trực tuyến (hoạt động trong vòng 30s).
+    /// </summary>
+    /// <param name="visitorTracker">Dịch vụ theo dõi du khách trực tuyến</param>
+    /// <returns>Trạng thái kết nối</returns>
+    [HttpPost("heartbeat")]
+    [RequireAccessPass]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public IActionResult Heartbeat([FromServices] IVisitorTracker visitorTracker)
+    {
+        var passContext = HttpContext.GetPassContext();
+        if (passContext != null)
+        {
+            visitorTracker.RecordHeartbeat(passContext.PassId);
+        }
+
+        return Ok(new { status = "alive", timestamp = DateTime.UtcNow });
+    }
 }

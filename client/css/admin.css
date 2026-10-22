@@ -392,6 +392,33 @@ html, body.admin-body {
   color: var(--admin-text-muted);
 }
 
+.kpi-live-dot {
+  display: inline-block;
+  width: 7.5px;
+  height: 7.5px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-live 1.8s infinite;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+@keyframes pulse-live {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
 /* Analytics Split Layout */
 .analytics-split-layout {
   display: grid;

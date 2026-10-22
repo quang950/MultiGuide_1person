@@ -198,6 +198,25 @@ document.addEventListener('DOMContentLoaded', () => {
   initPoiModalEvents();
 });
 
+let analyticsPollingInterval = null;
+
+function startAnalyticsPolling() {
+  if (analyticsPollingInterval) clearInterval(analyticsPollingInterval);
+  analyticsPollingInterval = setInterval(() => {
+    const analyticsPanel = document.getElementById('panelAnalytics');
+    if (analyticsPanel && analyticsPanel.classList.contains('is-active') && !document.hidden) {
+      loadAnalyticsDashboard();
+    }
+  }, 15000);
+}
+
+function stopAnalyticsPolling() {
+  if (analyticsPollingInterval) {
+    clearInterval(analyticsPollingInterval);
+    analyticsPollingInterval = null;
+  }
+}
+
 function initTabs() {
   const tabs = document.querySelectorAll('.admin-tab-btn');
   tabs.forEach(tab => {
@@ -213,12 +232,16 @@ function initTabs() {
       if (targetTab === 'analytics') {
         document.getElementById('panelAnalytics').classList.add('is-active');
         loadAnalyticsDashboard();
-      } else if (targetTab === 'areas') {
-        document.getElementById('panelAreas').classList.add('is-active');
-        loadTourAreas();
-      } else if (targetTab === 'pois') {
-        document.getElementById('panelPois').classList.add('is-active');
-        loadPoisForCurrentArea();
+        startAnalyticsPolling();
+      } else {
+        stopAnalyticsPolling();
+        if (targetTab === 'areas') {
+          document.getElementById('panelAreas').classList.add('is-active');
+          loadTourAreas();
+        } else if (targetTab === 'pois') {
+          document.getElementById('panelPois').classList.add('is-active');
+          loadPoisForCurrentArea();
+        }
       }
     });
   });
@@ -229,6 +252,19 @@ function initTabs() {
       loadAnalyticsDashboard();
     });
   }
+
+  // Khởi động auto-polling ngay khi tải trang (mặc định tab analytics)
+  startAnalyticsPolling();
+
+  // Tạm dừng khi ẩn tab trình duyệt và làm mới ngay khi quay lại
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const analyticsPanel = document.getElementById('panelAnalytics');
+      if (analyticsPanel && analyticsPanel.classList.contains('is-active')) {
+        loadAnalyticsDashboard();
+      }
+    }
+  });
 }
 
 function initLogout() {
@@ -236,6 +272,7 @@ function initLogout() {
   if (btnLogout) {
     btnLogout.addEventListener('click', () => {
       if (confirm('Bạn có chắc chắn muốn đăng xuất khỏi trang Quản trị?')) {
+        stopAnalyticsPolling();
         localStorage.removeItem('mg_admin_token');
         localStorage.removeItem('mg_admin_refresh_token');
         localStorage.removeItem('mg_admin_token_expires_at');
@@ -274,6 +311,11 @@ async function loadAnalyticsDashboard() {
     const mins = Math.floor(totalSec / 60);
     const secs = totalSec % 60;
     document.getElementById('kpiTotalListened').textContent = `${mins}m ${secs}s`;
+
+    const elActive = document.getElementById('kpiActiveVisitors');
+    if (elActive) {
+      elActive.textContent = (data.activeVisitorsCount || 0).toLocaleString();
+    }
 
     // 2. Bảng Top POIs
     const tableBody = document.getElementById('topPoisTableBody');
@@ -320,6 +362,7 @@ function getFallbackAnalytics() {
     totalRevenueUsd: 710.00,
     totalPlayLogs: 386,
     totalListenedSec: 18420,
+    activeVisitorsCount: 4,
     topPois: [
       { poiName: "Khuê Văn Các", areaName: "Văn Miếu - Quốc Tử Giám", playCount: 124, totalListenedSec: 6200, completedCount: 118 },
       { poiName: "Bia Tiến Sĩ & Vườn Bia", areaName: "Văn Miếu - Quốc Tử Giám", playCount: 98, totalListenedSec: 5400, completedCount: 92 },
