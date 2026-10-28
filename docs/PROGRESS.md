@@ -2,28 +2,22 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 22/10/2026 — Hoàn thành Thống kê Du Khách Trực Tuyến Live 15-30s & Heartbeat)
+## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tinh chỉnh Bảo mật Admin Long-Lived JWT & Ràng buộc Khóa ngoại PlayLog)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
-- **Vừa xong:** Hoàn thành trọn vẹn tính năng Thống kê Du Khách Trực Tuyến (Live Active Visitors):
+- **Vừa xong:** 
   1. **Tầng Business & Data (.NET 10)**:
-     - Định nghĩa `IVisitorTracker` trong Business.
-     - Bổ sung trường `ActiveVisitorsCount` vào DTO `DashboardAnalyticsResponse`.
-     - Hiện thực `ActiveVisitorTracker` trong Data bằng cơ chế In-Memory Sliding Window (`ConcurrentDictionary<Guid, DateTime>`), độ trễ cửa sổ trượt 30 giây, tự động dọn dẹp bộ nhớ (RAM < vài KB).
-     - Đăng ký DI Singleton `IVisitorTracker, ActiveVisitorTracker`.
-     - Tích hợp vào `AnalyticsRepository` tự động cung cấp `ActiveVisitorsCount` cho Dashboard.
-  2. **Tầng Api & Middleware**:
-     - Thêm endpoint `POST /passes/heartbeat` trong `PassesController`.
-     - Tích hợp `visitorTracker.RecordHeartbeat` vào `AccessPassMiddleware` để tự động ghi nhận mọi request của du khách (`/pois/nearby`, `/pois/{id}`, v.v.).
-  3. **Tầng Client Frontend**:
-     - Khách (`ui.js`, `api.js`): Tự động phát tín hiệu nhịp tim Heartbeat định kỳ 15 giây/lần khi đang ở màn hình bản đồ.
-     - Admin (`admin.html`, `admin.css`, `admin.js`): Thêm thẻ KPI Card mới bên cạnh *Tổng Thời Lượng Nghe* với icon người dùng, hiệu ứng chấm xanh nhấp nháy `• Live (trong 30s qua)`; tự động Polling làm mới số liệu mỗi 15 giây, hỗ trợ tạm dừng khi ẩn tab qua Page Visibility API.
+     - Thêm kiểm tra language_code hợp lệ và active trong PlayLogService qua ILanguageRepository, phòng chống lỗi 500 do vi phạm khóa ngoại CSDL khi khách gửi ngôn ngữ lạ.
+     - Tinh chỉnh Admin Auth: Chuyển hoàn toàn sang Long-lived JWT 30 ngày (2,592,000s) qua IAdminAuthService, đóng endpoint /admin/auth/refresh để loại bỏ nguy cơ bypass phân quyền Admin; cập nhật DTOs và implementation.
+  2. **Tầng Presentation & Client**:
+     - Cập nhật AdminAuthController và client/js/admin.js dùng token 30 ngày trực tiếp.
+     - Cập nhật tài liệu docs/PRD.md và docs/DECISIONS.md đồng bộ phản hồi 200 OK của POST /passes/heartbeat và lược bỏ refresh token.
 - **Kết quả kiểm thử:**
-  - `dotnet build MultiGuide.sln -warnaserror`: **0 Warning, 0 Error**.
-  - `dotnet test MultiGuide.sln`: **331/331 tests GREEN (100%)** (thêm bộ test `ActiveVisitorTrackerTests` và `Heartbeat` endpoints).
-  - `dotnet format MultiGuide.sln --verify-no-changes`: **Đạt chuẩn 100%**.
-- **Bước kế tiếp:** Người dùng nghiệm thu trực tiếp trên trình duyệt.
+  - dotnet build MultiGuide.sln -warnaserror: **0 Warning, 0 Error**.
+  - dotnet test MultiGuide.sln: **330/330 tests GREEN (100%)**.
+  - dotnet format MultiGuide.sln --verify-no-changes: **Đạt chuẩn 100%**.
+- **Bước kế tiếp:** Người dùng nghiệm thu trực tiếp.
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** Mở `http://127.0.0.1:5500/client/index.html` hoặc `http://127.0.0.1:5500/client/admin.html`
+- **Cách kiểm tra nhanh:** Mở http://127.0.0.1:5500/client/index.html hoặc http://127.0.0.1:5500/client/admin.html
 
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)

@@ -93,6 +93,15 @@ public class PlayLogsEndpointsTests : IClassFixture<WebApplicationFactory<Progra
         };
         isolatedContext.AccessPasses.Add(pass);
 
+        if (!await isolatedContext.Languages.AnyAsync(l => l.Code == "vi"))
+        {
+            isolatedContext.Languages.Add(new Language { Code = "vi", Name = "Tiếng Việt", IsActive = true });
+        }
+        if (!await isolatedContext.Languages.AnyAsync(l => l.Code == "en"))
+        {
+            isolatedContext.Languages.Add(new Language { Code = "en", Name = "English", IsActive = true });
+        }
+
         await isolatedContext.SaveChangesAsync();
         return (pass.Id, area.Id, rawToken);
     }
@@ -171,6 +180,34 @@ public class PlayLogsEndpointsTests : IClassFixture<WebApplicationFactory<Progra
         var problem = await res.Content.ReadFromJsonAsync<ProblemDetails>();
         Assert.NotNull(problem);
         Assert.Equal(ErrorCodes.PassExpired, problem.Extensions["code"]?.ToString());
+    }
+
+    [Fact]
+    public async Task CreatePlayLog_NgonNguKhongTonTai_TraVe422ValidationError()
+    {
+        // Arrange
+        var (client, dbName) = CreateTestClient();
+        var (_, areaId, token) = await SeedAreaAndPassAsync(dbName);
+        var poi = await SeedPoiAsync(dbName, areaId);
+
+        var req = new CreatePlayLogRequest
+        {
+            PoiId = poi.Id,
+            LanguageCode = "fr", // Chưa được cấu hình trong bảng language
+            ListenedSec = 60,
+            Completed = false
+        };
+
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        // Act
+        var res = await client.PostAsJsonAsync("/play-logs", req);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.UnprocessableEntity, res.StatusCode);
+        var problem = await res.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problem);
+        Assert.Equal(ErrorCodes.ValidationError, problem.Extensions["code"]?.ToString());
     }
 
     [Theory]

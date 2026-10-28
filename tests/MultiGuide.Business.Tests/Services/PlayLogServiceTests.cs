@@ -13,6 +13,7 @@ public class PlayLogServiceTests
 {
     private readonly Mock<IPlayLogRepository> _playLogRepoMock;
     private readonly Mock<IPoiRepository> _poiRepoMock;
+    private readonly Mock<ILanguageRepository> _languageRepoMock;
     private readonly Mock<IClock> _clockMock;
     private readonly PlayLogService _service;
 
@@ -22,13 +23,19 @@ public class PlayLogServiceTests
     {
         _playLogRepoMock = new Mock<IPlayLogRepository>();
         _poiRepoMock = new Mock<IPoiRepository>();
+        _languageRepoMock = new Mock<ILanguageRepository>();
         _clockMock = new Mock<IClock>();
 
         _clockMock.Setup(c => c.UtcNow).Returns(_fixedNow);
 
+        // Mặc định ngôn ngữ vi, en, ja tồn tại và active
+        _languageRepoMock.Setup(r => r.GetByCodeAsync(It.Is<string>(s => s == "vi" || s == "en" || s == "ja"), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((string code, CancellationToken _) => new Language { Code = code, Name = code, IsActive = true });
+
         _service = new PlayLogService(
             _playLogRepoMock.Object,
             _poiRepoMock.Object,
+            _languageRepoMock.Object,
             _clockMock.Object);
     }
 
@@ -76,6 +83,52 @@ public class PlayLogServiceTests
         Assert.Equal(ErrorCodes.ValidationError, ex.Code);
         Assert.NotNull(ex.Errors);
         Assert.True(ex.Errors.ContainsKey("language_code"));
+    }
+
+    [Fact]
+    public async Task CreatePlayLogAsync_NgonNguKhongTonTai_NemValidationException()
+    {
+        var passId = Guid.NewGuid();
+        var areaId = Guid.NewGuid();
+        var req = new CreatePlayLogRequest
+        {
+            PoiId = Guid.NewGuid(),
+            LanguageCode = "fr",
+            ListenedSec = 60,
+            Completed = true
+        };
+
+        _languageRepoMock.Setup(r => r.GetByCodeAsync("fr", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((Language?)null);
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.CreatePlayLogAsync(passId, areaId, req));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+        Assert.Contains("không tồn tại", ex.Message);
+    }
+
+    [Fact]
+    public async Task CreatePlayLogAsync_NgonNguInactive_NemValidationException()
+    {
+        var passId = Guid.NewGuid();
+        var areaId = Guid.NewGuid();
+        var req = new CreatePlayLogRequest
+        {
+            PoiId = Guid.NewGuid(),
+            LanguageCode = "de",
+            ListenedSec = 60,
+            Completed = true
+        };
+
+        _languageRepoMock.Setup(r => r.GetByCodeAsync("de", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new Language { Code = "de", Name = "German", IsActive = false });
+
+        var ex = await Assert.ThrowsAsync<ValidationException>(() =>
+            _service.CreatePlayLogAsync(passId, areaId, req));
+
+        Assert.Equal(ErrorCodes.ValidationError, ex.Code);
+        Assert.Contains("vô hiệu hóa", ex.Message);
     }
 
     [Theory]

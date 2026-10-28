@@ -92,18 +92,6 @@ public class SupabaseAdminAuthService : IAdminAuthService
         return new AdminLoginResponse(longLivedToken, email, "admin", null, ThirtyDaysInSeconds);
     }
 
-    public async Task<AdminRefreshTokenResponse> RefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(refreshToken))
-        {
-            throw new ValidationException(ErrorCodes.ValidationError, "Refresh token không được để trống.");
-        }
-
-        // Tạo mới một token 30 ngày
-        var newAccessToken = GenerateInternalAdminJwt(Guid.NewGuid().ToString(), "admin@multiguide.vn");
-        return await Task.FromResult(new AdminRefreshTokenResponse(newAccessToken, refreshToken, ThirtyDaysInSeconds, "admin"));
-    }
-
     private string GenerateInternalAdminJwt(string userId, string email)
     {
         var tokenHandler = new JwtSecurityTokenHandler();

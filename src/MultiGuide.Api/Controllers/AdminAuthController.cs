@@ -37,21 +37,4 @@ public class AdminAuthController : ControllerBase
         var result = await _adminAuthService.LoginAsync(request.Email, request.Password, cancellationToken);
         return Ok(result);
     }
-
-    /// <summary>
-    /// Làm mới phiên đăng nhập Quản trị viên bằng Refresh Token (tự động gia hạn không bị ngắt quãng).
-    /// </summary>
-    [HttpPost("refresh")]
-    [AllowAnonymous]
-    [ProducesResponseType(typeof(AdminRefreshTokenResponse), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<AdminRefreshTokenResponse>> Refresh(
-        [FromBody] AdminRefreshTokenRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        var result = await _adminAuthService.RefreshTokenAsync(request.RefreshToken, cancellationToken);
-        return Ok(result);
-    }
 }

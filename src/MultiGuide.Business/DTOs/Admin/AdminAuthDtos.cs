@@ -9,13 +9,5 @@ public record AdminLoginResponse(
     [property: JsonPropertyName("email")] string Email,
     [property: JsonPropertyName("role")] string Role,
     [property: JsonPropertyName("refresh_token")] string? RefreshToken = null,
-    [property: JsonPropertyName("expires_in")] int ExpiresIn = 3600);
+    [property: JsonPropertyName("expires_in")] int ExpiresIn = 2592000);
 
-public record AdminRefreshTokenRequest(
-    [property: JsonPropertyName("refresh_token")] string RefreshToken);
-
-public record AdminRefreshTokenResponse(
-    [property: JsonPropertyName("access_token")] string AccessToken,
-    [property: JsonPropertyName("refresh_token")] string RefreshToken,
-    [property: JsonPropertyName("expires_in")] int ExpiresIn,
-    [property: JsonPropertyName("role")] string Role = "admin");

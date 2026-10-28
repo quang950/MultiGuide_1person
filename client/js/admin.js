@@ -67,74 +67,8 @@ if (adminUserStr) {
   } catch (e) {}
 }
 
-let isRefreshingPromise = null;
-
 async function refreshAdminToken() {
-  if (isRefreshingPromise) return isRefreshingPromise;
-
-  const refreshToken = localStorage.getItem('mg_admin_refresh_token');
-  if (!refreshToken) {
-    return null;
-  }
-
-  isRefreshingPromise = (async () => {
-    try {
-      // 1. Thử refresh qua Backend proxy bảo mật
-      const res = await fetch(`${API_BASE}/admin/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: refreshToken })
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        const newAccess = data.access_token || data.accessToken;
-        const newRefresh = data.refresh_token || data.refreshToken || refreshToken;
-        const exp = Number(data.expires_in || data.expiresIn || 3600);
-
-        if (newAccess) {
-          localStorage.setItem('mg_admin_token', newAccess);
-          localStorage.setItem('mg_admin_refresh_token', newRefresh);
-          localStorage.setItem('mg_admin_token_expires_at', (Date.now() + exp * 1000).toString());
-          return newAccess;
-        }
-      }
-
-      // 2. Dự phòng trực tiếp qua Supabase Auth nếu backend trả về lỗi mạng hoặc 404
-      const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicmZkeHRtbmhkY296Ymx5aWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTQ3ODgsImV4cCI6MjEwNzQ3MDc4OH0.AuQtC8JZXsrmMc_84K5OJIY3RtQ8LXoLEv0sB1JM7iA';
-      const sbRes = await fetch('https://xbrfdxtmnhdcozblyilo.supabase.co/auth/v1/token?grant_type=refresh_token', {
-        method: 'POST',
-        headers: {
-          'apikey': anonKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ refresh_token: refreshToken })
-      });
-
-      if (sbRes.ok) {
-        const sbData = await sbRes.json();
-        const newAccess = sbData.access_token;
-        const newRefresh = sbData.refresh_token || refreshToken;
-        const exp = Number(sbData.expires_in || 3600);
-
-        if (newAccess) {
-          localStorage.setItem('mg_admin_token', newAccess);
-          localStorage.setItem('mg_admin_refresh_token', newRefresh);
-          localStorage.setItem('mg_admin_token_expires_at', (Date.now() + exp * 1000).toString());
-          return newAccess;
-        }
-      }
-
-      return null;
-    } catch (e) {
-      console.warn('Không thể làm mới token:', e);
-      return null;
-    } finally {
-      isRefreshingPromise = null;
-    }
-  })();
-
-  return isRefreshingPromise;
+  return localStorage.getItem('mg_admin_token');
 }
 
 async function ensureFreshToken() {

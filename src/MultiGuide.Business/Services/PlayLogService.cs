@@ -11,15 +11,18 @@ public class PlayLogService : IPlayLogService
 {
     private readonly IPlayLogRepository _playLogRepository;
     private readonly IPoiRepository _poiRepository;
+    private readonly ILanguageRepository _languageRepository;
     private readonly IClock _clock;
 
     public PlayLogService(
         IPlayLogRepository playLogRepository,
         IPoiRepository poiRepository,
+        ILanguageRepository languageRepository,
         IClock clock)
     {
         _playLogRepository = playLogRepository;
         _poiRepository = poiRepository;
+        _languageRepository = languageRepository;
         _clock = clock;
     }
 
@@ -55,6 +58,15 @@ public class PlayLogService : IPlayLogService
             throw new ValidationException(ErrorCodes.ValidationError, "Dữ liệu nhật ký nghe không hợp lệ.", errors);
         }
 
+        var normalizedLanguageCode = request.LanguageCode.Trim().ToLowerInvariant();
+        var language = await _languageRepository.GetByCodeAsync(normalizedLanguageCode, cancellationToken);
+        if (language == null || !language.IsActive)
+        {
+            throw new ValidationException(
+                ErrorCodes.ValidationError,
+                $"Ngôn ngữ '{request.LanguageCode}' không tồn tại hoặc đã bị vô hiệu hóa.");
+        }
+
         var poi = await _poiRepository.GetByIdAsync(request.PoiId, cancellationToken);
         if (poi == null || !poi.IsActive)
         {
@@ -75,7 +87,7 @@ public class PlayLogService : IPlayLogService
             Id = Guid.NewGuid(),
             PassId = passId,
             PoiId = request.PoiId,
-            LanguageCode = request.LanguageCode.Trim().ToLowerInvariant(),
+            LanguageCode = normalizedLanguageCode,
             StartedAt = _clock.UtcNow,
             ListenedSec = request.ListenedSec,
             Completed = request.Completed
