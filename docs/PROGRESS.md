@@ -5,11 +5,12 @@
 ## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tính năng Hiển thị Tọa độ Du khách Real-time dưới nút Recenter)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
 - **Vừa xong:** 
-  1. **Tính năng Hiển thị Tọa độ Du khách (Client - FE-3.4)**:
+  1. **Tối ưu UI Bản đồ & Cụm điều khiển Tọa độ (Client - FE-3.4)**:
      - Bổ sung cụm điều khiển GPS .map-gps-control-group và badge #userCoordsDisplay hiển thị tọa độ trực tiếp dưới nút tròn Recenter ở góc dưới bên phải.
-     - Tích hợp 2 nguồn dữ liệu: Tọa độ phần cứng GPS thực tế (
-avigator.geolocation) chấm xanh lá, và tọa độ bước chân mô phỏng (Click-to-Move) chấm màu đồng di sản.
-     - Hỗ trợ chạm 1 chạm vào badge để sao chép nhanh chuỗi tọa độ (hỗ trợ kiểm thử thực địa thuận tiện).
+     - Tinh chỉnh vị trí: Nút tròn và dòng tọa độ nằm sát lề phải (10px) và sát ngay phía trên đường line ngăn cách với Footer (6px).
+     - Tích hợp 2 nguồn dữ liệu: Tọa độ GPS thực tế (
+avigator.geolocation) chấm xanh lá, và tọa độ click mô phỏng chấm màu đồng di sản.
+     - Đã dọn dẹp và xóa bỏ khung chữ nhật nét đứt trang trí thừa xung quanh hồ Giếng Thiên Quang và Vườn bia Tiến Sĩ trong client/js/map.js, giúp bản đồ thoáng đãng, sắc nét và thẩm mỹ hơn.
      - Đảm bảo 100% Client-side, tuyệt đối không gửi hay log tọa độ lên CSDL Backend tuân thủ quy tắc bảo mật riêng tư.
   2. **Tầng Backend & Kiểm thử**:
      - dotnet build MultiGuide.sln -warnaserror: 0 Warning, 0 Error.

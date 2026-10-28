@@ -108,7 +108,6 @@ export class MapManager {
     this.map = null;
     this.poiMarkers = new Map();
     this.sacredAxisLine = null;
-    this.sacredBranches = [];
     this.userMarker = null;
     this.isCheckingGeofence = false;
     this.lastAutoTriggeredPoiId = null; // Tránh lặp âm thanh và giật popup (Anti-jitter)
@@ -417,10 +416,6 @@ export class MapManager {
     if (this.sacredAxisLine) {
       this.map.removeLayer(this.sacredAxisLine);
     }
-    if (this.sacredBranches) {
-      this.sacredBranches.forEach(b => this.map.removeLayer(b));
-    }
-    this.sacredBranches = [];
 
     // Tuyến đường trục chính nối thẳng từ Cổng Văn Miếu (Nam) lên Nhà Thái Học (Bắc) theo thứ tự trạm
     const sortedPois = [...HERITAGE_POIS].sort((a, b) => (a.order || 0) - (b.order || 0) || a.lat - b.lat);
@@ -433,37 +428,6 @@ export class MapManager {
       opacity: 0.75,
       lineCap: 'round'
     }).addTo(this.map);
-
-    // 2 nhánh nét đứt vòng quanh hồ Giếng Thiên Quang và Vườn bia Tiến Sĩ
-    const westPondBranch = [
-      [21.0284, 105.8358],
-      [21.0284, 105.8352],
-      [21.0288, 105.8352],
-      [21.0288, 105.8358]
-    ];
-
-    const eastPondBranch = [
-      [21.0284, 105.8358],
-      [21.0284, 105.8364],
-      [21.0288, 105.8364],
-      [21.0288, 105.8358]
-    ];
-
-    const b1 = L.polyline(westPondBranch, {
-      color: '#C28E58',
-      weight: 1.5,
-      dashArray: '4, 6',
-      opacity: 0.65
-    }).addTo(this.map);
-
-    const b2 = L.polyline(eastPondBranch, {
-      color: '#C28E58',
-      weight: 1.5,
-      dashArray: '4, 6',
-      opacity: 0.65
-    }).addTo(this.map);
-
-    this.sacredBranches.push(b1, b2);
   }
 
   /**
