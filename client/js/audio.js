@@ -500,21 +500,49 @@ export class AudioEngine {
   /**
    * Bắt đầu phát âm thanh cho một POI cụ thể
    */
+  /**
+   * Bắt đầu phát âm thanh cho một POI cụ thể (Single Audio Stream + Fade-out mượt mà)
+   */
   async playPoi(poiId) {
+    // 1. Fade-out mượt mà âm thanh đang phát trước khi chuyển sang POI mới (Single Audio Instance)
+    if (this.audioElement && !this.audioElement.paused && this.audioElement.currentTime > 0) {
+      try {
+        const origVol = this.audioElement.volume || 1.0;
+        const steps = 6;
+        const stepDelay = 50; // 6 * 50ms = 300ms
+        for (let i = 1; i <= steps; i++) {
+          await new Promise(r => setTimeout(r, stepDelay));
+          if (this.audioElement) {
+            this.audioElement.volume = Math.max(0, origVol * (1 - i / steps));
+          }
+        }
+        this.audioElement.pause();
+        this.audioElement.volume = origVol;
+      } catch (fadeErr) {
+        if (this.audioElement) {
+          this.audioElement.pause();
+        }
+      }
+    }
+
     this.currentPoiId = poiId;
     this.syncPoiContent(poiId);
 
     try {
       await this.loadAudioForPoi(poiId);
-      await this.audioElement.play();
+      if (this.audioElement) {
+        this.audioElement.volume = 1.0;
+        await this.audioElement.play();
+      }
     } catch (err) {
       if (err && err.name === 'NotAllowedError') {
         console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi tự động phát âm thanh. Bảng thông tin đã mở sẵn, du khách có thể chạm nút Phát bất kỳ lúc nào.`);
         return;
       }
       console.warn(`[MultiGuide Audio] Lỗi phát POI ${poiId}, sử dụng âm thanh di sản:`, err);
-      if (this.fallbackAudioUrl) {
+      if (this.fallbackAudioUrl && this.audioElement) {
         this.audioElement.src = this.fallbackAudioUrl;
+        this.audioElement.volume = 1.0;
         await this.audioElement.play().catch((playErr) => {
           if (playErr && playErr.name === 'NotAllowedError') {
             console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi phát âm thanh tự động.`);
@@ -524,9 +552,6 @@ export class AudioEngine {
     }
   }
 
-  /**
-   * Tải URL âm thanh từ Backend Render hoặc Supabase Signed URL
-   */
   async loadAudioForPoi(poiId) {
     const lang = store.get().selectedLang || 'vi';
     const targetGuid = POI_GUID_MAP[poiId] || poiId;

@@ -21,7 +21,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Van Mieu Gate',
     lat: 21.02720,
     lng: 105.83580,
-    triggerRadiusM: 30,
+    triggerRadiusM: 20,
     labelPos: 'left',
     isActive: false,
     isNearby: false
@@ -36,7 +36,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Khue Van Pavilion',
     lat: 21.02820,
     lng: 105.83580,
-    triggerRadiusM: 25,
+    triggerRadiusM: 20,
     labelPos: 'right',
     isActive: false,
     isNearby: false
@@ -51,7 +51,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Thien Quang Well & Stelae',
     lat: 21.02860,
     lng: 105.83580,
-    triggerRadiusM: 35,
+    triggerRadiusM: 20,
     labelPos: 'left',
     isActive: false,
     isNearby: false
@@ -66,7 +66,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Dai Thanh Gate & Courtyard',
     lat: 21.02900,
     lng: 105.83580,
-    triggerRadiusM: 30,
+    triggerRadiusM: 20,
     labelPos: 'right',
     isActive: false,
     isNearby: false
@@ -81,7 +81,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Dai Thanh Sanctuary',
     lat: 21.02940,
     lng: 105.83580,
-    triggerRadiusM: 30,
+    triggerRadiusM: 20,
     labelPos: 'left',
     isActive: false,
     isNearby: false
@@ -96,7 +96,7 @@ export const HERITAGE_POIS = [
     titleEn: 'Thai Hoc Academy',
     lat: 21.02980,
     lng: 105.83580,
-    triggerRadiusM: 35,
+    triggerRadiusM: 20,
     labelPos: 'right',
     isActive: false,
     isNearby: false
@@ -225,7 +225,7 @@ export class MapManager {
             titleEn: item.titleEn || item.title,
             lat: item.lat,
             lng: item.lng,
-            triggerRadiusM: item.triggerRadiusM || item.trigger_radius_m || 30,
+            triggerRadiusM: 20, // Chuẩn hóa 20m kích hoạt phát âm thanh tự động cho trục Thần đạo
             labelPos: (index % 2 === 0) ? 'left' : 'right',
             isActive: isCurrentlyActive ? true : false,
             isNearby: false
@@ -316,14 +316,17 @@ export class MapManager {
     if (!nearbyItem) return null;
     const targetGuid = nearbyItem.id || nearbyItem.poiId;
     return HERITAGE_POIS.find(p => 
-      (targetGuid && (p.id === targetGuid || p.guid === targetGuid)) ||
-      (nearbyItem.title && (p.title === nearbyItem.title || p.titleEn === nearbyItem.title)) ||
-      (nearbyItem.lat && Math.abs(p.lat - nearbyItem.lat) < 0.0004 && Math.abs(p.lng - nearbyItem.lng) < 0.0004)
+      (targetGuid && (String(p.id).toLowerCase() === String(targetGuid).toLowerCase() || String(p.guid).toLowerCase() === String(targetGuid).toLowerCase())) ||
+      (nearbyItem.code && p.code === nearbyItem.code) ||
+      (nearbyItem.title && (p.title === nearbyItem.title || p.titleEn === nearbyItem.title))
     );
   }
 
   /**
-   * Thuật toán Geofencing tự động kết nối API Backend thật (FE-4.3)
+   * Thuật toán Geofencing tự động kết nối API Backend và tính toán khoảng cách thông minh (FE-4.3)
+   * - Discovery Radius: 50m (quét và lên màu đồng thời cho tất cả các POI trong 50m)
+   * - Auto-Trigger Radius: 20m (kích hoạt tự động)
+   * - Cách tiếp cận A (Hysteresis Switching): chỉ chuyển sang POI mới khi gần hơn POI đang phát >= 5m
    */
   async checkGeofencing(lat, lng) {
     if (this.isCheckingGeofence) return;
@@ -331,57 +334,76 @@ export class MapManager {
 
     const token = store.get().accessToken;
     const lang = store.get().selectedLang || 'vi';
+    const DISCOVERY_RADIUS = CONFIG.DEFAULT_SCAN_RADIUS || 50; // 50m quét lân cận
+    const AUTO_TRIGGER_RADIUS = 20; // 20m tự động kích hoạt âm thanh
 
     try {
-      // 1. Gửi request RESTful API thật tới Backend Render
-      console.log(`[MultiGuide Geofence] Đang quét lân cận tại [${lat.toFixed(5)}, ${lng.toFixed(5)}]...`);
-      const nearbyData = await apiService.fetchNearbyPois(lat, lng, 50, lang, token);
+      // 1. Tính toán khoảng cách thực tế (Haversine) cho toàn bộ 6 POI
+      HERITAGE_POIS.forEach(p => {
+        p.distanceM = geoService.calculateDistance(lat, lng, p.lat, p.lng);
+      });
 
-      if (nearbyData && Array.isArray(nearbyData)) {
-        store.set({ nearbyPois: nearbyData });
+      // 2. Cập nhật trạng thái 'Ở gần bạn' đồng thời cho TẤT CẢ các POI trong bán kính 50m
+      const nearbyPoiIds = new Set(
+        HERITAGE_POIS
+          .filter(p => p.distanceM <= DISCOVERY_RADIUS)
+          .map(p => String(p.id))
+      );
+      this.updateNearbyPois(nearbyPoiIds);
 
-        // Tìm POI nằm trong bán kính trigger (<= 30m)
-        const triggeredPoi = nearbyData.find(p => p.withinTrigger || (p.distanceMeters !== undefined && p.distanceMeters <= 30) || (p.distanceM !== undefined && p.distanceM <= 30));
-        if (triggeredPoi) {
-          const matched = this.findPoiMatch(triggeredPoi);
-          if (matched) {
-            this.handlePoiTriggered(matched);
-          } else {
-            this.handlePoiLeftTrigger(lat, lng);
-          }
+      // 3. Đồng bộ với Backend API nếu có kết nối
+      try {
+        const backendNearby = await apiService.fetchNearbyPois(lat, lng, DISCOVERY_RADIUS, lang, token);
+        if (backendNearby && Array.isArray(backendNearby)) {
+          store.set({ nearbyPois: backendNearby });
+        }
+      } catch (apiErr) {
+        // Backend bận hoặc cold start: tiếp tục dùng kết quả Haversine
+      }
+
+      // 4. Lọc các POI nằm trong bán kính tự động kích hoạt (<= 20m)
+      const triggerCandidates = HERITAGE_POIS
+        .filter(p => p.distanceM <= (p.triggerRadiusM || AUTO_TRIGGER_RADIUS))
+        .sort((a, b) => a.distanceM - b.distanceM); // Nearest Distance First
+
+      if (triggerCandidates.length === 0) {
+        // Không có POI nào trong bán kính 20m
+        this.handlePoiLeftTrigger(lat, lng);
+        return;
+      }
+
+      // 5. Chọn POI gần nhất
+      const closestPoi = triggerCandidates[0];
+      const currentActive = store.get().activePoi;
+
+      if (!currentActive || !currentActive.id) {
+        // Chưa có điểm nào đang phát -> Kích hoạt ngay điểm gần nhất
+        this.handlePoiTriggered(closestPoi);
+      } else if (String(currentActive.id) === String(closestPoi.id) || String(currentActive.guid) === String(closestPoi.id)) {
+        // Điểm gần nhất chính là điểm đang phát -> Duy trì phát bình thường
+        this.lastAutoTriggeredPoiId = closestPoi.id;
+      } else {
+        // Đang phát điểm A, nhưng điểm gần nhất là B:
+        // Đo khoảng cách hiện tại từ du khách tới A và tới B
+        const distCurrent = geoService.calculateDistance(lat, lng, currentActive.lat, currentActive.lng);
+        const distClosest = closestPoi.distanceM;
+
+        // CƠ CHẾ HYSTERESIS SWITCHING (Cách tiếp cận A):
+        // Chỉ chuyển sang B nếu du khách gần B hơn A ít nhất 5 mét (chống rung giật GPS)
+        if (distClosest < distCurrent - 5) {
+          console.log(`[MultiGuide Hysteresis] Chuyển đổi POI: ${closestPoi.title} (${distClosest.toFixed(1)}m) gần hơn POI đang phát (${distCurrent.toFixed(1)}m) >= 5m.`);
+          this.handlePoiTriggered(closestPoi);
         } else {
-          this.handlePoiLeftTrigger(lat, lng);
+          console.log(`[MultiGuide Hysteresis] Giữ nguyên POI ${currentActive.title}: chênh lệch khoảng cách (${Math.abs(distCurrent - distClosest).toFixed(1)}m) chưa vượt ngưỡng an toàn 5m.`);
         }
       }
     } catch (err) {
-      console.warn('[MultiGuide Geofence] Kết nối Backend gián đoạn, áp dụng tính toán khoảng cách toán học cục bộ:', err.message);
-
-      // Fallback tính khoảng cách Haversine toán học để demo luôn mượt mà
-      let closestPoi = null;
-      let minDistance = Infinity;
-
-      HERITAGE_POIS.forEach(p => {
-        const dist = geoService.calculateDistance(lat, lng, p.lat, p.lng);
-        if (dist <= 30 && dist < minDistance) {
-          minDistance = dist;
-          closestPoi = p;
-        }
-      });
-
-      if (closestPoi) {
-        console.log(`[MultiGuide Geofence Fallback] Đã phát hiện ở gần POI ${closestPoi.id}: ${closestPoi.titleEn} (Cách ${minDistance.toFixed(1)}m)`);
-        this.handlePoiTriggered(closestPoi);
-      } else {
-        this.handlePoiLeftTrigger(lat, lng);
-      }
+      console.warn('[MultiGuide Geofence] Lỗi trong quá trình quét lân cận:', err.message);
     } finally {
       this.isCheckingGeofence = false;
     }
   }
 
-  /**
-   * Vẽ trục Thần đạo nét đứt màu đồng (FE-3.2)
-   */
   renderSacredAxis() {
     if (!this.map) return;
 
@@ -621,12 +643,15 @@ export class MapManager {
   /**
    * Kích hoạt trạng thái màu xanh ngọc (Nearby Proximity) cho POI khi du khách đến gần
    */
-  setNearbyPoi(poiId) {
+  /**
+   * Cập nhật trạng thái màu xanh ngọc (Nearby Proximity) đồng thời cho TẤT CẢ các POI trong bán kính 50m
+   */
+  updateNearbyPois(nearbyPoiIds) {
     HERITAGE_POIS.forEach(p => {
       // Nếu POI này đang phát audio thì giữ nguyên active
       if (p.isActive) return;
 
-      const isNear = (String(p.id) === String(poiId) || String(p.order) === String(poiId));
+      const isNear = nearbyPoiIds.has(String(p.id)) || nearbyPoiIds.has(String(p.guid)) || nearbyPoiIds.has(String(p.order));
       if (p.isNearby !== isNear) {
         p.isNearby = isNear;
         this.updateMarkerVisual(p);
@@ -634,8 +659,12 @@ export class MapManager {
     });
   }
 
+  setNearbyPoi(poiId) {
+    this.updateNearbyPois(new Set([String(poiId)]));
+  }
+
   /**
-   * Xóa trạng thái màu xanh khi du khách đi xa khỏi mọi POI
+   * Xóa trạng thái màu xanh khi du khách đi xa khỏi mọi POI (> 50m)
    */
   clearNearbyPoi() {
     HERITAGE_POIS.forEach(p => {
@@ -653,12 +682,15 @@ export class MapManager {
    */
   selectPoi(poiId) {
     HERITAGE_POIS.forEach(p => {
-      p.isActive = (String(p.id) === String(poiId) || String(p.order) === String(poiId));
-      p.isNearby = false; // Khi đã chọn thì không còn là trạng thái chờ
+      const isTarget = (String(p.id) === String(poiId) || String(p.guid) === String(poiId) || String(p.order) === String(poiId));
+      p.isActive = isTarget;
+      if (isTarget) {
+        p.isNearby = false;
+      }
       this.updateMarkerVisual(p);
     });
 
-    const activePoi = HERITAGE_POIS.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
+    const activePoi = HERITAGE_POIS.find(p => String(p.id) === String(poiId) || String(p.guid) === String(poiId) || String(p.order) === String(poiId));
     store.set({ activePoi });
 
     if (activePoi) {
@@ -689,12 +721,10 @@ export class MapManager {
 
     // Chống lặp / Anti-jitter: nếu vẫn là POI vừa tự động kích hoạt thì bỏ qua, không ngắt quãng audio
     if (this.lastAutoTriggeredPoiId && String(this.lastAutoTriggeredPoiId) === String(matched.id)) {
-      this.setNearbyPoi(matched.id);
       return;
     }
 
     this.lastAutoTriggeredPoiId = matched.id;
-    this.setNearbyPoi(matched.id);
 
     if (this.isAutoPlayAudio) {
       console.log(`[MultiGuide Auto-Tour] Tự động thuyết minh & mở bảng thông tin cho POI ${matched.id}: ${matched.titleEn || matched.title}`);
@@ -713,16 +743,13 @@ export class MapManager {
    * Xử lý khi du khách di chuyển ra khỏi vùng trigger của mọi POI
    */
   handlePoiLeftTrigger(lat, lng) {
-    this.clearNearbyPoi();
-
-    // Hysteresis buffer: Nếu đã rời xa POI trước đó quá bán kính trigger + 8m thì reset cờ
+    // Nếu du khách đã rời xa POI trước đó quá 25m thì giải phóng cờ để sẵn sàng kích hoạt lại khi quay lại
     if (this.lastAutoTriggeredPoiId) {
       const lastPoi = HERITAGE_POIS.find(p => String(p.id) === String(this.lastAutoTriggeredPoiId));
       if (lastPoi) {
         const dist = geoService.calculateDistance(lat, lng, lastPoi.lat, lastPoi.lng);
-        const exitThreshold = (lastPoi.triggerRadiusM || 30) + 8;
-        if (dist > exitThreshold) {
-          console.log(`[MultiGuide Geofence] Du khách đã rời xa POI ${lastPoi.title || lastPoi.titleEn} (${dist.toFixed(1)}m > ${exitThreshold}m). Sẵn sàng tự động kích hoạt lại khi quay lại.`);
+        if (dist > 25) {
+          console.log(`[MultiGuide Geofence] Du khách đã rời xa POI ${lastPoi.title || lastPoi.titleEn} (${dist.toFixed(1)}m > 25m). Sẵn sàng tự động kích hoạt lại khi quay lại.`);
           this.lastAutoTriggeredPoiId = null;
         }
       } else {
@@ -731,9 +758,6 @@ export class MapManager {
     }
   }
 
-  /**
-   * Gắn sự kiện nút Recenter GPS (FE-3.4)
-   */
   bindRecenterButton() {
     const btnRecenter = document.getElementById('btnRecenterMap');
     if (!btnRecenter) return;
