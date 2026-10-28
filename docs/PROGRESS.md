@@ -5,13 +5,13 @@
 ## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tính năng Hiển thị Tọa độ Du khách Real-time dưới nút Recenter)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
 - **Vừa xong:** 
-  1. **Tối ưu UI Bản đồ & Cụm điều khiển Tọa độ (Client - FE-3.4)**:
-     - Bổ sung cụm điều khiển GPS .map-gps-control-group và badge #userCoordsDisplay hiển thị tọa độ trực tiếp dưới nút tròn Recenter ở góc dưới bên phải.
-     - Tinh chỉnh vị trí: Nút tròn và dòng tọa độ nằm sát lề phải (10px) và sát ngay phía trên đường line ngăn cách với Footer (6px).
-     - Tích hợp 2 nguồn dữ liệu: Tọa độ GPS thực tế (
-avigator.geolocation) chấm xanh lá, và tọa độ click mô phỏng chấm màu đồng di sản.
-     - Đã dọn dẹp và xóa bỏ khung chữ nhật nét đứt trang trí thừa xung quanh hồ Giếng Thiên Quang và Vườn bia Tiến Sĩ trong client/js/map.js, giúp bản đồ thoáng đãng, sắc nét và thẩm mỹ hơn.
-     - Đảm bảo 100% Client-side, tuyệt đối không gửi hay log tọa độ lên CSDL Backend tuân thủ quy tắc bảo mật riêng tư.
+  1. **Đồng bộ Đa ngôn ngữ Hộp thoại Modal & Tối ưu Giao diện (Client - FE-6.3)**:
+     - Xây dựng module dùng chung ModalService trong client/js/modal.js và CSS trong client/css/components.css theo tone màu vàng đồng di sản #C28E58, bo góc mềm 22px, icon tròn, hiệu ứng mờ kính Backdrop Blur.
+     - Đồng bộ đa ngôn ngữ 100% cho hộp thoại Thoát vé (modalService.confirm): Tự động hiển thị đúng tiếng Anh, tiếng Nhật hoặc tiếng Việt tương ứng với ngôn ngữ du khách đang chọn thông qua client/js/i18n.js.
+     - Xử lý nút cờ Tiếng Trung 🇨🇳 中文: Hiển thị Modal 'Tính Năng Đang Hoàn Thiện / Sắp Ra Mắt' lịch sự, không đổi ngôn ngữ và giải quyết triệt để lỗi phát lệch âm thanh tiếng Anh.
+  2. **Tối ưu UI Bản đồ & Cụm điều khiển Tọa độ (Client - FE-3.4)**:
+     - Bổ sung cụm điều khiển GPS .map-gps-control-group và badge #userCoordsDisplay hiển thị tọa độ trực tiếp dưới nút tròn Recenter (sát lề phải 10px và sát trên line footer 6px).
+     - Đã xóa bỏ khung chữ nhật nét đứt thừa quanh hồ Giếng Thiên Quang trong client/js/map.js.
   2. **Tầng Backend & Kiểm thử**:
      - dotnet build MultiGuide.sln -warnaserror: 0 Warning, 0 Error.
      - dotnet test MultiGuide.sln: 331/331 tests GREEN (100%).

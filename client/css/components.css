@@ -1882,6 +1882,162 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+/* ========================================================
+   8. Heritage Modal Dialog (Hộp thoại trung tâm vàng đồng — Reusable)
+   ======================================================== */
+.heritage-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(24, 24, 22, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
 
+.heritage-modal-backdrop.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
 
+.heritage-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  background: #FFFFFF;
+  border-radius: 22px;
+  border: 1px solid rgba(194, 142, 88, 0.32);
+  box-shadow: 0 20px 48px rgba(24, 24, 22, 0.22), 0 4px 16px rgba(194, 142, 88, 0.12);
+  padding: 26px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: scale(0.92) translateY(10px);
+  opacity: 0;
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+}
 
+.heritage-modal-card.is-active {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+}
+
+.modal-icon-wrapper {
+  margin-bottom: 12px;
+}
+
+.modal-icon-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: #FAF4EB;
+  border: 1.5px solid #C28E58;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(194, 142, 88, 0.18);
+}
+
+.modal-icon-symbol {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.modal-content-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.modal-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: rgba(194, 142, 88, 0.12);
+  color: #A06E38;
+  border: 1px solid rgba(194, 142, 88, 0.22);
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.modal-title {
+  font-family: var(--font-serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #181816;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.modal-message {
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  color: #636159;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0 4px;
+}
+
+.modal-actions-group {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modal-actions-group.has-two-buttons {
+  flex-direction: row;
+  gap: 10px;
+}
+
+.btn-modal-confirm {
+  flex: 1;
+  width: 100%;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #C28E58 0%, #A8743E 100%);
+  border: none;
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(194, 142, 88, 0.28);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-modal-confirm:active {
+  transform: scale(0.96);
+  box-shadow: 0 2px 6px rgba(194, 142, 88, 0.2);
+}
+
+.btn-modal-cancel {
+  flex: 1;
+  height: 42px;
+  border-radius: 12px;
+  background: #F3EFE9;
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  color: #55534D;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.btn-modal-cancel:active {
+  transform: scale(0.96);
+  background: #E8E3DA;
+}

@@ -71,6 +71,12 @@ export const TRANSLATIONS = {
       btnDownloadDone: '✓ Đã lưu Offline thành công',
       btnRefresh: 'Làm mới trạng thái vé',
       btnLogout: 'Đăng xuất vé / Về màn chào đón'
+    },
+    modal: {
+      exitTitle: 'Xác Nhận Thoát Vé',
+      exitMessage: 'Bạn có muốn đăng xuất vé và quay lại màn hình chào đón ban đầu không?',
+      confirm: 'Đồng ý',
+      cancel: 'Hủy'
     }
   },
 
@@ -137,6 +143,12 @@ export const TRANSLATIONS = {
       btnDownloadDone: '✓ Offline pack saved successfully',
       btnRefresh: 'Refresh pass status',
       btnLogout: 'Exit Pass / Return to Welcome'
+    },
+    modal: {
+      exitTitle: 'Exit Pass Confirmation',
+      exitMessage: 'Do you want to exit your active pass and return to the welcome screen?',
+      confirm: 'Exit',
+      cancel: 'Cancel'
     }
   },
 
@@ -203,6 +215,12 @@ export const TRANSLATIONS = {
       btnDownloadDone: '✓ 离线资源包已成功缓存',
       btnRefresh: '刷新通票状态',
       btnLogout: '退出通行证 / 返回欢迎页'
+    },
+    modal: {
+      exitTitle: '退出通行证确认',
+      exitMessage: '您确定要退出当前通行证并返回欢迎页面吗？',
+      confirm: '确定',
+      cancel: '取消'
     }
   },
 
@@ -269,6 +287,12 @@ export const TRANSLATIONS = {
       btnDownloadDone: '✓ オフライン保存完了',
       btnRefresh: 'パス状態を更新',
       btnLogout: 'パスを終了 / ようこそ画面へ'
+    },
+    modal: {
+      exitTitle: 'パス終了の確認',
+      exitMessage: 'パスを終了して最初のようこそ画面に戻りますか？',
+      confirm: '終了する',
+      cancel: 'キャンセル'
     }
   }
 };

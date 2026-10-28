@@ -8,6 +8,7 @@ import { mapManager } from './map.js';
 import { t } from './i18n.js';
 import { POI_STORIES } from './audio.js';
 import { CONFIG } from './config.js?v=3.6';
+import { modalService } from './modal.js';
 
 /**
  * Mở khóa AudioContext cho iOS Safari / Android Chrome (CONSTRAINTS.md)
@@ -65,7 +66,17 @@ export function initLanguageSwitcher() {
     if (!btn) return;
 
     const langCode = btn.dataset.lang;
-    if (langCode && ['vi', 'en', 'zh', 'ja'].includes(langCode)) {
+    if (langCode === 'zh') {
+      modalService.showComingSoon({
+        badge: '🇨🇳 中文',
+        title: 'Tính Năng Đang Hoàn Thiện',
+        message: 'Bản dịch và giọng đọc thuyết minh tiếng Trung đang được đội ngũ di sản hoàn thiện và sẽ sớm ra mắt du khách!',
+        confirmText: 'Đã hiểu'
+      });
+      return;
+    }
+
+    if (langCode && ['vi', 'en', 'ja'].includes(langCode)) {
       // 1. Mở khóa AudioContext im lặng cho mobile
       unlockAudioContextSilently();
 
@@ -568,8 +579,14 @@ function initPassActions() {
 
   if (btnLogout && !btnLogout._hasListener) {
     btnLogout._hasListener = true;
-    btnLogout.addEventListener('click', () => {
-      if (confirm('Bạn có muốn đăng xuất vé và quay lại màn hình chào đón ban đầu?')) {
+    btnLogout.addEventListener('click', async () => {
+      const isConfirmed = await modalService.confirm({
+        title: t('modal.exitTitle'),
+        message: t('modal.exitMessage'),
+        confirmText: t('modal.confirm'),
+        cancelText: t('modal.cancel')
+      });
+      if (isConfirmed) {
         transitionToArrivalScreen();
       }
     });
