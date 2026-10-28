@@ -195,10 +195,18 @@
       <div class="scale-bracket"></div>
     </div>
 
-    <!-- 6. Nút Recenter vị trí du khách (FE-3.4) -->
-    <button type="button" class="btn-map-recenter" id="btnRecenterMap" aria-label="Căn giữa vị trí của bạn" data-i18n-aria="map.recenterAria">
-      <img src="assets/icons/recenter.svg" alt="Vị trí của bạn">
-    </button>
+    <!-- 6. Cụm điều khiển GPS & Hiển thị Tọa độ du khách (FE-3.4) -->
+    <div class="map-gps-control-group" id="mapGpsControlGroup">
+      <button type="button" class="btn-map-recenter" id="btnRecenterMap" aria-label="Căn giữa vị trí của bạn" data-i18n-aria="map.recenterAria">
+        <img src="assets/icons/recenter.svg" alt="Vị trí của bạn">
+      </button>
+
+      <!-- Dòng hiển thị tọa độ du khách (GPS thật / Click mô phỏng) -->
+      <div class="user-coords-badge" id="userCoordsDisplay" title="Tọa độ vị trí của bạn · Chạm để sao chép">
+        <span class="coords-status-dot is-simulated" id="coordsStatusDot"></span>
+        <span class="coords-text" id="userCoordsText">21.02765, 105.83580</span>
+      </div>
+    </div>
 
     <!-- 7. Toast thông báo nhẹ nhàng khi đến gần POI (Cụm 4) -->
     <div class="proximity-beacon-toast" id="proximityToast" aria-live="polite">

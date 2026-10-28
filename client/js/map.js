@@ -162,6 +162,9 @@ export class MapManager {
     // 6. Gắn sự kiện nút Recenter GPS (FE-3.4)
     this.bindRecenterButton();
 
+    // 6.2 Gắn sự kiện chạm sao chép dòng tọa độ du khách
+    this.bindUserCoordsBadge();
+
     // 6.5 Gắn sự kiện bật/tắt Tự động thuyết minh GPS Audio Pill
     this.bindGpsAudioPill();
 
@@ -253,6 +256,7 @@ export class MapManager {
 
     // Vị trí mặc định chuẩn ảnh mẫu: Trước Cổng Đại Trung (2)
     const initialLocation = [21.02765, 105.8358];
+    this.updateUserCoordsUI(initialLocation[0], initialLocation[1], true);
 
     const radarHtml = `
       <div class="user-radar-container">
@@ -300,9 +304,12 @@ export class MapManager {
    * Khởi động bộ theo dõi vị trí GPS & Geofencing tự động (FE-4.2 & FE-4.3)
    */
   initGeoTracking() {
-    geoService.startWatching((lat, lng) => {
+    geoService.startWatching((lat, lng, isSimulated = false) => {
       // 1. Cập nhật marker trên bản đồ
       this.updateUserMarkerLocation(lat, lng);
+
+      // 1.5 Cập nhật dòng tọa độ hiển thị góc dưới bên phải (GPS thật hoặc click ảo)
+      this.updateUserCoordsUI(lat, lng, isSimulated);
 
       // 2. Kích hoạt thuật toán Geofencing tự động kết nối Backend thật (FE-4.3)
       this.checkGeofencing(lat, lng);
@@ -756,6 +763,80 @@ export class MapManager {
         this.lastAutoTriggeredPoiId = null;
       }
     }
+  }
+
+  /**
+   * Cập nhật hiển thị dòng tọa độ du khách góc dưới bên phải (FE-3.4)
+   * @param {number} lat - Vĩ độ
+   * @param {number} lng - Kinh độ
+   * @param {boolean} isSimulated - true: bước chân ảo (click); false: GPS thật từ thiết bị
+   */
+  updateUserCoordsUI(lat, lng, isSimulated = false) {
+    const textEl = document.getElementById('userCoordsText');
+    const dotEl = document.getElementById('coordsStatusDot');
+    const badgeEl = document.getElementById('userCoordsDisplay');
+    if (!textEl) return;
+
+    if (typeof lat === 'number' && typeof lng === 'number') {
+      textEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      this.currentUserCoords = { lat, lng, isSimulated };
+    }
+
+    if (dotEl) {
+      if (isSimulated) {
+        dotEl.classList.add('is-simulated');
+        if (badgeEl) {
+          badgeEl.title = `Tọa độ vị trí (Click mô phỏng): ${lat.toFixed(5)}, ${lng.toFixed(5)} · Chạm để sao chép`;
+        }
+      } else {
+        dotEl.classList.remove('is-simulated');
+        if (badgeEl) {
+          badgeEl.title = `Tọa độ GPS thực tế: ${lat.toFixed(5)}, ${lng.toFixed(5)} · Chạm để sao chép`;
+        }
+      }
+    }
+  }
+
+  /**
+   * Gắn sự kiện sao chép tọa độ vào clipboard khi chạm vào badge
+   */
+  bindUserCoordsBadge() {
+    const badgeEl = document.getElementById('userCoordsDisplay');
+    if (!badgeEl) return;
+
+    badgeEl.addEventListener('click', async () => {
+      const textEl = document.getElementById('userCoordsText');
+      if (!textEl) return;
+      const coordsStr = textEl.textContent?.trim();
+      if (!coordsStr) return;
+
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(coordsStr);
+        } else {
+          const tempInput = document.createElement('input');
+          tempInput.value = coordsStr;
+          document.body.appendChild(tempInput);
+          tempInput.select();
+          document.execCommand('copy');
+          document.body.removeChild(tempInput);
+        }
+
+        const toast = document.getElementById('proximityToast');
+        const toastText = document.getElementById('proximityToastText');
+        if (toast && toastText) {
+          const originalText = toastText.textContent;
+          toastText.textContent = `📋 Đã sao chép tọa độ: ${coordsStr}`;
+          toast.classList.add('is-visible');
+          setTimeout(() => {
+            toast.classList.remove('is-visible');
+            setTimeout(() => { toastText.textContent = originalText; }, 300);
+          }, 2000);
+        }
+      } catch (err) {
+        console.warn('[MultiGuide Map] Không thể sao chép tọa độ:', err);
+      }
+    });
   }
 
   bindRecenterButton() {

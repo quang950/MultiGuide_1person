@@ -234,12 +234,26 @@
   border-bottom: 1.5px solid #6E6B65;
 }
 
+/* Cụm điều khiển vị trí góc phải dưới (FE-3.4) */
+.map-gps-control-group {
+  position: absolute;
+  bottom: calc(66px + var(--safe-bottom));
+  right: 10px;
+  z-index: 35;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.map-gps-control-group > * {
+  pointer-events: auto;
+}
+
 /* Nút Recenter GPS */
 .btn-map-recenter {
-  position: absolute;
-  bottom: calc(86px + var(--safe-bottom));
-  right: 18px;
-  z-index: 35;
+  position: relative;
   width: 44px;
   height: 44px;
   border-radius: 50%;
@@ -255,6 +269,52 @@
 
 .btn-map-recenter:active {
   transform: scale(0.92);
+}
+
+/* Dòng hiển thị tọa độ du khách (GPS thật hoặc Click-to-Move) */
+.user-coords-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(24, 24, 22, 0.08);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(24, 24, 22, 0.1);
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.15s ease, background-color 0.2s ease;
+}
+
+.user-coords-badge:active {
+  transform: scale(0.95);
+  background: rgba(245, 245, 240, 0.98);
+}
+
+.user-coords-badge .coords-status-dot {
+  width: 5.5px;
+  height: 5.5px;
+  border-radius: 50%;
+  background-color: #22c55e; /* Xanh lá khi là GPS thật */
+  box-shadow: 0 0 0 1.5px rgba(34, 197, 94, 0.2);
+  flex-shrink: 0;
+  transition: background-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.user-coords-badge .coords-status-dot.is-simulated {
+  background-color: #C28E58; /* Màu đồng di sản khi click mô phỏng */
+  box-shadow: 0 0 0 1.5px rgba(194, 142, 88, 0.25);
+}
+
+.user-coords-badge .coords-text {
+  font-family: 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.60rem; /* ~9.5px */
+  font-weight: 600;
+  color: #383733;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 /* ========================================================
@@ -484,9 +544,9 @@
     position: relative;
   }
 
-  .btn-map-recenter {
-    right: 20px;
-    bottom: calc(76px + var(--safe-bottom));
+  .map-gps-control-group {
+    right: 14px;
+    bottom: calc(66px + var(--safe-bottom));
   }
 
   .map-compass-hud {

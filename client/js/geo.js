@@ -77,7 +77,7 @@ class GeoService {
         });
 
         if (this.onUpdateCallback) {
-          this.onUpdateCallback(latitude, longitude);
+          this.onUpdateCallback(latitude, longitude, false);
         }
       },
       (err) => {
@@ -109,7 +109,7 @@ class GeoService {
     console.log(`[MultiGuide GPS Simulator] Đã bước tới vị trí: [${lat.toFixed(5)}, ${lng.toFixed(5)}]`);
 
     if (this.onUpdateCallback) {
-      this.onUpdateCallback(lat, lng);
+      this.onUpdateCallback(lat, lng, true);
     }
   }
 

@@ -2,15 +2,19 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tinh chỉnh Bảo mật Admin Long-Lived JWT & Ràng buộc Khóa ngoại PlayLog)
+## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tính năng Hiển thị Tọa độ Du khách Real-time dưới nút Recenter)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
 - **Vừa xong:** 
-  1. **Tầng Business & Data (.NET 10)**:
-     - Thêm kiểm tra language_code hợp lệ và active trong PlayLogService qua ILanguageRepository, phòng chống lỗi 500 do vi phạm khóa ngoại CSDL khi khách gửi ngôn ngữ lạ.
-     - Tinh chỉnh Admin Auth: Chuyển hoàn toàn sang Long-lived JWT 30 ngày (2,592,000s) qua IAdminAuthService, đóng endpoint /admin/auth/refresh để loại bỏ nguy cơ bypass phân quyền Admin; cập nhật DTOs và implementation.
-  2. **Tầng Presentation & Client**:
-     - Cập nhật AdminAuthController và client/js/admin.js dùng token 30 ngày trực tiếp.
-     - Cập nhật tài liệu docs/PRD.md và docs/DECISIONS.md đồng bộ phản hồi 200 OK của POST /passes/heartbeat và lược bỏ refresh token.
+  1. **Tính năng Hiển thị Tọa độ Du khách (Client - FE-3.4)**:
+     - Bổ sung cụm điều khiển GPS .map-gps-control-group và badge #userCoordsDisplay hiển thị tọa độ trực tiếp dưới nút tròn Recenter ở góc dưới bên phải.
+     - Tích hợp 2 nguồn dữ liệu: Tọa độ phần cứng GPS thực tế (
+avigator.geolocation) chấm xanh lá, và tọa độ bước chân mô phỏng (Click-to-Move) chấm màu đồng di sản.
+     - Hỗ trợ chạm 1 chạm vào badge để sao chép nhanh chuỗi tọa độ (hỗ trợ kiểm thử thực địa thuận tiện).
+     - Đảm bảo 100% Client-side, tuyệt đối không gửi hay log tọa độ lên CSDL Backend tuân thủ quy tắc bảo mật riêng tư.
+  2. **Tầng Backend & Kiểm thử**:
+     - dotnet build MultiGuide.sln -warnaserror: 0 Warning, 0 Error.
+     - dotnet test MultiGuide.sln: 331/331 tests GREEN (100%).
+     - dotnet format MultiGuide.sln --verify-no-changes: Đạt chuẩn 100%.
 - **Kết quả kiểm thử:**
   - dotnet build MultiGuide.sln -warnaserror: **0 Warning, 0 Error**.
   - dotnet test MultiGuide.sln: **330/330 tests GREEN (100%)**.
