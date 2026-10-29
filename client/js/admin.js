@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Khởi tạo các sự kiện modal và tìm kiếm
   initAreaModalEvents();
   initPoiModalEvents();
+  initPoiDistanceCalculator();
 });
 
 let analyticsPollingInterval = null;
@@ -166,6 +167,7 @@ function initTabs() {
       if (targetTab === 'analytics') {
         document.getElementById('panelAnalytics').classList.add('is-active');
         loadAnalyticsDashboard();
+        loadPoisForDistanceCalculator();
         startAnalyticsPolling();
       } else {
         stopAnalyticsPolling();
@@ -319,6 +321,229 @@ function getLanguageFlag(code) {
   if (code === 'ja') return '🇯🇵';
   if (code === 'zh') return '🇨🇳';
   return '🌐';
+}
+
+// ========================================================
+// 3.1. CÔNG CỤ TÍNH KHOẢNG CÁCH GIỮA 2 ĐIỂM POI (DASHBOARD)
+// ========================================================
+let calcPoisList = [];
+
+const KNOWN_POI_NAMES = {
+  'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3': 'Cổng Văn Miếu (Văn Miếu Môn)',
+  '3ede2134-c305-4270-9413-39c9743f9cb8': 'Khuê Văn Các',
+  '70dabf88-5450-48e7-9603-b753f5350047': 'Giếng Thiên Quang & Vườn Bia Tiến Sĩ',
+  'cc63b968-096f-4b06-b4f8-19f8f829ef42': 'Cổng Đại Thành & Sân Đại Bái',
+  '0c23b2e0-73d1-4f37-90a0-f95201abf43b': 'Điện Đại Thành',
+  'cd3c98eb-79fe-4980-a870-6f690f9e40cd': 'Nhà Thái Học'
+};
+
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+  if (Math.abs(lat1 - lat2) < 1e-9 && Math.abs(lon1 - lon2) < 1e-9) {
+    return 0;
+  }
+  const R = 6371000; // Bán kính Trái Đất (mét)
+  const phi1 = (lat1 * Math.PI) / 180;
+  const phi2 = (lat2 * Math.PI) / 180;
+  const deltaPhi = ((lat2 - lat1) * Math.PI) / 180;
+  const deltaLambda = ((lon2 - lon1) * Math.PI) / 180;
+
+  const a =
+    Math.sin(deltaPhi / 2) * Math.sin(deltaPhi / 2) +
+    Math.cos(phi1) * Math.cos(phi2) * Math.sin(deltaLambda / 2) * Math.sin(deltaLambda / 2);
+  const clampedA = Math.min(Math.max(a, 0), 1);
+  const c = 2 * Math.atan2(Math.sqrt(clampedA), Math.sqrt(1 - clampedA));
+
+  return R * c;
+}
+
+async function loadPoisForDistanceCalculator() {
+  const sel1 = document.getElementById('selectPoi1');
+  const sel2 = document.getElementById('selectPoi2');
+  if (!sel1 || !sel2) return;
+
+  sel1.innerHTML = '<option value="">-- Đang nạp danh sách POI... --</option>';
+  sel2.innerHTML = '<option value="">-- Đang nạp danh sách POI... --</option>';
+
+  try {
+    const res = await adminFetch('/admin/pois?page=1&page_size=100');
+    if (!res.ok) throw new Error('Không thể tải danh sách POI');
+    const result = await res.json();
+    let pois = result.items || [];
+
+    // Nếu rỗng, fallback về danh sách tĩnh HERITAGE_POIS
+    if (pois.length === 0 && window.HERITAGE_POIS) {
+      pois = window.HERITAGE_POIS;
+    }
+
+    // Sắp xếp theo priority tăng dần (10 -> 60)
+    pois.sort((a, b) => (a.priority || 0) - (b.priority || 0));
+
+    // Lấy tiêu đề tiếng Việt nếu chưa có
+    await Promise.all(
+      pois.map(async (p, idx) => {
+        if (!p.title) {
+          if (KNOWN_POI_NAMES[p.id]) {
+            p.title = KNOWN_POI_NAMES[p.id];
+          } else {
+            try {
+              const transRes = await adminFetch(`/admin/pois/${p.id}/translations`);
+              if (transRes.ok) {
+                const transList = await transRes.json();
+                const vi = transList.find(t => (t.languageCode || t.language_code) === 'vi');
+                p.title = vi?.title || transList[0]?.title || `Điểm dừng #${idx + 1}`;
+              } else {
+                p.title = `Điểm dừng #${idx + 1}`;
+              }
+            } catch {
+              p.title = `Điểm dừng #${idx + 1}`;
+            }
+          }
+        }
+      })
+    );
+
+    calcPoisList = pois;
+
+    if (pois.length === 0) {
+      sel1.innerHTML = '<option value="">Chưa có dữ liệu POI</option>';
+      sel2.innerHTML = '<option value="">Chưa có dữ liệu POI</option>';
+      return;
+    }
+
+    const optionsHtml = pois.map((p, idx) => {
+      const stopNum = p.priority ? Math.round(p.priority / 10) : (idx + 1);
+      return `<option value="${p.id}">Trạm #${stopNum}: ${p.title} (${p.lat.toFixed(5)}, ${p.lng.toFixed(5)})</option>`;
+    }).join('');
+
+    sel1.innerHTML = optionsHtml;
+    sel2.innerHTML = optionsHtml;
+
+    // Mặc định chọn POI 1 là phần tử đầu tiên, POI 2 là phần tử thứ 2 (nếu có)
+    if (pois.length > 0) sel1.value = pois[0].id;
+    if (pois.length > 1) sel2.value = pois[1].id;
+    else if (pois.length === 1) sel2.value = pois[0].id;
+
+    updatePoiMetaInfo();
+    executePoiDistanceCalculation();
+  } catch (err) {
+    console.error('Lỗi nạp POI cho máy tính khoảng cách:', err);
+    sel1.innerHTML = '<option value="">Lỗi tải POI</option>';
+    sel2.innerHTML = '<option value="">Lỗi tải POI</option>';
+  }
+}
+
+function updatePoiMetaInfo() {
+  const sel1 = document.getElementById('selectPoi1');
+  const sel2 = document.getElementById('selectPoi2');
+  const meta1 = document.getElementById('metaPoi1');
+  const meta2 = document.getElementById('metaPoi2');
+
+  const p1 = calcPoisList.find(p => p.id === sel1?.value);
+  const p2 = calcPoisList.find(p => p.id === sel2?.value);
+
+  if (meta1) {
+    meta1.innerHTML = p1
+      ? `<span>📍 Tọa độ: <strong>[${p1.lat.toFixed(5)}, ${p1.lng.toFixed(5)}]</strong> • Bán kính kích hoạt: ${p1.triggerRadiusM || p1.trigger_radius_m || 30}m</span>`
+      : '<span class="text-muted">Chưa chọn điểm</span>';
+  }
+  if (meta2) {
+    meta2.innerHTML = p2
+      ? `<span>📍 Tọa độ: <strong>[${p2.lat.toFixed(5)}, ${p2.lng.toFixed(5)}]</strong> • Bán kính kích hoạt: ${p2.triggerRadiusM || p2.trigger_radius_m || 30}m</span>`
+      : '<span class="text-muted">Chưa chọn điểm</span>';
+  }
+}
+
+function executePoiDistanceCalculation() {
+  const sel1 = document.getElementById('selectPoi1');
+  const sel2 = document.getElementById('selectPoi2');
+  const resCard = document.getElementById('distanceCalcResult');
+  if (!sel1 || !sel2 || !resCard) return;
+
+  const id1 = sel1.value;
+  const id2 = sel2.value;
+
+  if (!id1 || !id2) {
+    resCard.style.display = 'none';
+    return;
+  }
+
+  const p1 = calcPoisList.find(p => p.id === id1);
+  const p2 = calcPoisList.find(p => p.id === id2);
+
+  if (!p1 || !p2) {
+    resCard.style.display = 'none';
+    return;
+  }
+
+  updatePoiMetaInfo();
+
+  // Tính khoảng cách Haversine
+  const distM = calculateHaversineDistance(p1.lat, p1.lng, p2.lat, p2.lng);
+  const distM_rounded = Math.round(distM);
+  const distKm = (distM / 1000).toFixed(3);
+
+  // Ước tính thời gian đi bộ (vận tốc ~1.2 m/s = 72 m/phút)
+  let walkingText = '';
+  if (distM_rounded === 0) {
+    walkingText = '0 phút (Cùng 1 điểm)';
+  } else {
+    const mins = Math.round(distM / 72);
+    if (mins < 1) {
+      const secs = Math.max(1, Math.round(distM / 1.2));
+      walkingText = `~${secs} giây`;
+    } else {
+      walkingText = `~${mins} phút`;
+    }
+  }
+
+  const dLat = Math.abs(p2.lat - p1.lat).toFixed(5);
+  const dLng = Math.abs(p2.lng - p1.lng).toFixed(5);
+
+  document.getElementById('calcRouteName').textContent = `${p1.title} ➔ ${p2.title}`;
+  document.getElementById('resDistanceM').textContent = distM_rounded.toLocaleString();
+  document.getElementById('resDistanceKm').textContent = `(${distKm} km)`;
+  document.getElementById('resWalkingTime').textContent = walkingText;
+  document.getElementById('resDeltaCoords').textContent = `ΔLat: ${dLat}° | ΔLng: ${dLng}°`;
+
+  resCard.style.display = 'block';
+}
+
+function initPoiDistanceCalculator() {
+  const btnCalc = document.getElementById('btnCalculateDistance');
+  const btnSwap = document.getElementById('btnSwapPois');
+  const btnReload = document.getElementById('btnReloadCalcPois');
+  const sel1 = document.getElementById('selectPoi1');
+  const sel2 = document.getElementById('selectPoi2');
+
+  sel1?.addEventListener('change', () => {
+    updatePoiMetaInfo();
+    executePoiDistanceCalculation();
+  });
+
+  sel2?.addEventListener('change', () => {
+    updatePoiMetaInfo();
+    executePoiDistanceCalculation();
+  });
+
+  btnCalc?.addEventListener('click', () => {
+    executePoiDistanceCalculation();
+  });
+
+  btnSwap?.addEventListener('click', () => {
+    if (!sel1 || !sel2) return;
+    const temp = sel1.value;
+    sel1.value = sel2.value;
+    sel2.value = temp;
+    updatePoiMetaInfo();
+    executePoiDistanceCalculation();
+  });
+
+  btnReload?.addEventListener('click', () => {
+    loadPoisForDistanceCalculator();
+  });
+
+  // Nạp dữ liệu lần đầu
+  loadPoisForDistanceCalculator();
 }
 
 // ========================================================
@@ -597,6 +822,8 @@ async function loadPoisForCurrentArea() {
     // Sắp xếp thứ tự ưu tiên tăng dần (10 -> 60 tương ứng Trạm #1 -> #6)
     pois.sort((a, b) => (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
     allCurrentPois = pois;
+    // Tự động đồng bộ sang công cụ tính khoảng cách ở Dashboard
+    loadPoisForDistanceCalculator();
 
     if (pois.length === 0) {
       tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted">Chưa có điểm POI nào trong khu này. Bấm "Thêm Điểm POI Mới" để tạo!</td></tr>`;

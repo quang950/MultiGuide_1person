@@ -2,27 +2,24 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
-## Trạng thái hiện tại (cập nhật: 28/10/2026 — Hoàn thành Tính năng Hiển thị Tọa độ Du khách Real-time dưới nút Recenter)
+## Trạng thái hiện tại (cập nhật: 29/10/2026 — Hoàn thành Tính năng Đo khoảng cách giữa 2 POI trên Admin Dashboard)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
 - **Vừa xong:** 
-  1. **Đồng bộ Đa ngôn ngữ Hộp thoại Modal & Tối ưu Giao diện (Client - FE-6.3)**:
-     - Xây dựng module dùng chung ModalService trong client/js/modal.js và CSS trong client/css/components.css theo tone màu vàng đồng di sản #C28E58, bo góc mềm 22px, icon tròn, hiệu ứng mờ kính Backdrop Blur.
-     - Đồng bộ đa ngôn ngữ 100% cho hộp thoại Thoát vé (modalService.confirm): Tự động hiển thị đúng tiếng Anh, tiếng Nhật hoặc tiếng Việt tương ứng với ngôn ngữ du khách đang chọn thông qua client/js/i18n.js.
-     - Xử lý nút cờ Tiếng Trung 🇨🇳 中文: Hiển thị Modal 'Tính Năng Đang Hoàn Thiện / Sắp Ra Mắt' lịch sự, không đổi ngôn ngữ và giải quyết triệt để lỗi phát lệch âm thanh tiếng Anh.
-  2. **Tối ưu UI Bản đồ & Cụm điều khiển Tọa độ (Client - FE-3.4)**:
-     - Bổ sung cụm điều khiển GPS .map-gps-control-group và badge #userCoordsDisplay hiển thị tọa độ trực tiếp dưới nút tròn Recenter (sát lề phải 10px và sát trên line footer 6px).
-     - Đã xóa bỏ khung chữ nhật nét đứt thừa quanh hồ Giếng Thiên Quang trong client/js/map.js.
+  1. **Tính năng Đo Khoảng Cách Giữa 2 Điểm POI (Admin Dashboard - FE Tool)**:
+     - Thêm card tiện ích 'Công Cụ Đo Khoảng Cách Giữa 2 Điểm POI' tại Tab Thống Kê Hành Vi (Analytics) trong client/admin.html và client/css/admin.css.
+     - 2 ô dropdown chọn POI thứ 1 và POI thứ 2 (tự động nạp động danh sách POI cùng tọa độ và tên hiển thị).
+     - Hỗ trợ nút Hoán đổi chiều (Swap) giữa điểm xuất phát và đích đến.
+     - Tính toán trực tiếp trên Client theo công thức Haversine (R = 6,371,000 m): hiển thị khoảng cách theo mét, km, ước tính thời gian đi bộ (~1.2 m/s) và độ lệch GPS thực địa.
   2. **Tầng Backend & Kiểm thử**:
      - dotnet build MultiGuide.sln -warnaserror: 0 Warning, 0 Error.
-     - dotnet test MultiGuide.sln: 331/331 tests GREEN (100%).
      - dotnet format MultiGuide.sln --verify-no-changes: Đạt chuẩn 100%.
 - **Kết quả kiểm thử:**
   - dotnet build MultiGuide.sln -warnaserror: **0 Warning, 0 Error**.
-  - dotnet test MultiGuide.sln: **330/330 tests GREEN (100%)**.
+  - dotnet test MultiGuide.sln: **331/331 tests GREEN (100%)**.
   - dotnet format MultiGuide.sln --verify-no-changes: **Đạt chuẩn 100%**.
 - **Bước kế tiếp:** Người dùng nghiệm thu trực tiếp.
 - **Đang vướng:** không
-- **Cách kiểm tra nhanh:** Mở http://127.0.0.1:5500/client/index.html hoặc http://127.0.0.1:5500/client/admin.html
+- **Cách kiểm tra nhanh:** Mở http://127.0.0.1:5500/client/admin.html
 
 ## Giá trị cần ghi khi có (không ghi secret)
 - URL Render: https://multiguide-1person.onrender.com (Live trên Render, HTTPS hoạt động)
@@ -33,6 +30,7 @@
 - Model Gemini AI: `gemini-2.5-flash` (Google AI Studio Free Tier)
 
 ## Lịch sử
+- 29/10 — Khắc phục lỗi lưu POI Admin (404 Not Found): Đồng bộ hóa naming conventions giữa Frontend (client/js/admin.js) và Backend DTOs (MultiGuide.Business/DTOs/Admin/PoiDtos.cs & TranslationDtos.cs). Hỗ trợ kép cả camelCase và snake_case (areaId/area_id, triggerRadiusM/trigger_radius_m, imageUrl/image_url, languageCode/language_code). Cải thiện hiển thị thông báo lỗi chi tiết từ máy chủ. Toàn bộ 331 tests xanh lá.
 - 15/10 — Hoàn thành Task T-4.2: Tích hợp Testcontainers PostgreSQL 16 (`PostgresIntegrationTests`), kiểm thử luồng mua vé, xác minh trực tiếp trong database, kiểm thử idempotency và truy vấn POI lân cận với token hash SHA-256 trên container PostgreSQL thật. Nâng tổng số bài test lên 314/314 tests xanh lá (100%). Hoàn thành 100% toàn bộ kế hoạch 4 Ngày của dự án!
 - 15/10 — Hoàn thành Task T-4.4 (US-19): Triển khai `IAiService` trong Business, `GeminiAiService` trong Data gọi Google AI Studio REST API, endpoint `POST /admin/pois/{id}/ai-summary` trong `AdminPoisController` (phân quyền admin); bổ sung 14 bài test nâng tổng test suite lên 311/311 tests xanh lá (100%).
 - 15/10 — Hoàn thành Cụm 3 (T-4.8, T-4.9, T-4.10): Biên soạn tài liệu `README.md` chuyên sâu, kịch bản thuyết trình demo 5 phút `docs/DEMO_SCRIPT.md`, bộ 5 sơ đồ UML/Mermaid báo cáo đồ án `docs/REPORT_DIAGRAMS.md`.
