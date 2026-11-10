@@ -382,9 +382,14 @@ export class AudioEngine {
     this.startTime = null;
     this.fallbackAudioUrl = null;
     this.isSeeking = false;
+    this.isInitialized = false;
+    this.isUserPaused = false;
+    this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
   }
 
   init() {
+    if (this.isInitialized) return;
+    this.isInitialized = true;
     // 1. Gắn thẻ Audio HTML5 từ DOM
     this.audioElement = document.getElementById('heritageAudioElement') || new Audio();
     this.audioElement.preload = 'metadata';
@@ -403,6 +408,7 @@ export class AudioEngine {
     this.setupMediaSession();
 
     // 5. Cập nhật nội dung ban đầu từ POI mặc định (Khuê Văn Các)
+    this.setupSpeedControls();
     this.syncPoiContent(this.currentPoiId);
 
     console.log('[MultiGuide Audio] Audio Engine & Media Session API đã sẵn sàng.');
@@ -417,6 +423,9 @@ export class AudioEngine {
       store.set({ isPlaying: true });
       this.updatePlayPauseButtonUI(true);
       this.updateMediaSessionState('playing');
+      if (this.currentSpeed) {
+        this.audioElement.playbackRate = this.currentSpeed / 100;
+      }
     });
 
     // Khi âm thanh tạm dừng
@@ -429,6 +438,9 @@ export class AudioEngine {
     // Khi siêu dữ liệu tải xong (lấy được thời lượng duration)
     this.audioElement.addEventListener('loadedmetadata', () => {
       this.updateDurationUI(this.audioElement.duration);
+      if (this.currentSpeed) {
+        this.audioElement.playbackRate = this.currentSpeed / 100;
+      }
     });
 
     // Cập nhật thanh Scrubber tiến trình theo thời gian thực (FE-5.2)
@@ -437,6 +449,15 @@ export class AudioEngine {
       const current = this.audioElement.currentTime || 0;
       const total = this.audioElement.duration || 1;
       this.updateCurrentTimeUI(current, total);
+
+      // Dinh ky ghi nhan Play-Log moi 15 giay nghe lien tuc
+      if (this.startTime && this.currentPoiId) {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        if (elapsed >= 15) {
+          this.startTime = Date.now();
+          apiService.sendPlayLog(this.currentPoiId, 15, false);
+        }
+      }
     });
 
     // Khi bài nghe kết thúc (FE-5.4: Tự động ghi nhận Play-Log)
@@ -445,14 +466,45 @@ export class AudioEngine {
       this.finishPlayback();
     });
 
-    // Bắt sự kiện người dùng nhấp trên thanh Scrubber để tua nhạc
+    // Bắt sự kiện người dùng nhấp và kéo thả trên thanh Scrubber để tua nhạc (Hỗ trợ cảm ứng & chuột)
     const scrubberTrack = document.getElementById('playerScrubberTrack');
     if (scrubberTrack) {
-      scrubberTrack.addEventListener('click', (e) => {
+      let isDragging = false;
+      const getFraction = (clientX) => {
         const rect = scrubberTrack.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const fraction = Math.max(0, Math.min(1, clickX / rect.width));
+        if (rect.width <= 0) return 0;
+        return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      };
+
+      const handlePointerMove = (e) => {
+        if (!isDragging) return;
+        this.isSeeking = true;
+        const fraction = getFraction(e.clientX);
+        const duration = this.audioElement.duration || 1;
+        this.updateCurrentTimeUI(fraction * duration, duration);
+      };
+
+      const handlePointerUp = (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        window.removeEventListener('pointermove', handlePointerMove);
+        window.removeEventListener('pointerup', handlePointerUp);
+        window.removeEventListener('pointercancel', handlePointerUp);
+        const fraction = getFraction(e.clientX);
         this.seek(fraction);
+        setTimeout(() => { this.isSeeking = false; }, 150);
+      };
+
+      scrubberTrack.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        isDragging = true;
+        this.isSeeking = true;
+        const fraction = getFraction(e.clientX);
+        const duration = this.audioElement.duration || 1;
+        this.updateCurrentTimeUI(fraction * duration, duration);
+        window.addEventListener('pointermove', handlePointerMove);
+        window.addEventListener('pointerup', handlePointerUp);
+        window.addEventListener('pointercancel', handlePointerUp);
       });
     }
 
@@ -460,15 +512,42 @@ export class AudioEngine {
     const btnToggle = document.getElementById('btnPlayerToggle');
     if (btnToggle) {
       btnToggle.addEventListener('click', (e) => {
-        e.stopPropagation(); // Không trigger mở rộng Bottom Sheet
+        e.stopPropagation();
+        e.preventDefault();
+        e.stopImmediatePropagation();
         this.togglePlay();
       });
     }
 
-    // Lắng nghe thay đổi ngôn ngữ từ store
+    // Bắt chạm badge ngôn ngữ trên player để xoay vòng nhanh VI -> EN -> JA -> VI
+    const langBadge = document.getElementById('playerLangBadge');
+    if (langBadge) {
+      langBadge.style.cursor = 'pointer';
+      langBadge.title = 'Chạm để đổi ngôn ngữ thuyết minh (VI / EN / JA)';
+      langBadge.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        const current = store.get().selectedLang || 'vi';
+        const cycle = ['vi', 'en', 'ja'];
+        const nextLang = cycle[(cycle.indexOf(current) + 1) % cycle.length];
+        store.setLanguage(nextLang);
+      });
+    }
+
+    // Lắng nghe thay đổi ngôn ngữ từ store (chỉ chạy khi thực sự đổi ngôn ngữ)
+    let currentLang = store.get().selectedLang;
     store.subscribe((state) => {
-      if (state.selectedLang) {
-        this.syncPoiContent(this.currentPoiId);
+      if (state.selectedLang && state.selectedLang !== currentLang) {
+        currentLang = state.selectedLang;
+        this.setupSpeedControls();
+    this.syncPoiContent(this.currentPoiId);
+        const wasPlaying = this.audioElement && !this.audioElement.paused;
+        this.loadAudioForPoi(this.currentPoiId).then(() => {
+          if (wasPlaying && this.audioElement && !this.isUserPaused) {
+            this.audioElement.play().catch(() => {});
+          }
+        });
       }
     });
   }
@@ -480,20 +559,27 @@ export class AudioEngine {
     if (!this.audioElement) return;
 
     if (this.audioElement.paused) {
+      this.isUserPaused = false;
+    this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
       try {
-        if (!this.audioElement.src || this.audioElement.src === window.location.href) {
+        if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.startsWith('blob:')) {
           await this.loadAudioForPoi(this.currentPoiId);
         }
         await this.audioElement.play();
+        this.updatePlayPauseButtonUI(true);
+        store.set({ isPlaying: true });
       } catch (err) {
-        console.warn('[MultiGuide Audio] Không thể tự động phát, đang thử fallback:', err);
-        if (this.fallbackAudioUrl) {
-          this.audioElement.src = this.fallbackAudioUrl;
-          await this.audioElement.play().catch(() => {});
-        }
+        if (err && err.name === 'AbortError') return;
+        console.warn('[MultiGuide Audio] Lỗi phát âm thanh:', err);
+        this.updatePlayPauseButtonUI(false);
+        store.set({ isPlaying: false });
       }
     } else {
+      this.isUserPaused = true;
+      this.recordPlayProgress(false);
       this.audioElement.pause();
+      this.updatePlayPauseButtonUI(false);
+      store.set({ isPlaying: false });
     }
   }
 
@@ -504,6 +590,9 @@ export class AudioEngine {
    * Bắt đầu phát âm thanh cho một POI cụ thể (Single Audio Stream + Fade-out mượt mà)
    */
   async playPoi(poiId) {
+    this.recordPlayProgress(false);
+    this.isUserPaused = false;
+    this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
     // 1. Fade-out mượt mà âm thanh đang phát trước khi chuyển sang POI mới (Single Audio Instance)
     if (this.audioElement && !this.audioElement.paused && this.audioElement.currentTime > 0) {
       try {
@@ -554,30 +643,127 @@ export class AudioEngine {
 
   async loadAudioForPoi(poiId) {
     const lang = store.get().selectedLang || 'vi';
-    const targetGuid = POI_GUID_MAP[poiId] || poiId;
+    const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
+    const targetGuid = targetPoi?.id || targetPoi?.guid || POI_GUID_MAP[poiId] || poiId;
+    const langSuffix = (lang === 'vi' || !lang) ? '' : `_${lang}`;
 
     try {
-      console.log(`[MultiGuide Audio] Gọi API Backend lấy Signed URL cho POI ${poiId} (${targetGuid}, ${lang})...`);
-      const detail = await apiService.getPoiDetail(targetGuid, lang);
+      console.log(`[MultiGuide Audio] Tải thông tin POI ${poiId} (${targetGuid}, ${lang})...`);
+      const detail = await apiService.getPoiDetail(targetGuid, lang).catch(() => null);
 
-      if (detail && detail.audioUrl) {
-        console.log(`[MultiGuide Audio] Đã nhận Signed URL Supabase:`, detail.audioUrl);
-        this.audioElement.src = detail.audioUrl;
-        return;
+      if (detail) {
+        if (detail.title) {
+          const titleElem = document.getElementById('sheetPoiTitle');
+          const storyHeading = document.getElementById('storyHeading');
+          if (titleElem) titleElem.textContent = detail.title;
+          if (storyHeading) storyHeading.textContent = detail.title;
+        }
+        if (detail.description) {
+          const storyParagraph = document.getElementById('storyParagraph');
+          if (storyParagraph) storyParagraph.textContent = detail.description;
+
+          const storyQuote = document.querySelector('.sheet-expanded-content .story-quote') || document.getElementById('storyQuote');
+          if (storyQuote) {
+            const quoteMatch = detail.description.match(/["“]([^"”]+)["”]/);
+            if (quoteMatch && quoteMatch[1]) {
+              storyQuote.textContent = `"${quoteMatch[1].trim()}"`;
+            } else if (detail.summary) {
+              storyQuote.textContent = detail.summary;
+            } else {
+              const firstSent = detail.description.split(/[.\n]/)[0].trim();
+              storyQuote.textContent = firstSent || detail.title;
+            }
+            storyQuote.style.display = 'block';
+          }
+        }
+        if (detail.audioUrl) {
+          console.log(`[MultiGuide Audio] Đã nhận Signed URL Supabase:`, detail.audioUrl);
+          if (this.audioElement.src !== detail.audioUrl) {
+            this.audioElement.src = detail.audioUrl;
+            this.audioElement.load();
+          }
+          return;
+        }
       }
     } catch (e) {
-      console.warn(`[MultiGuide Audio] Không thể tải audio thật (${e.message}). Áp dụng âm thanh chuông di sản 432Hz.`);
+      console.warn(`[MultiGuide Audio] Lỗi tải từ API (${e.message}).`);
     }
 
-    // Fallback mượt mà bằng âm thanh chuông hòa âm thiền định
-    if (this.fallbackAudioUrl) {
-      this.audioElement.src = this.fallbackAudioUrl;
+    if (targetPoi && (targetPoi.audioUrl || targetPoi.audio_url)) {
+      const src = targetPoi.audioUrl || targetPoi.audio_url;
+      this.audioElement.src = src;
+      this.audioElement.load();
+      return;
+    }
+
+    // Nạp trực tiếp file MP3 thật theo ngôn ngữ nếu có
+    const localAudioSrc = `assets/audio/pois/${targetGuid}${langSuffix}.mp3`;
+    console.log(`[MultiGuide Audio] Gán nguồn âm thanh local:`, localAudioSrc);
+    if (this.audioElement.src !== localAudioSrc && !this.audioElement.src.endsWith(localAudioSrc)) {
+      this.audioElement.src = localAudioSrc;
+      this.audioElement.load();
     }
   }
 
   /**
    * Tua thời gian âm thanh theo tỉ lệ phần trăm [0, 1]
    */
+  setupSpeedControls() {
+    const btnSpeed = document.getElementById('btnPlayerSpeed');
+    const popover = document.getElementById('speedMenuPopover');
+    if (!btnSpeed || !popover) return;
+
+    const savedSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
+    this.setPlaybackSpeed(savedSpeed);
+
+    btnSpeed.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      popover.style.display = popover.style.display === 'none' ? 'flex' : 'none';
+      btnSpeed.classList.toggle('is-active', popover.style.display === 'flex');
+    });
+
+    document.querySelectorAll('.speed-opt-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const speed = Number(btn.dataset.speed);
+        if (speed) {
+          this.setPlaybackSpeed(speed);
+        }
+        popover.style.display = 'none';
+        btnSpeed.classList.remove('is-active');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!popover.contains(e.target) && e.target !== btnSpeed) {
+        popover.style.display = 'none';
+        btnSpeed.classList.remove('is-active');
+      }
+    });
+  }
+
+  setPlaybackSpeed(speed) {
+    if (!speed || isNaN(speed)) speed = 100;
+    this.currentSpeed = speed;
+    localStorage.setItem('mg_playback_speed', speed.toString());
+
+    if (this.audioElement) {
+      this.audioElement.playbackRate = speed / 100;
+    }
+
+    const btnSpeed = document.getElementById('btnPlayerSpeed');
+    if (btnSpeed) {
+      btnSpeed.textContent = `${speed}%`;
+    }
+
+    document.querySelectorAll('.speed-opt-btn').forEach(b => {
+      b.classList.toggle('is-active', Number(b.dataset.speed) === speed);
+    });
+    console.log(`[MultiGuide Audio] Đã áp dụng tốc độ đọc: ${speed}% (${speed / 100}x) cho tất cả POI.`);
+  }
+
   seek(fraction) {
     if (!this.audioElement || !this.audioElement.duration) return;
     const targetTime = fraction * this.audioElement.duration;
@@ -591,10 +777,50 @@ export class AudioEngine {
   syncPoiContent(poiId) {
     const lang = store.get().selectedLang || 'vi';
     const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
-    const poiData = POI_STORIES[poiId] || (targetPoi ? POI_STORIES[targetPoi.order] : null) || POI_STORIES[2];
-    const story = poiData[lang] || poiData['en'] || poiData['vi'];
+    let poiData = POI_STORIES[poiId] || (targetPoi && targetPoi.order && POI_STORIES[targetPoi.order] ? POI_STORIES[targetPoi.order] : null);
 
-    // 1. Cập nhật Mini Player Header
+    let story = null;
+    if (poiData) {
+      story = poiData[lang] || poiData['en'] || poiData['vi'];
+      if (story && story.subtitle) {
+        const totalCount = (window.HERITAGE_POIS && window.HERITAGE_POIS.length > 0) ? window.HERITAGE_POIS.length : 7;
+        const totalStr = String(totalCount).padStart(2, '0');
+        story = {
+          ...story,
+          subtitle: story.subtitle.replace(/\/06/g, '/' + totalStr).replace(/\/6/g, '/' + totalStr)
+        };
+      }
+    } else if (targetPoi) {
+      const orderNum = targetPoi.order || (targetPoi.priority ? Math.round(targetPoi.priority / 10) : 7);
+      const totalCount = window.HERITAGE_POIS?.length || 6;
+      const orderStr = String(orderNum).padStart(2, '0');
+      const totalStr = String(totalCount).padStart(2, '0');
+      const poiTitle = (lang === 'en' && targetPoi.titleEn) ? targetPoi.titleEn : (targetPoi.title || 'Điểm di tích');
+      const poiSubtitle = `Điểm ${orderStr}/${totalStr} · Thuyết minh di tích`;
+      const poiDesc = targetPoi.description || targetPoi.summary || 'Chào mừng bạn đến với điểm dừng thuyết minh di sản.';
+      let quoteText = '';
+      if (poiDesc) {
+        const qm = poiDesc.match(/["“]([^"”]+)["”]/);
+        if (qm && qm[1]) quoteText = `"${qm[1].trim()}"`;
+        else if (targetPoi.summary) quoteText = targetPoi.summary;
+        else quoteText = poiDesc.split(/[.\n]/)[0].trim();
+      }
+      story = {
+        title: poiTitle,
+        subtitle: poiSubtitle,
+        badge: lang === 'en' ? 'SACRED HERITAGE' : (lang === 'ja' ? '千年の遺産' : 'DI SẢN NGHÌN NĂM'),
+        heading: poiTitle,
+        quote: quoteText || poiTitle,
+        paragraph: poiDesc,
+        subtext: '',
+        duration: '1:30'
+      };
+    } else {
+      story = POI_STORIES[2]?.vi;
+    }
+    if (!story) return;
+
+    // 1. Cập nhật Mini Player Header theo ngôn ngữ đang chọn
     const titleElem = document.getElementById('sheetPoiTitle');
     const subtitleElem = document.getElementById('sheetPoiSubtitle');
     const langBadge = document.getElementById('playerLangBadge');
@@ -611,10 +837,23 @@ export class AudioEngine {
     const storySubtext = document.querySelector('.sheet-expanded-content .story-subtext');
 
     if (storyBadge) storyBadge.textContent = story.badge;
-    if (storyHeading) storyHeading.textContent = story.heading;
-    if (storyParagraph) storyParagraph.textContent = story.paragraph;
-    if (storyQuote) storyQuote.textContent = story.quote;
-    if (storySubtext) storySubtext.textContent = story.subtext;
+    if (storyHeading) storyHeading.textContent = story.heading || story.title;
+
+    // Khung màu vàng lên trên đầu tiên, luôn hiển thị
+    if (storyQuote) {
+      storyQuote.style.display = 'block';
+      storyQuote.textContent = story.quote;
+    }
+
+    // Chữ màu trắng là nội dung thuyết minh đầy đủ, cùng 1 font và cỡ chữ
+    if (storyParagraph) {
+      const fullText = story.paragraph + (story.subtext ? ('\n\n' + story.subtext) : '');
+      storyParagraph.textContent = fullText;
+    }
+    if (storySubtext) {
+      storySubtext.style.display = 'none';
+      storySubtext.textContent = '';
+    }
 
     // 3. Cập nhật Media Session Metadata
     this.updateMediaSessionMetadata(story.title, story.subtitle);
@@ -645,14 +884,17 @@ export class AudioEngine {
   updateCurrentTimeUI(currentTime, duration) {
     const currentElem = document.getElementById('timeCurrent');
     const fillElem = document.getElementById('playerScrubberFill');
+    const thumbElem = document.getElementById('playerScrubberThumb');
 
     if (currentElem) {
       currentElem.textContent = formatTime(currentTime);
     }
 
-    if (fillElem && duration > 0) {
-      const percentage = Math.min(100, (currentTime / duration) * 100);
-      fillElem.style.width = `${percentage.toFixed(1)}%`;
+    if (duration > 0) {
+      const percentage = Math.min(100, Math.max(0, (currentTime / duration) * 100));
+      const pctStr = `${percentage.toFixed(1)}%`;
+      if (fillElem) fillElem.style.width = pctStr;
+      if (thumbElem) thumbElem.style.left = pctStr;
     }
   }
 
@@ -731,10 +973,19 @@ export class AudioEngine {
   /**
    * Kết thúc bài nghe & tự động gửi Play-Log về Backend thật (FE-5.4)
    */
+  recordPlayProgress(completed = false) {
+    if (!this.startTime || !this.currentPoiId) return;
+    const durationSeconds = Math.round((Date.now() - this.startTime) / 1000);
+    this.startTime = null;
+    if (durationSeconds >= 2) {
+      console.log(`[MultiGuide Audio] Ghi nhận lượt nghe POI ${this.currentPoiId}: ${durationSeconds}s (completed: ${completed})`);
+      apiService.sendPlayLog(this.currentPoiId, durationSeconds, completed);
+    }
+  }
+
   finishPlayback() {
-    const durationSeconds = this.startTime 
-      ? Math.max(1, Math.round((Date.now() - this.startTime) / 1000))
-      : 1;
+    this.recordPlayProgress(true);
+    const durationSeconds = 1;
 
     console.log(`[MultiGuide Audio] Gửi Play-Log cho POI ${this.currentPoiId} (Thời lượng: ${durationSeconds}s)...`);
     apiService.sendPlayLog(this.currentPoiId, durationSeconds);

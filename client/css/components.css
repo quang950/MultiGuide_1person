@@ -546,7 +546,7 @@
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow: 0 12px 36px rgba(24, 24, 22, 0.14), 0 2px 8px rgba(24, 24, 22, 0.05);
   transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, height 0.38s cubic-bezier(0.16, 1, 0.3, 1);
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   transform: translateY(140%);
@@ -579,22 +579,27 @@
 /* Vùng tay nắm kéo trượt */
 .sheet-drag-zone {
   width: 100%;
-  height: 16px;
+  height: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: grab;
-  padding-top: 6px;
+  cursor: pointer;
+  padding: 6px 0;
   user-select: none;
   -webkit-user-select: none;
 }
 
 .sheet-drag-handle {
-  width: 38px;
-  height: 4.5px;
+  width: 42px;
+  height: 5px;
   border-radius: 2.5px;
-  background-color: rgba(24, 24, 22, 0.2);
+  background-color: rgba(24, 24, 22, 0.25);
   transition: background-color var(--transition-fast);
+  pointer-events: none;
+}
+
+.sheet-drag-zone:hover .sheet-drag-handle {
+  background-color: rgba(194, 142, 88, 0.6);
 }
 
 .sheet-drag-zone:active .sheet-drag-handle {
@@ -725,6 +730,12 @@
   background-color: #2A2A26;
 }
 
+.btn-player-toggle svg,
+.btn-player-toggle polygon,
+.btn-player-toggle rect {
+  pointer-events: none;
+}
+
 /* Thanh Scrubber tiến trình âm thanh */
 .player-scrubber-wrapper {
   display: flex;
@@ -743,20 +754,53 @@
 
 .player-scrubber-track {
   flex: 1;
-  height: 3.5px;
+  height: 4.5px;
   background-color: rgba(194, 142, 88, 0.22);
-  border-radius: 2px;
+  border-radius: 3px;
   position: relative;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
+  touch-action: none;
 }
 
 .player-scrubber-fill {
   height: 100%;
   background-color: #C28E58;
-  border-radius: 2px;
+  border-radius: 3px;
   width: 0%;
-  transition: width 0.12s linear;
+  pointer-events: none;
+}
+
+/* Nút chấm tròn kéo thả tiến trình nghe nhạc (Scrubber Thumb) */
+.player-scrubber-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 13px;
+  height: 13px;
+  background-color: #C28E58;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -50%);
+  cursor: grab;
+  transition: transform 0.1s ease;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.player-scrubber-thumb:hover,
+.player-scrubber-track:hover .player-scrubber-thumb {
+  transform: translate(-50%, -50%) scale(1.2);
+  box-shadow: 0 2px 6px rgba(194, 142, 88, 0.4);
+}
+
+.player-scrubber-thumb:active,
+.player-scrubber-thumb.is-dragging {
+  transform: translate(-50%, -50%) scale(1.35);
+  cursor: grabbing;
+  background-color: #A36F39;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
 }
 
 /* ========================================================
@@ -798,37 +842,35 @@
 
 .story-heading {
   font-family: var(--font-serif);
-  font-size: 1.35rem;
+  font-size: 1.38rem;
   font-weight: 600;
   color: var(--text-ink);
   line-height: 1.25;
 }
 
-.story-paragraph {
-  font-family: var(--font-sans);
-  font-size: 0.88rem;
-  color: #383632;
-  line-height: 1.6;
-}
-
 .story-quote {
   font-family: var(--font-serif);
   font-style: italic;
-  font-size: 0.94rem;
+  font-size: 1.02rem;
   color: #6B4A25;
   background-color: #F8F5EE;
-  padding: 12px 16px;
-  border-left: 3px solid #C28E58;
+  padding: 14px 18px;
+  border-left: 3.5px solid #C28E58;
   border-radius: 0 8px 8px 0;
-  line-height: 1.5;
-  margin: 4px 0;
+  line-height: 1.55;
+  margin: 6px 0 10px 0;
+}
+
+.story-paragraph {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  color: #383632;
+  line-height: 1.72;
+  white-space: pre-line;
 }
 
 .story-subtext {
-  font-family: var(--font-sans);
-  font-size: 0.84rem;
-  color: #6E6B65;
-  line-height: 1.55;
+  display: none !important;
 }
 
 /* ========================================================
@@ -2040,4 +2082,125 @@
 .btn-modal-cancel:active {
   transform: scale(0.96);
   background: #E8E3DA;
+}
+
+
+/* ========================================================
+   Chế độ Quản Trị Viên Xem App Khách (Admin Preview)
+   ======================================================== */
+html.is-admin-preview #arrivalScreen {
+  display: none !important;
+}
+html.is-admin-preview #mainAppContainer {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+/* Tăng kích thước Mini Player để dễ thao tác trên điện thoại */
+.mini-player-header {
+  padding: 4px 18px 18px 18px !important;
+  gap: 12px !important;
+}
+
+.btn-player-toggle {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+/* ========================================================
+   Nút & Menu Chọn Tốc Độ Đọc Âm Thanh (50% - 150%)
+   ======================================================== */
+.player-speed-control {
+  position: relative;
+  user-select: none;
+}
+
+.btn-player-speed {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 11px;
+  min-height: 28px;
+  min-width: 50px;
+  border-radius: 999px;
+  background-color: #F6F1EB;
+  color: #8E6030;
+  border: 1.5px solid rgba(194, 142, 88, 0.5);
+  font-family: var(--font-sans, -apple-system, sans-serif);
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+
+.btn-player-speed:hover,
+.btn-player-speed:active,
+.btn-player-speed.is-active {
+  background-color: #8E6030;
+  color: #FFFFFF;
+  border-color: #8E6030;
+  transform: translateY(-1px);
+}
+
+.speed-menu-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 2500;
+  background: #FFFFFF;
+  border-radius: 16px;
+  border: 1.5px solid rgba(194, 142, 88, 0.4);
+  box-shadow: 0 14px 36px rgba(24, 24, 22, 0.28), 0 2px 8px rgba(0, 0, 0, 0.06);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  min-width: 152px;
+  animation: speedPopoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes speedPopoverFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.speed-menu-title {
+  font-family: var(--font-sans, -apple-system, sans-serif);
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #9D6E3F;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 8px 6px 8px;
+  border-bottom: 1px solid rgba(24, 24, 22, 0.08);
+  margin-bottom: 2px;
+}
+
+.speed-opt-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #2C2416;
+  font-family: var(--font-sans, -apple-system, sans-serif);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.speed-opt-btn:hover {
+  background-color: rgba(194, 142, 88, 0.14);
+  color: #8E6030;
+}
+
+.speed-opt-btn.is-active {
+  background-color: #8E6030 !important;
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
 }

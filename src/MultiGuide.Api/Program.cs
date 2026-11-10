@@ -150,9 +150,11 @@ app.UseCors("AllowClient");
 // Run seeder if enabled via configuration (Seed:Enabled or Seed__Enabled)
 // Do not auto-seed when running integration tests (USE_IN_MEMORY_DB=true or Testing environment)
 var useInMemory = string.Equals(app.Configuration["USE_IN_MEMORY_DB"], "true", StringComparison.OrdinalIgnoreCase);
-var isTesting = app.Environment.IsEnvironment("Testing") || useInMemory;
+var isRunningInTest = AppDomain.CurrentDomain.GetAssemblies()
+    .Any(a => a.FullName != null && (a.FullName.Contains("xunit") || a.FullName.Contains("testhost") || a.FullName.Contains("Microsoft.AspNetCore.Mvc.Testing")));
+var isTesting = app.Environment.IsEnvironment("Testing") || isRunningInTest;
 var seedConfig = app.Configuration["Seed:Enabled"] ?? app.Configuration["Seed__Enabled"];
-var isSeedEnabled = bool.TryParse(seedConfig, out var enabled) ? enabled : (!isTesting);
+var isSeedEnabled = bool.TryParse(seedConfig, out var enabled) && enabled;
 
 if (isSeedEnabled && !isTesting)
 {
@@ -214,6 +216,40 @@ app.MapGet("/health/ready", async (MultiGuideDbContext dbContext, CancellationTo
             new { status = "unhealthy", database = "unhealthy", error = ex.Message },
             statusCode: StatusCodes.Status503ServiceUnavailable);
     }
+});
+
+// Endpoint stream file audio phục vụ nghe trực tiếp ở môi trường phát triển (US-13, AI TTS)
+app.MapGet("/audio/{**path}", (string path) =>
+{
+    var cleanPath = (path ?? string.Empty).TrimStart('/');
+    var localPath = Path.Combine(AppContext.BaseDirectory, "storage", "audio", cleanPath.Replace('/', Path.DirectorySeparatorChar));
+    if (File.Exists(localPath) && new FileInfo(localPath).Length > 1000)
+    {
+        return Results.File(localPath, "audio/mpeg", enableRangeProcessing: true);
+    }
+
+    var match = System.Text.RegularExpressions.Regex.Match(cleanPath, @"pois/([a-f0-9\-]+)/([a-z]+)\.mp3", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+    if (match.Success)
+    {
+        var poiId = match.Groups[1].Value;
+        var lang = match.Groups[2].Value;
+        var searchRoots = new[]
+        {
+            Path.Combine(Directory.GetCurrentDirectory(), "scripts", "audio", $"{poiId}_{lang}.mp3"),
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "scripts", "audio", $"{poiId}_{lang}.mp3"),
+            Path.Combine(Directory.GetCurrentDirectory(), "..", "..", "scripts", "audio", $"{poiId}_{lang}.mp3"),
+            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "scripts", "audio", $"{poiId}_{lang}.mp3")
+        };
+        foreach (var c in searchRoots)
+        {
+            if (File.Exists(c) && new FileInfo(c).Length > 1000)
+            {
+                return Results.File(c, "audio/mpeg", enableRangeProcessing: true);
+            }
+        }
+    }
+
+    return Results.NotFound();
 });
 
 app.MapControllers();

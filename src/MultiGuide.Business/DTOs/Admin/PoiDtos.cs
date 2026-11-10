@@ -52,49 +52,31 @@ public class CreatePoiRequest
 
 public class UpdatePoiRequest
 {
-    public double Lat { get; set; }
-    public double Lng { get; set; }
-    public double TriggerRadiusM { get; set; } = 30;
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
+    public double? TriggerRadiusM { get; set; }
 
     [JsonPropertyName("trigger_radius_m")]
     public double? TriggerRadiusMSnakeCase
     {
-        set
-        {
-            if (value.HasValue)
-            {
-                TriggerRadiusM = value.Value;
-            }
-        }
+        set => TriggerRadiusM = value;
     }
 
-    public int Priority { get; set; }
+    public int? Priority { get; set; }
     public string? ImageUrl { get; set; }
 
     [JsonPropertyName("image_url")]
     public string? ImageUrlSnakeCase
     {
-        set
-        {
-            if (value != null)
-            {
-                ImageUrl = value;
-            }
-        }
+        set => ImageUrl = value;
     }
 
-    public bool IsActive { get; set; } = true;
+    public bool? IsActive { get; set; }
 
     [JsonPropertyName("is_active")]
     public bool? IsActiveSnakeCase
     {
-        set
-        {
-            if (value.HasValue)
-            {
-                IsActive = value.Value;
-            }
-        }
+        set => IsActive = value;
     }
 }
 
@@ -123,6 +105,12 @@ public class PoiResponse
 
     [JsonPropertyName("is_active")]
     public bool IsActiveSnakeCase => IsActive;
+
+    public string? Title { get; set; }
+    public bool HasAudio { get; set; }
+
+    [JsonPropertyName("has_audio")]
+    public bool HasAudioSnakeCase => HasAudio;
 
     public DateTime CreatedAt { get; set; }
 

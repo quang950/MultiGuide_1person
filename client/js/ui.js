@@ -56,8 +56,13 @@ export function initLanguageSwitcher() {
   updateActiveButton(initialLang);
 
   // Đăng ký lắng nghe store để tự động phản ánh thay đổi
+  let lastLangUi = store.get().selectedLang;
   store.subscribe((state) => {
-    updateActiveButton(state.selectedLang);
+    if (state.selectedLang && state.selectedLang !== lastLangUi) {
+      lastLangUi = state.selectedLang;
+      updateActiveButton(state.selectedLang);
+      renderAllStops();
+    }
   });
 
   // Lắng nghe sự kiện click trên các nút (Event Delegation)
@@ -230,48 +235,71 @@ export function showProximityBeacon(poi, isAutoPlaying = false) {
  * Khởi tạo Interactive Heritage Bottom Sheet Drawer (FE-5.1)
  * 3 nấc trượt: Nấc 0 (Ẩn), Nấc 1 (Mini Player ~140px), Nấc 2 (Kéo lên 78vh đọc toàn văn)
  */
+let isBottomSheetInitialized = false;
 export function initBottomSheet() {
+  if (isBottomSheetInitialized) return;
+  isBottomSheetInitialized = true;
   const sheet = document.getElementById('heritageBottomSheet');
   const dragZone = document.getElementById('sheetDragZone');
   const miniHeader = document.getElementById('miniPlayerHeader');
   if (!sheet) return;
 
-  // 1. Nhấp vào Mini Player Header hoặc Drag Zone để chuyển đổi nấc mở rộng (tránh chạm nút play và scrubber)
+  let hasDragged = false;
+  let startY = 0;
+  let isDragging = false;
+
+  // 1. Nhấp vào bất kỳ đâu trên Mini Player để mở rộng hiển thị nội dung thuyết minh (trừ nút play, scrubber, nút đóng)
+  const handleSheetExpandClick = (e) => {
+    if (e.target.closest('#btnPlayerToggle') || 
+        e.target.closest('.player-scrubber-wrapper') || 
+        e.target.closest('#playerScrubberTrack') || 
+        e.target.closest('#btnSheetClose')) {
+      return;
+    }
+    if (hasDragged) {
+      hasDragged = false;
+      return;
+    }
+    sheet.classList.add('is-expanded');
+  };
+
   if (miniHeader) {
-    miniHeader.addEventListener('click', (e) => {
-      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) {
+    miniHeader.addEventListener('click', handleSheetExpandClick);
+  }
+
+  // 2. Chạm vào thanh ngang nhỏ (Drag Handle) để chuyển đổi đóng / mở rộng
+  if (dragZone) {
+    dragZone.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (hasDragged) {
+        hasDragged = false;
         return;
       }
       sheet.classList.toggle('is-expanded');
     });
   }
 
-  if (dragZone) {
-    dragZone.addEventListener('click', () => {
-      sheet.classList.toggle('is-expanded');
-    });
-  }
-
-  // 2. Kéo vuốt cảm ứng (Swipe Gesture) & Kéo chuột trên thanh nắm Drag Handle & Header
-  let startY = 0;
-  let isDragging = false;
-
+  // 3. Kéo vuốt cảm ứng (Swipe Gesture) & Kéo chuột trên thanh nắm Drag Handle & Header
   const onDragStart = (clientY) => {
     startY = clientY;
     isDragging = true;
+    hasDragged = false;
   };
 
   const onDragEnd = (clientY) => {
     if (!isDragging) return;
     isDragging = false;
     const deltaY = clientY - startY;
+    if (Math.abs(deltaY) > 8) {
+      hasDragged = true;
+    }
 
-    // Vuốt lên > 25px -> Mở rộng Nấc 2 đọc toàn văn
-    if (deltaY < -25) {
+    // Vuốt lên > 20px -> Mở rộng Nấc 2 đọc toàn văn
+    if (deltaY < -20) {
       sheet.classList.add('is-expanded');
     }
-    // Vuốt xuống > 25px -> Thu gọn về Mini Player Nấc 1
-    else if (deltaY > 25) {
+    // Vuốt xuống > 20px -> Thu gọn về Mini Player Nấc 1
+    else if (deltaY > 20) {
       sheet.classList.remove('is-expanded');
     }
   };
@@ -279,17 +307,17 @@ export function initBottomSheet() {
   [dragZone, miniHeader].forEach(el => {
     if (!el) return;
     el.addEventListener('touchstart', (e) => {
-      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('.player-scrubber-wrapper') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       if (e.touches && e.touches[0]) onDragStart(e.touches[0].clientY);
     }, { passive: true });
 
     el.addEventListener('touchend', (e) => {
-      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('.player-scrubber-wrapper') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       if (e.changedTouches && e.changedTouches[0]) onDragEnd(e.changedTouches[0].clientY);
     }, { passive: true });
 
     el.addEventListener('mousedown', (e) => {
-      if (e.target.closest('#btnPlayerToggle') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
+      if (e.target.closest('#btnPlayerToggle') || e.target.closest('.player-scrubber-wrapper') || e.target.closest('#playerScrubberTrack') || e.target.closest('#btnSheetClose')) return;
       onDragStart(e.clientY);
       const onMouseUp = (upEvt) => {
         onDragEnd(upEvt.clientY);
@@ -299,7 +327,7 @@ export function initBottomSheet() {
     });
   });
 
-  // 3. Nút đóng / hạ khung Bottom Sheet (✕)
+  // 4. Nút đóng / hạ khung Bottom Sheet (✕)
   const btnClose = document.getElementById('btnSheetClose');
   if (btnClose) {
     btnClose.addEventListener('click', (e) => {
@@ -420,7 +448,8 @@ export function renderAllStops() {
   if (!container || !window.HERITAGE_POIS) return;
 
   const currentLang = store.get().selectedLang || 'vi';
-  const pois = window.HERITAGE_POIS;
+  const rawPois = window.HERITAGE_POIS || [];
+  const pois = rawPois.filter(p => (p.title && p.title.trim().length > 0) || POI_STORIES[p.id] || POI_STORIES[p.order]);
   const activePoi = store.get().activePoi;
   const activeId = activePoi ? (activePoi.id || activePoi.order) : null;
 
@@ -677,6 +706,18 @@ export function transitionToArrivalScreen() {
   localStorage.removeItem('mg_access_token');
   localStorage.removeItem('mg_pass_code');
   localStorage.removeItem('mg_pass_expires_at');
+  localStorage.removeItem('mg_admin_token');
+  localStorage.removeItem('mg_admin_refresh_token');
+  localStorage.removeItem('mg_admin_token_expires_at');
+  localStorage.removeItem('mg_admin_user');
+  sessionStorage.removeItem('mg_admin_preview');
+  document.documentElement.classList.remove('is-admin-preview');
+
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+  const btnReturnAdmin = document.getElementById('btnReturnAdmin');
+  if (btnReturnAdmin) btnReturnAdmin.style.display = 'none';
   store.set({ accessToken: null, passData: null, activeTab: 'explore', isPlaying: false });
 
   // 3. Đóng bottom sheet và các tab overlay nếu đang mở

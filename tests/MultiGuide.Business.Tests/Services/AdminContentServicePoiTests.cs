@@ -92,7 +92,7 @@ public class AdminContentServicePoiTests
     [InlineData(0, 0, 4.99, 0)]
     [InlineData(0, 0, 200.01, 0)]
     [InlineData(0, 0, 30, -1)]
-    [InlineData(0, 0, 30, 101)]
+    [InlineData(0, 0, 30, 1001)]
     public async Task CreatePoiAsync_GiaTriNgoaiKhoang_NemValidationException(double lat, double lng, double radius, int priority)
     {
         var request = new CreatePoiRequest
@@ -261,6 +261,18 @@ public class AdminContentServicePoiTests
         Assert.False(result.IsActive);
         Assert.True(result.UpdatedAt > oldTime);
         _poiRepoMock.Verify(r => r.UpdateAsync(poi, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeletePoiAsync_HardDelete_GoiDeleteAsync()
+    {
+        var id = Guid.NewGuid();
+        var poi = new Poi { Id = id, IsActive = true };
+        _poiRepoMock.Setup(r => r.GetByIdAsync(id, It.IsAny<CancellationToken>())).ReturnsAsync(poi);
+
+        await _service.DeletePoiAsync(id, hardDelete: true);
+
+        _poiRepoMock.Verify(r => r.DeleteAsync(poi, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]

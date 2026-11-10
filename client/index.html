@@ -25,6 +25,17 @@
   <link rel="stylesheet" href="css/base.css?v=2.9">
   <link rel="stylesheet" href="css/components.css?v=2.9">
   <link rel="stylesheet" href="css/map.css?v=4.2">
+  <script>
+    (function() {
+      var isPreview = window.location.search.indexOf('mode=admin_preview') !== -1 ||
+                      sessionStorage.getItem('mg_admin_preview') === '1' ||
+                      (localStorage.getItem('mg_admin_token') && window.location.search.indexOf('mode=visitor_checkout') === -1);
+      if (isPreview) {
+        sessionStorage.setItem('mg_admin_preview', '1');
+        document.documentElement.classList.add('is-admin-preview');
+      }
+    })();
+  </script>
 </head>
 <body>
 
@@ -174,6 +185,12 @@
       <img src="assets/icons/logo-mark.svg" alt="MultiGuide Logo" class="map-brand-logo">
       <span class="map-brand-title">MultiGuide</span>
       <span class="map-brand-edition">HANOI EDITION</span>
+      <a href="admin.html" class="btn-return-admin" id="btnReturnAdmin" title="Quay lại Dashboard Quản Trị" style="display: none; align-items: center; gap: 4px; padding: 3px 9px; margin-left: 6px; border-radius: 999px; background: #8E6030; color: #fff; font-size: 0.72rem; font-weight: 600; text-decoration: none; box-shadow: 0 2px 6px rgba(142,96,48,0.25); transition: background 0.2s;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        <span>Admin</span>
+      </a>
     </header>
 
 
@@ -229,6 +246,18 @@
             <span class="tag-dot">●</span> <span data-i18n="player.tag">STORIES, IN STEP WITH YOU</span>
           </span>
           <div class="player-meta-actions">
+            <!-- Nút điều chỉnh tốc độ đọc âm thanh 50% - 150% -->
+            <div class="player-speed-control" id="playerSpeedControl" style="position: relative;">
+              <button type="button" class="btn-player-speed" id="btnPlayerSpeed" title="Điều chỉnh tốc độ đọc" aria-label="Tốc độ đọc">100%</button>
+              <div class="speed-menu-popover" id="speedMenuPopover" style="display: none;">
+                <div class="speed-menu-title">Tốc độ đọc</div>
+                <button type="button" class="speed-opt-btn" data-speed="50">50%</button>
+                <button type="button" class="speed-opt-btn" data-speed="75">75%</button>
+                <button type="button" class="speed-opt-btn is-active" data-speed="100">100% (Chuẩn)</button>
+                <button type="button" class="speed-opt-btn" data-speed="125">125%</button>
+                <button type="button" class="speed-opt-btn" data-speed="150">150%</button>
+              </div>
+            </div>
             <span class="player-lang-badge" id="playerLangBadge">EN</span>
             <button type="button" class="btn-sheet-close" id="btnSheetClose" aria-label="Đóng bảng thuyết minh" data-i18n-aria="player.closeAria">✕</button>
           </div>
@@ -256,7 +285,8 @@
         <div class="player-scrubber-wrapper">
           <span class="scrubber-time time-current" id="timeCurrent">0:00</span>
           <div class="player-scrubber-track" id="playerScrubberTrack">
-            <div class="player-scrubber-fill" id="playerScrubberFill" style="width: 48%;"></div>
+            <div class="player-scrubber-fill" id="playerScrubberFill" style="width: 0%;"></div>
+            <div class="player-scrubber-thumb" id="playerScrubberThumb" style="left: 0%;"></div>
           </div>
           <span class="scrubber-time time-total" id="timeTotal">4:36</span>
         </div>
@@ -270,18 +300,20 @@
           <div class="story-badge" data-i18n="player.badge">DI SẢN NGHÌN NĂM</div>
           <h4 class="story-heading" id="storyHeading">Khuê Văn Các — Biểu Tượng Trí Tuệ Thăng Long</h4>
           
-          <p class="story-paragraph" id="storyParagraph">
-            Được xây dựng vào năm 1805 dưới triều vua Gia Long, Khuê Văn Các (Gác ngắm sao Khuê) là biểu tượng văn hóa tiêu biểu của thủ đô Hà Nội. Công trình mang kiến trúc độc đáo với tầng trên là lầu gỗ vuông vức, bốn mặt trổ bốn cửa tròn lớn tượng trưng cho bầu trời và ánh sáng lấp lánh của vì sao chủ quản sự học.
-          </p>
-
-          <blockquote class="story-quote">
+          
+          <!-- Khung câu nói / trích dẫn văn hóa màu vàng lên trên đầu tiên -->
+<blockquote class="story-quote" id="storyQuote">
             "Khuê tinh thiên lãng nhân văn hữu — Sao Khuê soi sáng cho nền văn trị thái bình."
           </blockquote>
 
-          <p class="story-subtext">
-            Nơi đây từng là nơi hội tụ bình duyệt những áng văn chương tuyệt tác của các sĩ tử đỗ đạt thời phong kiến trước khi vào điện yết kiến hoàng đế.
+          
+          <!-- Nội dung thuyết minh đầy đủ chữ màu trắng đều 1 font và 1 cỡ chữ -->
+<p class="story-paragraph" id="storyParagraph">
+            Được xây dựng vào năm 1805 dưới triều vua Gia Long, Khuê Văn Các (Gác ngắm sao Khuê) là biểu tượng văn hóa tiêu biểu của thủ đô Hà Nội. Công trình mang kiến trúc độc đáo với tầng trên là lầu gỗ vuông vức, bốn mặt trổ bốn cửa tròn lớn tượng trưng cho bầu trời và ánh sáng lấp lánh của vì sao chủ quản sự học.
           </p>
-        </div>
+
+          
+</div>
       </div>
 
       <!-- Thẻ Audio HTML5 ẩn để phát âm thanh chuẩn trình duyệt -->
@@ -472,6 +504,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Modular JS Application Controller -->
-  <script type="module" src="js/app.js?v=4.2"></script>
+  <script type="module" src="js/app.js?v=4.5"></script>
 </body>
 </html>

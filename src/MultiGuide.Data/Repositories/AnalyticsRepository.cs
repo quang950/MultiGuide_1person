@@ -41,7 +41,7 @@ public class AnalyticsRepository : IAnalyticsRepository
                 CompletedCount = g.Count(x => x.Completed)
             })
             .OrderByDescending(x => x.PlayCount)
-            .Take(10)
+            .Take(100)
             .ToListAsync(cancellationToken);
 
         var poiIds = topPoiGroups.Select(x => x.PoiId).ToList();

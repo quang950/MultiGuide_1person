@@ -64,12 +64,15 @@ public static class DependencyInjection
             options.Url = configuration["Supabase:Url"]
                 ?? configuration["Supabase__Url"]
                 ?? Environment.GetEnvironmentVariable("Supabase__Url")
-                ?? string.Empty;
+                ?? "https://xbrfdxtmnhdcozblyilo.supabase.co";
 
             options.ServiceRoleKey = configuration["Supabase:ServiceRoleKey"]
                 ?? configuration["Supabase__ServiceRoleKey"]
                 ?? Environment.GetEnvironmentVariable("Supabase__ServiceRoleKey")
-                ?? string.Empty;
+                ?? configuration["Supabase:AnonKey"]
+                ?? configuration["Supabase__AnonKey"]
+                ?? Environment.GetEnvironmentVariable("Supabase__AnonKey")
+                ?? "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhicmZkeHRtbmhkY296Ymx5aWxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4OTQ3ODgsImV4cCI6MjEwNzQ3MDc4OH0.AuQtC8JZXsrmMc_84K5OJIY3RtQ8LXoLEv0sB1JM7iA";
 
             options.AudioBucket = configuration["Supabase:AudioBucket"]
                 ?? configuration["Supabase__AudioBucket"]

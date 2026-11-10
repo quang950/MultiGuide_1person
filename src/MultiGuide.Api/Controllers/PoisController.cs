@@ -42,6 +42,7 @@ public class PoisController : BaseApiController
         [FromQuery] double? lat,
         [FromQuery] double? lng,
         [FromQuery] double? radius,
+        [FromQuery(Name = "radius_m")] double? radiusM,
         [FromQuery] string? lang,
         CancellationToken cancellationToken)
     {
@@ -65,7 +66,7 @@ public class PoisController : BaseApiController
             errors["lng"] = ["Kinh độ 'lng' phải nằm trong khoảng [-180, 180]."];
         }
 
-        var effectiveRadius = radius ?? 100.0;
+        var effectiveRadius = radius ?? radiusM ?? 100.0;
         if (effectiveRadius <= 0.0 || effectiveRadius > 500.0)
         {
             errors["radius"] = ["Bán kính 'radius' phải lớn hơn 0 và tối đa là 500 mét."];

@@ -48,6 +48,11 @@ public class TranslationResponse
     [JsonPropertyName("audio_path")]
     public string? AudioPathSnakeCase => AudioPath;
 
+    public string? AudioUrl { get; set; }
+
+    [JsonPropertyName("audio_url")]
+    public string? AudioUrlSnakeCase => AudioUrl;
+
     public int? AudioDurationSec { get; set; }
 
     [JsonPropertyName("audio_duration_sec")]
