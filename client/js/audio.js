@@ -697,8 +697,27 @@ export class AudioEngine {
     }
 
     // Nạp trực tiếp file MP3 thật theo ngôn ngữ nếu có
-    const localAudioSrc = `assets/audio/pois/${targetGuid}${langSuffix}.mp3`;
-    console.log(`[MultiGuide Audio] Gán nguồn âm thanh local:`, localAudioSrc);
+    // Xác định số thứ tự trạm (1..7) để fallback âm thanh nếu trên Cloud dùng GUID khác
+    const stopNumber = targetPoi?.order || (targetPoi?.priority ? Math.round(targetPoi.priority / 10) : (typeof poiId === 'number' ? poiId : 1));
+    const validStop = Math.max(1, Math.min(7, stopNumber));
+
+    // Kiểm tra nếu targetGuid thuộc 6 GUID gốc chuẩn
+    const standardGuids = [
+      'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
+      '3ede2134-c305-4270-9413-39c9743f9cb8',
+      '70dabf88-5450-48e7-9603-b753f5350047',
+      'cc63b968-096f-4b06-b4f8-19f8f829ef42',
+      '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
+      'cd3c98eb-79fe-4980-a870-6f690f9e40cd'
+    ];
+    const isStandardGuid = standardGuids.includes(String(targetGuid).toLowerCase());
+
+    // Nếu là GUID chuẩn thì ưu tiên theo GUID, nếu là GUID ngẫu nhiên từ Cloud Backend thì nạp theo số trạm (1..7)
+    const localAudioSrc = isStandardGuid
+      ? `assets/audio/pois/${targetGuid}${langSuffix}.mp3`
+      : `assets/audio/pois/${validStop}${langSuffix}.mp3`;
+
+    console.log(`[MultiGuide Audio] Gán nguồn âm thanh (Trạm #${validStop}):`, localAudioSrc);
     if (this.audioElement.src !== localAudioSrc && !this.audioElement.src.endsWith(localAudioSrc)) {
       this.audioElement.src = localAudioSrc;
       this.audioElement.load();
