@@ -218,26 +218,74 @@ public class AdminContentService : IAdminContentService
             throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{id}'.");
         }
 
-        ValidatePoiFields(request.Lat, request.Lng, request.TriggerRadiusM, request.Priority, request.ImageUrl);
+        if (request.Lat.HasValue || request.Lng.HasValue)
+        {
+            var lat = request.Lat ?? poi.Lat;
+            var lng = request.Lng ?? poi.Lng;
+            if (double.IsNaN(lat) || lat is < -90 or > 90)
+            {
+                throw new ValidationException(ErrorCodes.ValidationError, "Vĩ độ (lat) phải nằm trong khoảng [-90, 90].");
+            }
+            if (double.IsNaN(lng) || lng is < -180 or > 180)
+            {
+                throw new ValidationException(ErrorCodes.ValidationError, "Kinh độ (lng) phải nằm trong khoảng [-180, 180].");
+            }
+            poi.Lat = lat;
+            poi.Lng = lng;
+        }
 
-        poi.Lat = request.Lat;
-        poi.Lng = request.Lng;
-        poi.TriggerRadiusM = request.TriggerRadiusM;
-        poi.Priority = request.Priority;
-        poi.ImageUrl = NormalizeImageUrl(request.ImageUrl);
-        poi.IsActive = request.IsActive;
+        if (request.TriggerRadiusM.HasValue)
+        {
+            var radius = request.TriggerRadiusM.Value;
+            if (double.IsNaN(radius) || radius is < 5 or > 200)
+            {
+                throw new ValidationException(ErrorCodes.ValidationError, "Bán kính kích hoạt (trigger_radius_m) phải nằm trong khoảng [5, 200].");
+            }
+            poi.TriggerRadiusM = radius;
+        }
+
+        if (request.Priority.HasValue)
+        {
+            var prio = request.Priority.Value;
+            if (prio is < 0 or > 1000)
+            {
+                throw new ValidationException(ErrorCodes.ValidationError, "Độ ưu tiên (priority) phải nằm trong khoảng [0, 1000].");
+            }
+            poi.Priority = prio;
+        }
+
+        if (request.ImageUrl != null)
+        {
+            if (request.ImageUrl.Trim().Length > 500)
+            {
+                throw new ValidationException(ErrorCodes.ValidationError, "Đường dẫn ảnh (image_url) không được vượt quá 500 ký tự.");
+            }
+            poi.ImageUrl = NormalizeImageUrl(request.ImageUrl);
+        }
+
+        if (request.IsActive.HasValue)
+        {
+            poi.IsActive = request.IsActive.Value;
+        }
+
         poi.UpdatedAt = DateTime.UtcNow;
 
         await _poiRepository.UpdateAsync(poi, cancellationToken);
         return MapToResponse(poi);
     }
 
-    public async Task DeletePoiAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task DeletePoiAsync(Guid id, bool hardDelete = false, CancellationToken cancellationToken = default)
     {
         var poi = await _poiRepository.GetByIdAsync(id, cancellationToken);
         if (poi == null)
         {
             throw new NotFoundException(ErrorCodes.NotFound, $"Không tìm thấy điểm POI với mã định danh '{id}'.");
+        }
+
+        if (hardDelete)
+        {
+            await _poiRepository.DeleteAsync(poi, cancellationToken);
+            return;
         }
 
         poi.IsActive = false;
@@ -262,9 +310,9 @@ public class AdminContentService : IAdminContentService
             throw new ValidationException(ErrorCodes.ValidationError, "Bán kính kích hoạt (trigger_radius_m) phải nằm trong khoảng [5, 200].");
         }
 
-        if (priority is < 0 or > 100)
+        if (priority is < 0 or > 1000)
         {
-            throw new ValidationException(ErrorCodes.ValidationError, "Độ ưu tiên (priority) phải nằm trong khoảng [0, 100].");
+            throw new ValidationException(ErrorCodes.ValidationError, "Độ ưu tiên (priority) phải nằm trong khoảng [0, 1000].");
         }
 
         if (imageUrl != null && imageUrl.Trim().Length > 500)
@@ -276,32 +324,72 @@ public class AdminContentService : IAdminContentService
     private static string? NormalizeImageUrl(string? imageUrl) =>
         string.IsNullOrWhiteSpace(imageUrl) ? null : imageUrl.Trim();
 
-    private static PoiResponse MapToResponse(Poi poi) => new()
+    private static PoiResponse MapToResponse(Poi poi)
     {
-        Id = poi.Id,
-        AreaId = poi.AreaId,
-        Lat = poi.Lat,
-        Lng = poi.Lng,
-        TriggerRadiusM = poi.TriggerRadiusM,
-        Priority = poi.Priority,
-        ImageUrl = poi.ImageUrl,
-        IsActive = poi.IsActive,
-        CreatedAt = poi.CreatedAt,
-        UpdatedAt = poi.UpdatedAt
-    };
+        var primaryTrans = poi.Translations?.FirstOrDefault(t => t.LanguageCode == "vi")
+            ?? poi.Translations?.FirstOrDefault(t => t.LanguageCode == "en")
+            ?? poi.Translations?.FirstOrDefault();
+
+        var hasAudio = poi.Translations != null && poi.Translations.Any(t => !string.IsNullOrWhiteSpace(t.AudioPath));
+
+        return new PoiResponse
+        {
+            Id = poi.Id,
+            AreaId = poi.AreaId,
+            Lat = poi.Lat,
+            Lng = poi.Lng,
+            TriggerRadiusM = poi.TriggerRadiusM,
+            Priority = poi.Priority,
+            ImageUrl = poi.ImageUrl,
+            IsActive = poi.IsActive,
+            Title = primaryTrans?.Title,
+            HasAudio = hasAudio,
+            CreatedAt = poi.CreatedAt,
+            UpdatedAt = poi.UpdatedAt
+        };
+    }
 
     public async Task<IReadOnlyList<TranslationResponse>> GetTranslationsAsync(Guid poiId, CancellationToken cancellationToken = default)
     {
         await EnsurePoiExistsAsync(poiId, cancellationToken);
 
         var translations = await _translationRepository.GetByPoiIdAsync(poiId, cancellationToken);
-        return translations.Select(MapToResponse).ToList();
+        var result = new List<TranslationResponse>(translations.Count);
+        foreach (var t in translations)
+        {
+            var res = MapToResponse(t);
+            if (!string.IsNullOrWhiteSpace(t.AudioPath))
+            {
+                try
+                {
+                    res.AudioUrl = await _fileStorage.CreateSignedUrlAsync(t.AudioPath, TimeSpan.FromHours(1), cancellationToken);
+                }
+                catch
+                {
+                    // Fallback nếu storage chưa cấu hình hoặc không tạo được signed URL
+                }
+            }
+            result.Add(res);
+        }
+        return result;
     }
 
     public async Task<TranslationResponse> GetTranslationByIdAsync(Guid poiId, Guid id, CancellationToken cancellationToken = default)
     {
         var translation = await GetTranslationOfPoiAsync(poiId, id, cancellationToken);
-        return MapToResponse(translation);
+        var res = MapToResponse(translation);
+        if (!string.IsNullOrWhiteSpace(translation.AudioPath))
+        {
+            try
+            {
+                res.AudioUrl = await _fileStorage.CreateSignedUrlAsync(translation.AudioPath, TimeSpan.FromHours(1), cancellationToken);
+            }
+            catch
+            {
+                // Fallback nếu storage chưa cấu hình hoặc không tạo được signed URL
+            }
+        }
+        return res;
     }
 
     public async Task<TranslationResponse> CreateTranslationAsync(Guid poiId, CreateTranslationRequest request, CancellationToken cancellationToken = default)
@@ -640,6 +728,7 @@ public class AdminContentService : IAdminContentService
     public async Task<AiSummaryResponse> GeneratePoiSummaryAsync(
         Guid poiId,
         string? language = "vi",
+        string? topic = null,
         CancellationToken cancellationToken = default)
     {
         if (_aiService == null)
@@ -658,17 +747,23 @@ public class AdminContentService : IAdminContentService
         var area = await _areaRepository.GetByIdAsync(poi.AreaId, cancellationToken);
         var areaName = area?.Name ?? "Khu di tích";
 
-        // Ưu tiên tiêu đề bản dịch theo ngôn ngữ đích, hoặc bản dịch đầu tiên nếu có
-        IEnumerable<PoiTranslation> translations = (poi.Translations != null && poi.Translations.Count > 0)
-            ? poi.Translations
-            : (await _translationRepository.GetByPoiIdAsync(poi.Id, cancellationToken) ?? Array.Empty<PoiTranslation>());
-
-        var poiName = translations
-            .FirstOrDefault(t => t.LanguageCode.Equals(targetLang, StringComparison.OrdinalIgnoreCase))?.Title;
-
-        if (string.IsNullOrWhiteSpace(poiName))
+        string poiName;
+        if (!string.IsNullOrWhiteSpace(topic))
         {
-            poiName = translations.FirstOrDefault()?.Title ?? $"Điểm tham quan {poi.Id.ToString()[..8]}";
+            poiName = topic.Trim();
+        }
+        else
+        {
+            IEnumerable<PoiTranslation> translations = (poi.Translations != null && poi.Translations.Count > 0)
+                ? poi.Translations
+                : (await _translationRepository.GetByPoiIdAsync(poi.Id, cancellationToken) ?? Array.Empty<PoiTranslation>());
+
+            var foundTitle = translations
+                .FirstOrDefault(t => t.LanguageCode.Equals(targetLang, StringComparison.OrdinalIgnoreCase))?.Title;
+
+            poiName = !string.IsNullOrWhiteSpace(foundTitle)
+                ? foundTitle
+                : (translations.FirstOrDefault()?.Title ?? $"Điểm tham quan {poi.Id.ToString()[..8]}");
         }
 
         var summary = await _aiService.GeneratePoiSummaryAsync(poiName, areaName, targetLang, cancellationToken);

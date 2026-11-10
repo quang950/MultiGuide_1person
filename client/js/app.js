@@ -1,12 +1,12 @@
 import { CONFIG } from './config.js?v=3.6';
 import { store } from './state.js';
 import { apiService } from './api.js';
-import { initLanguageSwitcher, initPassCheckout, initAdminLogin } from './ui.js';
+import { initLanguageSwitcher, initPassCheckout, initAdminLogin, transitionToMainApp } from './ui.js';
 import { initI18n } from './i18n.js';
 
 console.log('[MultiGuide PWA] Khởi tạo ứng dụng di sản...');
 
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
   // 1. Khởi tạo bộ máy Đa Ngôn Ngữ tập trung (i18n)
   initI18n();
 
@@ -23,6 +23,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 5. Khởi tạo Nút nổi Admin & Modal đăng nhập
   initAdminLogin();
+
+  // 5b. Kiểm tra chế độ xem từ Admin (Xem App Khách) hoặc Admin đang đăng nhập
+  const urlParams = new URLSearchParams(window.location.search);
+  const isAdminPreview = urlParams.get('mode') === 'admin_preview' || sessionStorage.getItem('mg_admin_preview') === '1';
+  const hasAdminToken = !!localStorage.getItem('mg_admin_token');
+
+  if (isAdminPreview) {
+    sessionStorage.setItem('mg_admin_preview', '1');
+    document.documentElement.classList.add('is-admin-preview');
+  }
+
+  const btnReturnAdmin = document.getElementById('btnReturnAdmin');
+  if (btnReturnAdmin && (isAdminPreview || hasAdminToken)) {
+    btnReturnAdmin.style.display = 'inline-flex';
+  }
+
+  if (isAdminPreview || (hasAdminToken && urlParams.get('mode') !== 'visitor_checkout')) {
+    console.log('[MultiGuide PWA] Chuyển thẳng vào Bản đồ di sản cho Quản trị viên kiểm thử...');
+    if (!store.get().accessToken) {
+      store.setAccessToken('mg_admin_preview_pass', {
+        code: 'ADMIN-PREVIEW-PASS',
+        expiresAt: new Date(Date.now() + 86400000).toISOString(),
+        status: 'active'
+      });
+      // Kích hoạt vé thật từ backend trong nền nếu có
+      apiService.purchasePass('van-mieu').then(passData => {
+        const token = passData.accessToken || passData.token;
+        if (token) store.setAccessToken(token, passData);
+      }).catch(() => {});
+    }
+    transitionToMainApp();
+  }
 
   // 6. Quản lý Service Worker PWA (FE-7.1)
   const isLocal = typeof window !== 'undefined' && 
@@ -63,5 +95,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   console.log('[MultiGuide PWA] Giao diện đã sẵn sàng. Ngôn ngữ hiện tại:', store.get().selectedLang);
-});
+}
 
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}

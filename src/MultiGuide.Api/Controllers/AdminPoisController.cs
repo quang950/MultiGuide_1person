@@ -99,9 +99,12 @@ public class AdminPoisController : AdminBaseController
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromQuery] bool hard = false,
+        CancellationToken cancellationToken = default)
     {
-        await _adminContentService.DeletePoiAsync(id, cancellationToken);
+        await _adminContentService.DeletePoiAsync(id, hard, cancellationToken);
         return NoContent();
     }
 
@@ -123,7 +126,54 @@ public class AdminPoisController : AdminBaseController
         CancellationToken cancellationToken = default)
     {
         var language = request?.Language ?? "vi";
-        var result = await _adminContentService.GeneratePoiSummaryAsync(id, language, cancellationToken);
+        var topic = request?.Topic;
+        var result = await _adminContentService.GeneratePoiSummaryAsync(id, language, topic, cancellationToken);
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Tải lên ảnh đại diện / hiện vật cho POI (lưu vào thư mục client/assets/pois).
+    /// </summary>
+    [HttpPost("upload-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadImage(
+        IFormFile? file,
+        CancellationToken cancellationToken = default)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(new { detail = "Vui lòng chọn file hình ảnh." });
+        }
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".gif"))
+        {
+            return BadRequest(new { detail = "Định dạng ảnh không được hỗ trợ. Vui lòng chọn file JPG, PNG, WEBP." });
+        }
+
+        var repoRoot = Directory.GetCurrentDirectory();
+        while (!string.IsNullOrEmpty(repoRoot) && !Directory.Exists(Path.Combine(repoRoot, "client")))
+        {
+            var parent = Directory.GetParent(repoRoot);
+            if (parent == null) break;
+            repoRoot = parent.FullName;
+        }
+
+        var targetDir = !string.IsNullOrEmpty(repoRoot) && Directory.Exists(Path.Combine(repoRoot, "client"))
+            ? Path.Combine(repoRoot, "client", "assets", "pois")
+            : Path.Combine(AppContext.BaseDirectory, "assets", "pois");
+
+        Directory.CreateDirectory(targetDir);
+        var fileName = $"poi_{Guid.NewGuid():N}{ext}";
+        var filePath = Path.Combine(targetDir, fileName);
+
+        await using (var stream = new FileStream(filePath, FileMode.Create))
+        {
+            await file.CopyToAsync(stream, cancellationToken);
+        }
+
+        return Ok(new { imageUrl = $"assets/pois/{fileName}" });
     }
 }

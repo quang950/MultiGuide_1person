@@ -16,7 +16,9 @@ public class PoiRepository : IPoiRepository
 
     public async Task<Poi?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        return await _context.Pois.FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
+        return await _context.Pois
+            .Include(p => p.Translations)
+            .FirstOrDefaultAsync(p => p.Id == id, cancellationToken);
     }
 
     public async Task<Poi?> GetWithTranslationsByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -34,7 +36,7 @@ public class PoiRepository : IPoiRepository
         int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var query = _context.Pois.AsNoTracking();
+        IQueryable<Poi> query = _context.Pois.AsNoTracking().Include(p => p.Translations);
 
         if (areaId.HasValue)
         {
@@ -84,6 +86,21 @@ public class PoiRepository : IPoiRepository
             _context.Pois.Update(poi);
         }
 
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task DeleteAsync(Poi poi, CancellationToken cancellationToken = default)
+    {
+        var translations = await _context.PoiTranslations
+            .Where(t => t.PoiId == poi.Id)
+            .ToListAsync(cancellationToken);
+
+        if (translations.Count > 0)
+        {
+            _context.PoiTranslations.RemoveRange(translations);
+        }
+
+        _context.Pois.Remove(poi);
         await _context.SaveChangesAsync(cancellationToken);
     }
 }

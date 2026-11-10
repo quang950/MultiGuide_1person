@@ -972,6 +972,149 @@ html, body.admin-body {
   cursor: not-allowed;
 }
 
+.btn-audio-preview {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--admin-radius-sm);
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.2);
+}
+
+.btn-audio-preview:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+}
+
+.btn-audio-preview.is-playing {
+  background: #dc2626;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);
+}
+
+.btn-audio-preview.is-playing:hover {
+  background: #b91c1c;
+}
+
+/* ========================================================
+   Admin Audio Mini Player (Chuẩn giao diện App Khách)
+   ======================================================== */
+.admin-audio-player-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 14px;
+  background: #FAF7F2;
+  border-radius: 10px;
+  border: 1px solid rgba(194, 142, 88, 0.28);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  box-sizing: border-box;
+}
+
+.admin-btn-player-toggle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #181816;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(24, 24, 22, 0.22);
+  transition: transform 0.15s ease, background-color 0.15s ease;
+}
+
+.admin-btn-player-toggle:hover {
+  background-color: #2A2A26;
+  transform: scale(1.06);
+}
+
+.admin-btn-player-toggle:active {
+  transform: scale(0.92);
+}
+
+.admin-btn-player-toggle svg {
+  pointer-events: none;
+}
+
+.admin-scrubber-time {
+  font-family: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #8E6030;
+  min-width: 32px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+
+.admin-scrubber-track {
+  flex: 1;
+  height: 6px;
+  background-color: rgba(194, 142, 88, 0.22);
+  border-radius: 3px;
+  position: relative;
+  cursor: pointer;
+  touch-action: none;
+}
+
+.admin-scrubber-fill {
+  height: 100%;
+  background-color: #C28E58;
+  border-radius: 3px;
+  width: 0%;
+  pointer-events: none;
+}
+
+.admin-scrubber-thumb {
+  position: absolute;
+  top: 50%;
+  left: 0%;
+  width: 13px;
+  height: 13px;
+  background-color: #C28E58;
+  border: 2px solid #FFFFFF;
+  border-radius: 50%;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28);
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s ease;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+.admin-scrubber-track:hover .admin-scrubber-thumb {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+.admin-btn-speed {
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: rgba(194, 142, 88, 0.12);
+  border: 1px solid rgba(194, 142, 88, 0.35);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #8E6030;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.admin-btn-speed:hover {
+  background: rgba(194, 142, 88, 0.25);
+  border-color: #C28E58;
+}
+
 .modal-form-actions {
   display: flex;
   justify-content: flex-end;

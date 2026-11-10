@@ -9,4 +9,9 @@ public class GenerateAiSummaryRequest
     /// Ngôn ngữ mong muốn (vi, en, ja... Mặc định: vi).
     /// </summary>
     public string? Language { get; set; } = "vi";
+
+    /// <summary>
+    /// Chủ đề hoặc tên POI tùy chỉnh (ví dụ: Bến Bạch Đằng, Khuê Văn Các...).
+    /// </summary>
+    public string? Topic { get; set; }
 }

@@ -133,7 +133,14 @@ export const apiService = {
   },
 
   async sendPlayLog(poiId, durationSeconds, completed = false) {
-    const token = store.get().accessToken;
+    let token = store.get().accessToken;
+    if (!token) {
+      try {
+        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
+        token = pass.accessToken || pass.token;
+        store.setAccessToken(token, pass);
+      } catch {}
+    }
     if (!token || !poiId || durationSeconds <= 0) return;
     const POI_GUID_MAP = {
       1: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
@@ -143,22 +150,54 @@ export const apiService = {
       5: '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
       6: 'cd3c98eb-79fe-4980-a870-6f690f9e40cd'
     };
-    const guid = POI_GUID_MAP[poiId] || poiId;
+    const isGuid = (val) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(val));
+    let guid = POI_GUID_MAP[poiId];
+    if (!guid && isGuid(poiId)) {
+      guid = poiId;
+    }
+    if (!guid && typeof window !== 'undefined' && Array.isArray(window.HERITAGE_POIS)) {
+      const found = window.HERITAGE_POIS.find(p => String(p.order) === String(poiId) || String(p.id) === String(poiId));
+      if (found && (isGuid(found.id) || isGuid(found.guid))) {
+        guid = found.guid || found.id;
+      }
+    }
+    if (!guid && (String(poiId) === '7' || poiId === 7)) {
+      guid = 'ff6e03ab-7094-4242-9dea-f22d6c23f3e2';
+    }
+
+    if (!guid || !isGuid(guid)) return;
+
     const lang = store.get().selectedLang || 'vi';
+    const payload = {
+      poiId: guid,
+      languageCode: lang,
+      listenedSec: Math.max(1, Math.round(durationSeconds)),
+      completed: Boolean(completed)
+    };
+
     try {
-      await fetch(`${this.baseUrl}/play-logs`, {
+      let res = await fetch(`${this.baseUrl}/play-logs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          poiId: guid,
-          languageCode: lang,
-          listenedSec: Math.max(1, Math.round(durationSeconds)),
-          completed: Boolean(completed)
-        })
+        body: JSON.stringify(payload)
       });
+
+      if (res.status === 401 || res.status === 403) {
+        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
+        token = pass.accessToken || pass.token;
+        store.setAccessToken(token, pass);
+        await fetch(`${this.baseUrl}/play-logs`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
+      }
     } catch (e) {
       console.warn('Lỗi gửi play-log:', e);
     }

@@ -383,8 +383,10 @@ export function initI18n() {
   applyTranslations(initialLang);
 
   // Tự động cập nhật DOM mỗi khi selectedLang trong store thay đổi
+  let lastLangI18n = store.get().selectedLang;
   store.subscribe((state) => {
-    if (state.selectedLang) {
+    if (state.selectedLang && state.selectedLang !== lastLangI18n) {
+      lastLangI18n = state.selectedLang;
       applyTranslations(state.selectedLang);
     }
   });

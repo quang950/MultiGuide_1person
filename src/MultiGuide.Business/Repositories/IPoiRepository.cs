@@ -22,4 +22,6 @@ public interface IPoiRepository
     Task<Poi> AddAsync(Poi poi, CancellationToken cancellationToken = default);
 
     Task UpdateAsync(Poi poi, CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(Poi poi, CancellationToken cancellationToken = default);
 }

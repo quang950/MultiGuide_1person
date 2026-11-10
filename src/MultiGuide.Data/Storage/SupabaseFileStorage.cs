@@ -60,7 +60,16 @@ public class SupabaseFileStorage : IFileStorage
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Supabase Storage Upload thất bại HTTP {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
+            _logger.LogWarning("Supabase Storage Upload HTTP {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
+
+            // Nếu bị chặn bởi chính sách RLS Supabase (AccessDenied/policy), tự động lưu file cục bộ fallback an toàn
+            if ((response.StatusCode == HttpStatusCode.BadRequest || response.StatusCode == HttpStatusCode.Forbidden) &&
+                (errorBody.Contains("policy") || errorBody.Contains("AccessDenied") || errorBody.Contains("Unauthorized")))
+            {
+                var savedLocalPath = await SaveToLocalFallbackAsync(content, cleanPath, cancellationToken);
+                return savedLocalPath;
+            }
+
             throw new AppException(ErrorCodes.StorageError, $"Không thể tải file lên lưu trữ Supabase (HTTP {(int)response.StatusCode}): {errorBody}", 500);
         }
 
@@ -74,6 +83,22 @@ public class SupabaseFileStorage : IFileStorage
         ValidateConfiguration();
         var cleanPath = NormalizePath(path);
 
+        if (cleanPath.StartsWith("assets/", StringComparison.OrdinalIgnoreCase) ||
+            cleanPath.StartsWith("audio/", StringComparison.OrdinalIgnoreCase))
+        {
+            // Xóa file local nếu có
+            try
+            {
+                var localFile = Path.Combine(Directory.GetCurrentDirectory(), "client", cleanPath.Replace('/', Path.DirectorySeparatorChar));
+                if (File.Exists(localFile))
+                {
+                    File.Delete(localFile);
+                }
+            }
+            catch { }
+            return;
+        }
+
         var bucket = string.IsNullOrWhiteSpace(_options.AudioBucket) ? "audio" : _options.AudioBucket;
         var requestUri = $"{GetStorageBaseUrl()}/object/{bucket}/{cleanPath}";
 
@@ -85,6 +110,13 @@ public class SupabaseFileStorage : IFileStorage
         if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (errorBody.Contains("not_found", StringComparison.OrdinalIgnoreCase) ||
+                errorBody.Contains("NoSuchKey", StringComparison.OrdinalIgnoreCase) ||
+                errorBody.Contains("AccessDenied", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("Supabase Storage Delete bỏ qua do file không tồn tại hoặc RLS: {ErrorBody}", errorBody);
+                return;
+            }
             _logger.LogError("Supabase Storage Delete thất bại HTTP {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
             throw new AppException(ErrorCodes.StorageError, $"Không thể xóa file khỏi lưu trữ Supabase (HTTP {(int)response.StatusCode}): {errorBody}", 500);
         }
@@ -97,6 +129,12 @@ public class SupabaseFileStorage : IFileStorage
     {
         ValidateConfiguration();
         var cleanPath = NormalizePath(path);
+
+        if (cleanPath.StartsWith("assets/", StringComparison.OrdinalIgnoreCase) ||
+            cleanPath.StartsWith("audio/", StringComparison.OrdinalIgnoreCase))
+        {
+            return cleanPath;
+        }
 
         var bucket = string.IsNullOrWhiteSpace(_options.AudioBucket) ? "audio" : _options.AudioBucket;
         var requestUri = $"{GetStorageBaseUrl()}/object/sign/{bucket}/{cleanPath}";
@@ -114,7 +152,14 @@ public class SupabaseFileStorage : IFileStorage
         if (!response.IsSuccessStatusCode)
         {
             var errorBody = await response.Content.ReadAsStringAsync(cancellationToken);
-            _logger.LogError("Supabase Storage CreateSignedUrl thất bại HTTP {StatusCode}: {ErrorBody}", response.StatusCode, errorBody);
+            _logger.LogWarning("Supabase Storage CreateSignedUrl HTTP {StatusCode}: {ErrorBody}. Kiểm tra fallback cục bộ.", response.StatusCode, errorBody);
+
+            var localCandidate = TryResolveLocalPath(cleanPath);
+            if (localCandidate != null)
+            {
+                return localCandidate;
+            }
+
             throw new AppException(ErrorCodes.StorageError, $"Không thể tạo signed URL từ Supabase (HTTP {(int)response.StatusCode}): {errorBody}", 500);
         }
 
@@ -213,5 +258,81 @@ public class SupabaseFileStorage : IFileStorage
         }
 
         return clean;
+    }
+
+    private async Task<string> SaveToLocalFallbackAsync(Stream content, string cleanPath, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var parts = cleanPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2 && cleanPath.StartsWith("pois/", StringComparison.OrdinalIgnoreCase))
+            {
+                var poiId = parts[1];
+                var langWithExt = parts[^1];
+                var lang = Path.GetFileNameWithoutExtension(langWithExt);
+                var localFileName = $"{poiId}_{lang}.mp3";
+                var localSimple = $"{poiId}.mp3";
+
+                var targetDir = Path.Combine(Directory.GetCurrentDirectory(), "client", "assets", "audio", "pois");
+                if (!Directory.Exists(targetDir))
+                {
+                    var parent = Directory.GetParent(Directory.GetCurrentDirectory())?.Parent?.FullName;
+                    if (parent != null)
+                    {
+                        targetDir = Path.Combine(parent, "client", "assets", "audio", "pois");
+                    }
+                }
+
+                if (Directory.Exists(targetDir))
+                {
+                    if (content.CanSeek) content.Position = 0;
+                    var filePath = Path.Combine(targetDir, localFileName);
+                    await using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        await content.CopyToAsync(fs, cancellationToken);
+                    }
+
+                    if (string.Equals(lang, "vi", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var simplePath = Path.Combine(targetDir, localSimple);
+                        File.Copy(filePath, simplePath, overwrite: true);
+                    }
+
+                    _logger.LogInformation("Đã lưu audio fallback thành công tại: {FilePath}", filePath);
+                    return $"assets/audio/pois/{localFileName}";
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Lỗi khi lưu audio fallback vào thư mục cục bộ.");
+        }
+        return cleanPath;
+    }
+
+    private static string? TryResolveLocalPath(string cleanPath)
+    {
+        var parts = cleanPath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length >= 2)
+        {
+            var poiId = parts[1];
+            var lang = Path.GetFileNameWithoutExtension(parts[^1]);
+            var localCandidate = $"assets/audio/pois/{poiId}_{lang}.mp3";
+            var simpleCandidate = $"assets/audio/pois/{poiId}.mp3";
+
+            var root = Directory.GetCurrentDirectory();
+            var p1 = Path.Combine(root, "client", localCandidate);
+            var p2 = Path.Combine(root, "client", simpleCandidate);
+            if (File.Exists(p1)) return localCandidate;
+            if (File.Exists(p2)) return simpleCandidate;
+
+            var parent = Directory.GetParent(root)?.Parent?.FullName;
+            if (parent != null)
+            {
+                if (File.Exists(Path.Combine(parent, "client", localCandidate))) return localCandidate;
+                if (File.Exists(Path.Combine(parent, "client", simpleCandidate))) return simpleCandidate;
+            }
+        }
+        return null;
     }
 }
