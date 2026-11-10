@@ -331,9 +331,9 @@ public static class DbSeeder
 
                     AreaId = areaId,
 
-                    Lat = 21.02720,
+                    Lat = 21.0269,
 
-                    Lng = 105.83555,
+                    Lng = 105.8355,
 
                     TriggerRadiusM = 30,
 

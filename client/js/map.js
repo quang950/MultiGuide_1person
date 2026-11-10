@@ -40,9 +40,9 @@ export const HERITAGE_POIS = [
 
     titleEn: 'Van Mieu Gate',
 
-    lat: 21.02720,
+    lat: 21.0269,
 
-    lng: 105.83555,
+    lng: 105.8355,
 
     triggerRadiusM: 20,
 
