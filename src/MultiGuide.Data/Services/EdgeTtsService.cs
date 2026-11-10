@@ -66,7 +66,8 @@ public class EdgeTtsService : ITtsService
             {
                 Path.Combine(Directory.GetCurrentDirectory(), "scripts", "tts.py"),
                 Path.Combine(AppContext.BaseDirectory, "scripts", "tts.py"),
-                @"D:\MultiGuide\scripts\tts.py"
+                @"D:\MultiGuide\scripts\tts.py",
+                "/app/scripts/tts.py",
             };
 
             foreach (var p in explicitPaths)
@@ -97,6 +98,9 @@ public class EdgeTtsService : ITtsService
 
             var pythonExecutables = new List<string>
             {
+                "/opt/venv/bin/python",
+                "/usr/bin/python3",
+                "python3",
                 @"C:\ProgramData\anaconda3\python.exe",
                 "python",
                 "py"
@@ -112,6 +116,7 @@ public class EdgeTtsService : ITtsService
                 }
             }
 
+            candidates.Add(("/opt/venv/bin/edge-tts", $"-f \"{tempTextFile}\" -v \"{voice}\" --rate=-15% --write-media \"{tempOutputFile}\""));
             candidates.Add(("edge-tts", $"-f \"{tempTextFile}\" -v \"{voice}\" --rate=-15% --write-media \"{tempOutputFile}\""));
             foreach (var py in pythonExecutables)
             {

@@ -14,7 +14,7 @@ import { apiService } from './api.js';
 
 import { geoService } from './geo.js';
 
-import { audioEngine, POI_STORIES } from './audio.js';
+import { audioEngine, POI_STORIES } from './audio.js?v=4.3';
 
 import { showProximityBeacon, showBottomSheet, hideBottomSheet } from './ui.js';
 

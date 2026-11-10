@@ -6,7 +6,7 @@ import { store } from './state.js';
 import { apiService } from './api.js';
 import { mapManager } from './map.js';
 import { t } from './i18n.js';
-import { POI_STORIES } from './audio.js';
+import { POI_STORIES } from './audio.js?v=4.3';
 import { CONFIG } from './config.js?v=3.6';
 import { modalService } from './modal.js';
 
@@ -179,7 +179,7 @@ export function initPassCheckout() {
   });
 }
 
-import { audioEngine } from './audio.js';
+import { audioEngine } from './audio.js?v=4.3';
 
 let proximityToastTimer = null;
 

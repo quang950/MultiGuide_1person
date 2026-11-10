@@ -725,6 +725,34 @@ export class AudioEngine {
   /**
    * Tua thời gian âm thanh theo tỉ lệ phần trăm [0, 1]
    */
+  /**
+   * Xác định đường dẫn file MP3 cục bộ (fallback khi offline hoặc API backend chưa có Signed URL)
+   */
+  resolveLocalAudioSrc(poiId) {
+    const lang = store.get().selectedLang || 'vi';
+    const langSuffix = (lang === 'vi' || !lang) ? '' : `_${lang}`;
+    const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
+    const targetGuid = targetPoi?.id || targetPoi?.guid || POI_GUID_MAP[poiId] || poiId;
+    const stopNumber = targetPoi?.order || (targetPoi?.priority ? Math.round(targetPoi.priority / 10) : (typeof poiId === 'number' ? poiId : 1));
+    const validStop = Math.max(1, Math.min(7, stopNumber));
+
+    // Kiểm tra nếu targetGuid thuộc 6 GUID gốc chuẩn
+    const standardGuids = [
+      'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
+      '3ede2134-c305-4270-9413-39c9743f9cb8',
+      '70dabf88-5450-48e7-9603-b753f5350047',
+      'cc63b968-096f-4b06-b4f8-19f8f829ef42',
+      '0c23b2e0-73d1-4f37-90a0-f95201abf43b',
+      'cd3c98eb-79fe-4980-a870-6f690f9e40cd'
+    ];
+    const isStandardGuid = standardGuids.includes(String(targetGuid).toLowerCase());
+
+    if (isStandardGuid) {
+      return `assets/audio/pois/${targetGuid}${langSuffix}.mp3`;
+    }
+    return `assets/audio/pois/${validStop}${langSuffix}.mp3`;
+  }
+
   setupSpeedControls() {
     const btnSpeed = document.getElementById('btnPlayerSpeed');
     const popover = document.getElementById('speedMenuPopover');

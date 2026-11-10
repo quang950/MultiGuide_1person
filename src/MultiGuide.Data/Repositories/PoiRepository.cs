@@ -91,6 +91,15 @@ public class PoiRepository : IPoiRepository
 
     public async Task DeleteAsync(Poi poi, CancellationToken cancellationToken = default)
     {
+        var playLogs = await _context.PlayLogs
+            .Where(p => p.PoiId == poi.Id)
+            .ToListAsync(cancellationToken);
+
+        if (playLogs.Count > 0)
+        {
+            _context.PlayLogs.RemoveRange(playLogs);
+        }
+
         var translations = await _context.PoiTranslations
             .Where(t => t.PoiId == poi.Id)
             .ToListAsync(cancellationToken);

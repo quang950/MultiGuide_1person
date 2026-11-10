@@ -2095,6 +2095,9 @@ html.is-admin-preview #mainAppContainer {
   display: block !important;
   opacity: 1 !important;
 }
+html.is-admin-preview #btnReturnAdmin {
+  display: inline-flex !important;
+}
 
 /* Tăng kích thước Mini Player để dễ thao tác trên điện thoại */
 .mini-player-header {
