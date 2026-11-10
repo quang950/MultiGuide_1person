@@ -20,6 +20,8 @@ reports/
 !client/*.html
 *.docx
 *.mp3
+!client/assets/audio/**/*.mp3
+!client/assets/audio/*.mp3
 scripts/audio/
 test_client/
 __pycache__/
