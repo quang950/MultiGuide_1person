@@ -1909,8 +1909,11 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
       // Cập nhật giao diện của Tab ngôn ngữ đang mở
       loadLangDraft(currentActiveLang);
 
-      alert(`✓ Đã sinh giọng đọc Neural thành công cho cả 3 ngôn ngữ: Tiếng Việt, English, và 日本語!
-Bạn có thể chuyển qua các Tab ngôn ngữ để nghe thử từng bản.`);
+      if (completedLangs.length > 0) {
+        alert(`✓ Đã sinh giọng đọc Neural thành công cho: ${completedLangs.join(", ")}!\nBạn có thể chuyển qua các Tab ngôn ngữ để nghe thử từng bản.`);
+      } else {
+        alert("Máy chủ chưa sinh được file audio (HTTP 422). Vui lòng đợi Render hoàn tất deploy container Docker mới.");
+      }
     } catch (e) {
       alert(`Lỗi sinh audio: ${e.message}`);
     } finally {
@@ -2119,11 +2122,12 @@ window.openEditPoiModal = async function(poiId) {
 };
 
 window.deletePoi = async function(poiId) {
-  if (!confirm('Bạn có chắc muốn xóa điểm POI này? (Xóa mềm is_active=false)')) return;
+  if (!confirm('Bạn có chắc chắn muốn xóa vĩnh viễn điểm POI này? Thao tác này sẽ xóa điểm và toàn bộ dữ liệu thuyết minh liên quan.')) return;
   try {
-    const res = await adminFetch(`/admin/pois/${poiId}`, { method: 'DELETE' });
+    const res = await adminFetch(`/admin/pois/${poiId}?hard=true`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Không thể xóa điểm.');
-    alert('Đã xóa điểm POI.');
+    alert('Đã xóa thành công điểm POI.');
+    allCurrentPois = allCurrentPois.filter(p => p.id !== poiId);
     loadPoisForCurrentArea();
   } catch (e) {
     alert(e.message);

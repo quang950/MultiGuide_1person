@@ -27,12 +27,15 @@
   <link rel="stylesheet" href="css/map.css?v=4.2">
   <script>
     (function() {
-      var isPreview = window.location.search.indexOf('mode=admin_preview') !== -1 ||
-                      sessionStorage.getItem('mg_admin_preview') === '1' ||
-                      (localStorage.getItem('mg_admin_token') && window.location.search.indexOf('mode=visitor_checkout') === -1);
-      if (isPreview) {
+      // Chỉ kích hoạt chế độ xem trước khi Admin bấm nút "Xem App Khách" từ Dashboard (có tham số mode=admin_preview và có token admin)
+      var urlParams = new URLSearchParams(window.location.search);
+      var isAdminPreview = urlParams.get('mode') === 'admin_preview' && !!localStorage.getItem('mg_admin_token');
+      if (isAdminPreview) {
         sessionStorage.setItem('mg_admin_preview', '1');
         document.documentElement.classList.add('is-admin-preview');
+      } else {
+        sessionStorage.removeItem('mg_admin_preview');
+        document.documentElement.classList.remove('is-admin-preview');
       }
     })();
   </script>
@@ -504,6 +507,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Modular JS Application Controller -->
-  <script type="module" src="js/app.js?v=4.5"></script>
+  <script type="module" src="js/app.js?v=4.6"></script>
 </body>
 </html>
