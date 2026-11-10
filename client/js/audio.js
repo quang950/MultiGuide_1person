@@ -394,12 +394,8 @@ export class AudioEngine {
     this.audioElement = document.getElementById('heritageAudioElement') || new Audio();
     this.audioElement.preload = 'metadata';
 
-    // 2. Tạo sẵn âm thanh chuông di sản thiền định làm fallback mượt mà
-    try {
-      this.fallbackAudioUrl = generateCalmTempleBellWav(18);
-    } catch (e) {
-      console.warn('[MultiGuide Audio] Không thể khởi tạo chuông fallback:', e);
-    }
+    // 2. Không dùng âm thanh giả lập sóng sin gây rè, ưu tiên file MP3 thật
+    this.fallbackAudioUrl = null;
 
     // 3. Đăng ký các sự kiện của Audio Element
     this.setupListeners();
@@ -628,9 +624,13 @@ export class AudioEngine {
         console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi tự động phát âm thanh. Bảng thông tin đã mở sẵn, du khách có thể chạm nút Phát bất kỳ lúc nào.`);
         return;
       }
-      console.warn(`[MultiGuide Audio] Lỗi phát POI ${poiId}, sử dụng âm thanh di sản:`, err);
-      if (this.fallbackAudioUrl && this.audioElement) {
-        this.audioElement.src = this.fallbackAudioUrl;
+      console.warn(`[MultiGuide Audio] Lỗi phát POI ${poiId}, chuyển sang audio tĩnh có sẵn:`, err);
+      const fallbackSrc = this.resolveLocalAudioSrc(poiId);
+      if (fallbackSrc && this.audioElement) {
+        if (this.audioElement.src !== fallbackSrc && !this.audioElement.src.endsWith(fallbackSrc)) {
+          this.audioElement.src = fallbackSrc;
+          this.audioElement.load();
+        }
         this.audioElement.volume = 1.0;
         await this.audioElement.play().catch((playErr) => {
           if (playErr && playErr.name === 'NotAllowedError') {
@@ -712,10 +712,8 @@ export class AudioEngine {
     ];
     const isStandardGuid = standardGuids.includes(String(targetGuid).toLowerCase());
 
-    // Nếu là GUID chuẩn thì ưu tiên theo GUID, nếu là GUID ngẫu nhiên từ Cloud Backend thì nạp theo số trạm (1..7)
-    const localAudioSrc = isStandardGuid
-      ? `assets/audio/pois/${targetGuid}${langSuffix}.mp3`
-      : `assets/audio/pois/${validStop}${langSuffix}.mp3`;
+    // Nạp đường dẫn audio tĩnh cục bộ
+    const localAudioSrc = this.resolveLocalAudioSrc(poiId);
 
     console.log(`[MultiGuide Audio] Gán nguồn âm thanh (Trạm #${validStop}):`, localAudioSrc);
     if (this.audioElement.src !== localAudioSrc && !this.audioElement.src.endsWith(localAudioSrc)) {
