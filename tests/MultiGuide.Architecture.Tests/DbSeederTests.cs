@@ -37,7 +37,7 @@ public class DbSeederTests
     }
 
     [Fact]
-    public async Task DbSeeder_WhenSeedEnabled_InsertsOneAreaSixPoisAndEighteenTranslations()
+    public async Task DbSeeder_WhenSeedEnabled_InsertsOneAreaSixPoisAndTwentyFourTranslations()
     {
         var context = CreateInMemoryContext(Guid.NewGuid().ToString());
         var config = new ConfigurationBuilder()
@@ -51,10 +51,11 @@ public class DbSeederTests
 
         // Verify Languages
         var languages = await context.Languages.ToListAsync();
-        Assert.Equal(3, languages.Count);
+        Assert.Equal(4, languages.Count);
         Assert.Contains(languages, l => l.Code == "vi");
         Assert.Contains(languages, l => l.Code == "en");
         Assert.Contains(languages, l => l.Code == "ja");
+        Assert.Contains(languages, l => l.Code == "zh");
 
         // Verify Area
         var area = await context.TourAreas.FirstOrDefaultAsync(a => a.Code == "van-mieu");
@@ -69,16 +70,17 @@ public class DbSeederTests
 
         // Verify Translations
         var translations = await context.PoiTranslations.ToListAsync();
-        Assert.Equal(18, translations.Count);
+        Assert.Equal(24, translations.Count);
 
-        // Every POI must have exactly 3 translations (vi, en, ja)
+        // Every POI must have exactly 4 translations (vi, en, zh, ja)
         foreach (var poi in pois)
         {
             var poiTrans = translations.Where(t => t.PoiId == poi.Id).ToList();
-            Assert.Equal(3, poiTrans.Count);
+            Assert.Equal(4, poiTrans.Count);
             Assert.Contains(poiTrans, t => t.LanguageCode == "vi");
             Assert.Contains(poiTrans, t => t.LanguageCode == "en");
             Assert.Contains(poiTrans, t => t.LanguageCode == "ja");
+            Assert.Contains(poiTrans, t => t.LanguageCode == "zh" && !string.IsNullOrWhiteSpace(t.Description) && t.AudioPath!.EndsWith("_zh.mp3"));
         }
     }
 
@@ -97,10 +99,10 @@ public class DbSeederTests
         await DbSeeder.SeedDemoDataAsync(context, config);
         await DbSeeder.SeedDemoDataAsync(context, config);
 
-        Assert.Equal(3, await context.Languages.CountAsync());
+        Assert.Equal(4, await context.Languages.CountAsync());
         Assert.Equal(1, await context.TourAreas.CountAsync());
         Assert.Equal(6, await context.Pois.CountAsync());
-        Assert.Equal(18, await context.PoiTranslations.CountAsync());
+        Assert.Equal(24, await context.PoiTranslations.CountAsync());
     }
 
     [Fact]

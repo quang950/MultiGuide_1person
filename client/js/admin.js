@@ -17,7 +17,7 @@ let allCurrentPois = [];
 let currentEditingPoiPriority = 10;
 
 let currentAreaId = null;
-let currentPoiTranslations = { vi: {}, en: {}, ja: {} };
+let currentPoiTranslations = { vi: {}, en: {}, zh: {}, ja: {} };
 let currentActiveLang = 'vi';
 
 // Cập nhật huy hiệu môi trường kết nối API
@@ -1043,9 +1043,16 @@ function detectHeritageCategory(lower) {
   return 'general';
 }
 
-// Bộ tri thức văn hóa & địa danh di sản thông minh đa ngôn ngữ (VI + EN + JA)
+// Bộ tri thức văn hóa & địa danh di sản thông minh đa ngôn ngữ (VI + EN + ZH + JA)
 // Kịch bản chi tiết chuyên sâu, không dùng câu thơ trong ngoặc kép, thời lượng đọc hơn 1 phút (~170-220 từ)
 function generateSmartHeritageContent(rawTopic, lang = 'vi', wikiKnowledge = null) {
+  if (lang === 'zh') {
+    const topic = (rawTopic || '').trim().toLocaleLowerCase('vi');
+    const story = Object.values(POI_STORIES).find(p => p.vi?.title.toLocaleLowerCase('vi') === topic)?.zh;
+    return story
+      ? { title: story.title, summary: story.quote, script: story.paragraph + (story.subtext ? '\n\n' + story.subtext : '') }
+      : { title: rawTopic || '', summary: '', script: '' };
+  }
   const formattedTopic = (rawTopic || 'Điểm di tích').split(' ')
     .map(w => w ? (w.charAt(0).toUpperCase() + w.slice(1)) : '')
     .join(' ');
@@ -1791,6 +1798,16 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
         description: jaSmart.script
       };
 
+      const zhSmart = generateSmartHeritageContent(formattedTopic, 'zh');
+      if (zhSmart.script && !currentPoiTranslations.zh?.description) {
+        currentPoiTranslations.zh = {
+          ...currentPoiTranslations.zh,
+          title: zhSmart.title,
+          summary: zhSmart.summary,
+          description: zhSmart.script
+        };
+      }
+
       // Tải lại nội dung hiển thị cho Tab ngôn ngữ đang mở
       loadLangDraft(currentActiveLang);
     } catch (e) {
@@ -1821,7 +1838,7 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
     }
 
     btnTts.disabled = true;
-    btnTts.textContent = '⏳ Đang sinh giọng đọc Neural cho cả 3 ngôn ngữ (VI, EN, JA)...';
+    btnTts.textContent = '⏳ Đang sinh giọng đọc Neural cho cả 4 ngôn ngữ (VI, EN, ZH, JA)...';
 
     try {
       saveCurrentLangDraft();
@@ -1830,8 +1847,8 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
       const listRes = await adminFetch(`/admin/pois/${poiId}/translations`);
       let serverTransList = listRes.ok ? (await listRes.json()) : [];
 
-      const targetLangs = ['vi', 'en', 'ja'];
-      const langNames = { vi: 'Tiếng Việt', en: 'English', ja: '日本語' };
+      const targetLangs = ['vi', 'en', 'zh', 'ja'];
+      const langNames = { vi: 'Tiếng Việt', en: 'English', zh: '中文', ja: '日本語' };
       const completedLangs = [];
       const failedLangs = [];
 
@@ -1846,12 +1863,17 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
           draft.id = transId;
         }
 
-        // Xác định tiêu đề và kịch bản chuẩn cho từng ngôn ngữ (VI + EN + JA)
+        // Xác định tiêu đề và kịch bản chuẩn cho từng ngôn ngữ (VI + EN + ZH + JA)
         const storyData = (POI_STORIES && POI_STORIES[poiOrder]) ? POI_STORIES[poiOrder][lang] : null;
         const smartFallback = generateSmartHeritageContent(title || 'Điểm di tích', lang);
         let langTitle = (draft.title || '').trim() || (storyData ? storyData.title : smartFallback.title);
         let langScript = (draft.description || '').trim() || (storyData ? (storyData.paragraph + (storyData.subtext ? (' ' + storyData.subtext) : '')) : smartFallback.script);
         let langSummary = (draft.summary || '').trim() || smartFallback.summary;
+
+        if (!langScript.trim()) {
+          failedLangs.push(`${langNames[lang]}: Chưa có nội dung bản dịch. Hãy nhập kịch bản trước khi sinh giọng đọc.`);
+          continue;
+        }
 
         // Cập nhật lại draft đầy đủ cho ngôn ngữ
         currentPoiTranslations[lang] = {
@@ -1918,7 +1940,7 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
       alert(`Lỗi sinh audio: ${e.message}`);
     } finally {
       btnTts.disabled = false;
-      btnTts.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>🎙️ Sinh Giọng Đọc Tự Động (VI + EN + JA)</span>`;
+      btnTts.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg><span>🎙️ Sinh Giọng Đọc Tự Động (VI + EN + ZH + JA)</span>`;
     }
   });
 
@@ -1975,7 +1997,7 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
 
       // Lưu bản dịch cho từng ngôn ngữ (tự động điền bản dịch chuẩn nếu để trống)
       const topicForSave = document.getElementById('poiTitleInput').value.trim() || 'Điểm di tích';
-      for (const lang of ['vi', 'en', 'ja']) {
+      for (const lang of ['vi', 'en', 'zh', 'ja']) {
         const draft = currentPoiTranslations[lang] || {};
         const smartFallback = generateSmartHeritageContent(topicForSave, lang);
         let title = (draft.title || '').trim() || smartFallback.title;
@@ -2043,7 +2065,7 @@ function openNewPoiModal() {
   }
   currentEditingPoiPriority = nextOrder * 10;
 
-  currentPoiTranslations = { vi: {}, en: {}, ja: {} };
+  currentPoiTranslations = { vi: {}, en: {}, zh: {}, ja: {} };
   currentActiveLang = 'vi';
   resetLangTabs();
 
@@ -2089,7 +2111,7 @@ window.openEditPoiModal = async function(poiId) {
 
     // Tải danh sách bản dịch của POI
     const transRes = await adminFetch(`/admin/pois/${poiId}/translations`);
-    currentPoiTranslations = { vi: {}, en: {}, ja: {} };
+    currentPoiTranslations = { vi: {}, en: {}, zh: {}, ja: {} };
     if (transRes.ok) {
       const transList = await transRes.json();
       if (Array.isArray(transList)) {
