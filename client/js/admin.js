@@ -1983,7 +1983,7 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
         savedPoiId = createdPoi.id;
       } else {
         // Cập nhật POI
-        await adminFetch(`/admin/pois/${editingId}`, {
+        const poiRes = await adminFetch(`/admin/pois/${editingId}`, {
           method: 'PUT',
           body: JSON.stringify({
             lat,
@@ -1994,6 +1994,10 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
             is_active: true
           })
         });
+        if (!poiRes.ok) {
+          const problem = await poiRes.json().catch(() => ({}));
+          throw new Error(problem.detail || `Không thể cập nhật POI (HTTP ${poiRes.status}).`);
+        }
       }
 
       // Lưu bản dịch cho từng ngôn ngữ (tự động điền bản dịch chuẩn nếu để trống)
