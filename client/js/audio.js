@@ -384,6 +384,7 @@ export class AudioEngine {
     this.isSeeking = false;
     this.isInitialized = false;
     this.isUserPaused = false;
+    this.audioRequestId = 0;
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
   }
 
@@ -586,6 +587,7 @@ export class AudioEngine {
    * Bắt đầu phát âm thanh cho một POI cụ thể (Single Audio Stream + Fade-out mượt mà)
    */
   async playPoi(poiId) {
+    const requestId = ++this.audioRequestId;
     this.recordPlayProgress(false);
     this.isUserPaused = false;
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
@@ -597,6 +599,7 @@ export class AudioEngine {
         const stepDelay = 50; // 6 * 50ms = 300ms
         for (let i = 1; i <= steps; i++) {
           await new Promise(r => setTimeout(r, stepDelay));
+          if (requestId !== this.audioRequestId) return;
           if (this.audioElement) {
             this.audioElement.volume = Math.max(0, origVol * (1 - i / steps));
           }
@@ -612,14 +615,17 @@ export class AudioEngine {
 
     this.currentPoiId = poiId;
     this.syncPoiContent(poiId);
+    if (requestId !== this.audioRequestId) return;
 
     try {
-      await this.loadAudioForPoi(poiId);
+      if (!await this.loadAudioForPoi(poiId, requestId)) return;
+      if (requestId !== this.audioRequestId) return;
       if (this.audioElement) {
         this.audioElement.volume = 1.0;
         await this.audioElement.play();
       }
     } catch (err) {
+      if (requestId !== this.audioRequestId) return;
       if (err && err.name === 'NotAllowedError') {
         console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi tự động phát âm thanh. Bảng thông tin đã mở sẵn, du khách có thể chạm nút Phát bất kỳ lúc nào.`);
         return;
@@ -641,8 +647,9 @@ export class AudioEngine {
     }
   }
 
-  async loadAudioForPoi(poiId) {
+  async loadAudioForPoi(poiId, requestId = ++this.audioRequestId) {
     const lang = store.get().selectedLang || 'vi';
+    const isCurrent = () => requestId === this.audioRequestId && lang === (store.get().selectedLang || 'vi');
     const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
     const targetGuid = targetPoi?.id || targetPoi?.guid || POI_GUID_MAP[poiId] || poiId;
     const langSuffix = (lang === 'vi' || !lang) ? '' : `_${lang}`;
@@ -650,6 +657,7 @@ export class AudioEngine {
     try {
       console.log(`[MultiGuide Audio] Tải thông tin POI ${poiId} (${targetGuid}, ${lang})...`);
       const detail = await apiService.getPoiDetail(targetGuid, lang).catch(() => null);
+      if (!isCurrent()) return false;
 
       if (detail && (lang !== 'zh' || detail.language === 'zh')) {
         if (detail.title) {
@@ -682,18 +690,19 @@ export class AudioEngine {
             this.audioElement.src = detail.audioUrl;
             this.audioElement.load();
           }
-          return;
+          return true;
         }
       }
     } catch (e) {
       console.warn(`[MultiGuide Audio] Lỗi tải từ API (${e.message}).`);
     }
 
+    if (!isCurrent()) return false;
     if (lang !== 'zh' && targetPoi && (targetPoi.audioUrl || targetPoi.audio_url)) {
       const src = targetPoi.audioUrl || targetPoi.audio_url;
       this.audioElement.src = src;
       this.audioElement.load();
-      return;
+      return true;
     }
 
     // Nạp trực tiếp file MP3 thật theo ngôn ngữ nếu có
@@ -720,6 +729,7 @@ export class AudioEngine {
       this.audioElement.src = localAudioSrc;
       this.audioElement.load();
     }
+    return true;
   }
 
   /**
