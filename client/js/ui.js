@@ -98,22 +98,53 @@ export function initPassCheckout() {
   const btnActivate = document.getElementById('btnActivatePass');
   if (!btnActivate) return;
 
-  // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy (bỏ qua token demo nếu có)
+  // Restore the original expiry, including an explicitly marked offline demo pass.
   let currentToken = store.get().accessToken;
   if (currentToken && currentToken.startsWith('mg_demo_pass_')) {
-    store.setAccessToken(null);
-    currentToken = null;
+    const cached = store.get().passData;
+    if (!cached?.isOfflineDemo || !(Date.parse(cached.expiresAt) > Date.now())) {
+      store.setAccessToken(null);
+      currentToken = null;
+    }
   }
 
   setPassCheckoutLabel(currentToken ? 'arrival.continueBtn' : 'arrival.unlockBtn');
+  if (currentToken && !currentToken.startsWith('mg_demo_pass_')) {
+    apiService.getCurrentPass().then(() => {
+      const key = btnActivate.querySelector('.btn-text')?.getAttribute('data-i18n');
+      if (key === 'arrival.continueBtn' || key === 'arrival.unlockBtn') {
+        setPassCheckoutLabel(store.get().accessToken ? 'arrival.continueBtn' : 'arrival.unlockBtn');
+      }
+    }).catch(() => { /* Keep cached metadata when the connection is unavailable. */ });
+  }
 
   btnActivate.addEventListener('click', async () => {
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
     unlockAudioContextSilently();
 
+    const cachedPass = store.get().passData;
+    if (store.get().accessToken?.startsWith('mg_demo_pass_') && cachedPass?.isOfflineDemo && Date.parse(cachedPass.expiresAt) > Date.now()) {
+      transitionToMainApp();
+      return;
+    }
+
     // Nếu đã có token vé thật từ trước, chuyển thẳng sang màn hình chính
     if (store.get().accessToken && !store.get().accessToken.startsWith('mg_demo_pass_')) {
-      transitionToMainApp();
+      btnActivate.disabled = true;
+      try {
+        const pass = await apiService.getCurrentPass();
+        if (pass && Date.parse(pass.expiresAt) > Date.now() && pass.status !== 'revoked') transitionToMainApp();
+        else {
+          store.setAccessToken(null);
+          setPassCheckoutLabel('arrival.unlockBtn');
+        }
+      } catch {
+        const cached = store.get().passData;
+        if (cached && Date.parse(cached.expiresAt) > Date.now()) transitionToMainApp();
+        else setPassCheckoutLabel('passTab.btnPassCheckFailed');
+      } finally {
+        btnActivate.disabled = false;
+      }
       return;
     }
 
@@ -508,21 +539,20 @@ export function initPassCountdown() {
   const codeEl = document.getElementById('passCardCode');
   if (!clockEl) return;
 
-  const passData = store.get().passData;
-  if (codeEl) {
-    codeEl.textContent = (passData && passData.passId) ? passData.passId : 'HN-VM-2026-PASS';
-  }
-
-  // Lấy mốc thời gian hết hạn hoặc mặc định 24h kể từ khi tải
-  let expiresTimestamp = passData && passData.expiresAt ? new Date(passData.expiresAt).getTime() : null;
-  if (!expiresTimestamp || isNaN(expiresTimestamp)) {
-    // 24 tiếng kể từ bây giờ
-    expiresTimestamp = Date.now() + 24 * 3600 * 1000 - 15000;
-  }
-
   const updateClock = () => {
+    const { passData, accessToken } = store.get();
+    if (codeEl) codeEl.textContent = passData?.passId || passData?.id || '—';
+    const expiresTimestamp = Date.parse(passData?.expiresAt);
     const now = Date.now();
-    const diff = Math.max(0, expiresTimestamp - now);
+    const knownExpiry = Number.isFinite(expiresTimestamp);
+    const expired = !accessToken || (knownExpiry && expiresTimestamp <= now) || passData?.status === 'revoked';
+    const badge = document.querySelector('.royal-pass-status-badge');
+    if (badge) badge.textContent = t(expired ? 'passTab.statusExpired' : knownExpiry ? 'passTab.statusActive' : 'passTab.statusUnknown');
+    if (!knownExpiry && !expired) {
+      clockEl.textContent = '--:--:--';
+      return;
+    }
+    const diff = expired ? 0 : Math.max(0, expiresTimestamp - now);
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -590,12 +620,25 @@ function initPassActions() {
 
   if (btnRefresh && !btnRefresh._hasListener) {
     btnRefresh._hasListener = true;
-    btnRefresh.addEventListener('click', () => {
-      btnRefresh.innerHTML = '<span>⏳ Đang kiểm tra hệ thống...</span>';
-      setTimeout(() => {
-        btnRefresh.innerHTML = '<span>✓ Vé di sản đang kích hoạt</span>';
+    btnRefresh.addEventListener('click', async () => {
+      const label = btnRefresh.querySelector('[data-i18n]');
+      const show = key => {
+        if (!label) return;
+        label.setAttribute('data-i18n', key);
+        label.textContent = t(key);
+      };
+      btnRefresh.disabled = true;
+      show('passTab.btnCheckingPass');
+      try {
+        const pass = await apiService.getCurrentPass();
+        show(pass && Date.parse(pass.expiresAt) > Date.now() && pass.status !== 'revoked'
+          ? 'passTab.btnPassActive' : 'passTab.btnPassInvalid');
+      } catch {
+        show('passTab.btnPassCheckFailed');
+      } finally {
+        btnRefresh.disabled = false;
         initPassCountdown();
-      }, 800);
+      }
     });
   }
 
@@ -702,7 +745,7 @@ export function transitionToArrivalScreen() {
   } catch {}
 
   // 2. Xóa access token của khách trong localStorage
-  localStorage.removeItem('mg_access_token');
+  store.setAccessToken(null);
   localStorage.removeItem('mg_pass_code');
   localStorage.removeItem('mg_pass_expires_at');
   localStorage.removeItem('mg_admin_token');

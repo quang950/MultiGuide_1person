@@ -73,6 +73,13 @@ export const TRANSLATIONS = {
       btnDownload: 'Tải trước nội dung Offline',
       btnDownloadDone: '✓ Đã lưu Offline thành công',
       btnRefresh: 'Làm mới trạng thái vé',
+      btnCheckingPass: 'Đang kiểm tra vé...',
+      btnPassActive: '✓ Vé đang có hiệu lực',
+      btnPassInvalid: 'Vé hết hạn hoặc không hợp lệ',
+      btnPassCheckFailed: 'Không thể kiểm tra vé. Vui lòng thử lại.',
+      statusActive: 'ĐANG HIỆU LỰC',
+      statusExpired: 'HẾT HẠN / KHÔNG HỢP LỆ',
+      statusUnknown: 'CHƯA XÁC MINH',
       btnLogout: 'Đăng xuất vé / Về màn chào đón'
     },
     modal: {
@@ -148,6 +155,13 @@ export const TRANSLATIONS = {
       btnDownload: 'Download offline audio pack',
       btnDownloadDone: '✓ Offline pack saved successfully',
       btnRefresh: 'Refresh pass status',
+      btnCheckingPass: 'Checking your pass...',
+      btnPassActive: '✓ Your pass is active',
+      btnPassInvalid: 'Pass expired or invalid',
+      btnPassCheckFailed: 'Unable to check your pass. Please retry.',
+      statusActive: 'ACTIVE',
+      statusExpired: 'EXPIRED / INVALID',
+      statusUnknown: 'NOT VERIFIED',
       btnLogout: 'Exit Pass / Return to Welcome'
     },
     modal: {
@@ -223,6 +237,13 @@ export const TRANSLATIONS = {
       btnDownload: '离线下载语音资源包',
       btnDownloadDone: '✓ 离线资源包已成功缓存',
       btnRefresh: '刷新通票状态',
+      btnCheckingPass: '正在验证通行证...',
+      btnPassActive: '✓ 通行证有效',
+      btnPassInvalid: '通行证已过期或无效',
+      btnPassCheckFailed: '无法验证通行证，请重试。',
+      statusActive: '有效',
+      statusExpired: '已过期或无效',
+      statusUnknown: '尚未验证',
       btnLogout: '退出通行证 / 返回欢迎页'
     },
     modal: {
@@ -298,6 +319,13 @@ export const TRANSLATIONS = {
       btnDownload: 'オフライン音声を事前保存',
       btnDownloadDone: '✓ オフライン保存完了',
       btnRefresh: 'パス状態を更新',
+      btnCheckingPass: 'パスを確認しています...',
+      btnPassActive: '✓ パスは有効です',
+      btnPassInvalid: 'パスは期限切れ、または無効です',
+      btnPassCheckFailed: 'パスを確認できません。再試行してください。',
+      statusActive: '有効',
+      statusExpired: '期限切れ / 無効',
+      statusUnknown: '未確認',
       btnLogout: 'パスを終了 / ようこそ画面へ'
     },
     modal: {
