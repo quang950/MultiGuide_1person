@@ -5,6 +5,10 @@ export async function savePoiTranslations({ poiId, drafts, topic, generateConten
     const fallback = generateContent(topic, lang);
     const title = (draft.title || '').trim() || fallback.title;
     const description = (draft.description || '').trim() || (draft.summary || '').trim() || fallback.script;
+    if (!description?.trim()) {
+      if (!draft.id && !draft.title?.trim()) continue;
+      throw new Error(`${lang.toUpperCase()}: Chưa có nội dung bản dịch.`);
+    }
     const payload = JSON.stringify({ title, description });
     const endpoint = `/admin/pois/${poiId}/translations`;
     let response;
