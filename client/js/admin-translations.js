@@ -28,6 +28,8 @@ export async function savePoiTranslations({ poiId, drafts, topic, generateConten
       }
     }
     await requireSuccess(response, lang);
+    const saved = await response.json().catch(() => ({}));
+    drafts[lang] = { ...draft, id: saved.id || draft.id, title, description };
   }
 }
 

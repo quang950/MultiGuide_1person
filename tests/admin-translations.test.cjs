@@ -28,6 +28,14 @@ test('A failed conflict-recovery PUT is reported, not treated as success', async
     request:async()=>[response(409),response(200,[{id:'existing',languageCode:'vi'}]),response(500)][calls++]}), /HTTP 500/);
 });
 
+test('IDs of successful translations survive a later failure for safe retries', async () => {
+  const drafts={};
+  await assert.rejects(save({poiId:'poi', drafts, topic:'POI', generateContent,
+    request:async(url, options)=>JSON.parse(options.body).language_code==='vi'
+      ? response(201,{id:'saved-vi'}) : response(500)}));
+  assert.equal(drafts.vi.id, 'saved-vi');
+});
+
 test('An existing Chinese translation cannot be silently cleared', async () => {
   await assert.rejects(save({poiId:'poi', drafts:{zh:{id:'existing-zh'}}, topic:'POI', generateContent,
     request:async()=>response(200)}), /ZH:/);
