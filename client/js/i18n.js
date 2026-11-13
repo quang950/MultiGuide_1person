@@ -26,6 +26,9 @@ export const TRANSLATIONS = {
       collectionTag: 'BỘ SƯU TẬP VĂN MIẾU',
       collectionCode: 'HN — 001',
       unlockBtn: 'Mở Khóa & Bắt Đầu Trải Nghiệm',
+      continueBtn: 'Tiếp tục khám phá di tích →',
+      connectingBtn: 'Đang kết nối không gian di sản...',
+      activatedBtn: '✓ Vé di sản đã kích hoạt',
       securityFooter: 'Thanh toán bảo mật · Không cần tải app'
     },
     map: {
@@ -98,6 +101,9 @@ export const TRANSLATIONS = {
       collectionTag: 'VAN MIEU COLLECTION',
       collectionCode: 'HN — 001',
       unlockBtn: 'Unlock & Begin Audio Tour',
+      continueBtn: 'Continue exploring →',
+      connectingBtn: 'Connecting to your heritage experience...',
+      activatedBtn: '✓ Your heritage pass is activated',
       securityFooter: 'Secure checkout · No app download needed'
     },
     map: {
@@ -162,7 +168,7 @@ export const TRANSLATIONS = {
       subtitle: '漫步于千年古刹，让古老历史随您的足迹自然娓娓道来。',
       passCategory: '数字文博通行证',
       passTitle: '24小时文庙通票',
-      passPrice: '¥35 CNY',
+      passPrice: '50.000 越南盾',
       passValidity: '激活后即刻生效',
       feat1: 'GPS语音导览',
       feat2: '6大神道古迹',
@@ -170,6 +176,9 @@ export const TRANSLATIONS = {
       collectionTag: '河内文庙典藏系列',
       collectionCode: 'HN — 001',
       unlockBtn: '解锁通行证 · 开启语音之旅',
+      continueBtn: '继续探索古迹 →',
+      connectingBtn: '正在连接文化遗产体验...',
+      activatedBtn: '✓ 文博通行证已激活',
       securityFooter: '安全便捷 · 无需下载任何应用程序'
     },
     map: {
@@ -203,7 +212,7 @@ export const TRANSLATIONS = {
       title: '我的数字通票',
       subtitle: '可在全景区内无限次收听高品质文博讲解音频',
       cardTitle: '24小时文庙通票',
-      price: '¥35 CNY',
+      price: '50.000 越南盾',
       timeRemaining: '有效剩余时间',
       featuresTitle: '已激活特权',
       featGps: 'GPS位置智能感应触发语音',
@@ -242,6 +251,9 @@ export const TRANSLATIONS = {
       collectionTag: '文廟コレクション',
       collectionCode: 'HN — 001',
       unlockBtn: 'パスを有効化して音声ツアーを開始',
+      continueBtn: '史跡の探索を続ける →',
+      connectingBtn: '遺産体験に接続しています...',
+      activatedBtn: '✓ 遺産パスが有効になりました',
       securityFooter: '安心の決済 · アプリダウンロード不要'
     },
     map: {
