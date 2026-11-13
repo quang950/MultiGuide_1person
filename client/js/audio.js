@@ -560,7 +560,7 @@ export class AudioEngine {
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
       try {
         if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.startsWith('blob:')) {
-          await this.loadAudioForPoi(this.currentPoiId);
+          if (!await this.loadAudioForPoi(this.currentPoiId)) return;
         }
         await this.audioElement.play();
         this.updatePlayPauseButtonUI(true);
