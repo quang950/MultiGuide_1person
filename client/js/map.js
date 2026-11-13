@@ -1714,7 +1714,7 @@ export class MapManager {
 
       if (textSpan) {
 
-        textSpan.textContent = lang === 'en' ? 'GPS audio on' : lang === 'ja' ? 'GPS音声ガイド稼働中' : 'Âm thanh GPS đang bật';
+        textSpan.textContent = lang === 'en' ? 'GPS audio on' : lang === 'ja' ? 'GPS音声ガイド稼働中' : lang === 'zh' ? 'GPS语音导览已开启' : 'Âm thanh GPS đang bật';
 
       }
 
@@ -1724,7 +1724,7 @@ export class MapManager {
 
       if (textSpan) {
 
-        textSpan.textContent = lang === 'en' ? 'GPS audio off' : lang === 'ja' ? 'GPS音声ガイド停止中' : 'Âm thanh GPS đang tắt';
+        textSpan.textContent = lang === 'en' ? 'GPS audio off' : lang === 'ja' ? 'GPS音声ガイド停止中' : lang === 'zh' ? 'GPS语音导览已关闭' : 'Âm thanh GPS đang tắt';
 
       }
 
