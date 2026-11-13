@@ -10,6 +10,8 @@ import { CONFIG } from './config.js';
 
 import { store } from './state.js';
 
+import { t } from './i18n.js';
+
 import { apiService } from './api.js';
 
 import { geoService } from './geo.js';
@@ -1678,11 +1680,7 @@ export class MapManager {
 
       if (toast && toastText) {
 
-        toastText.textContent = this.isAutoPlayAudio
-
-          ? (lang === 'en' ? '🎙️ GPS Auto-play: ENABLED' : lang === 'ja' ? '🎙️ GPS自動音声ガイド: 有効' : '🎙️ Tự động thuyết minh GPS: ĐÃ BẬT')
-
-          : (lang === 'en' ? '⏸️ GPS Auto-play: DISABLED' : lang === 'ja' ? '⏸️ GPS自動音声ガイド: 停止中' : '⏸️ Tự động thuyết minh GPS: ĐÃ TẮT');
+        toastText.textContent = `${this.isAutoPlayAudio ? '🎙️' : '⏸️'} ${t(this.isAutoPlayAudio ? 'map.gpsAudioOn' : 'map.gpsAudioOff', lang)}`;
 
         toast.classList.add('is-visible');
 
@@ -1714,7 +1712,7 @@ export class MapManager {
 
       if (textSpan) {
 
-        textSpan.textContent = lang === 'en' ? 'GPS audio on' : lang === 'ja' ? 'GPS音声ガイド稼働中' : lang === 'zh' ? 'GPS语音导览已开启' : 'Âm thanh GPS đang bật';
+        textSpan.textContent = t('map.gpsAudioOn', lang);
 
       }
 
@@ -1724,7 +1722,7 @@ export class MapManager {
 
       if (textSpan) {
 
-        textSpan.textContent = lang === 'en' ? 'GPS audio off' : lang === 'ja' ? 'GPS音声ガイド停止中' : lang === 'zh' ? 'GPS语音导览已关闭' : 'Âm thanh GPS đang tắt';
+        textSpan.textContent = t('map.gpsAudioOff', lang);
 
       }
 
