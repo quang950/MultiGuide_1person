@@ -3,7 +3,7 @@
  * Chiến lược: Network-First cho HTML/JS/CSS (luôn lấy bản mới nhất trên Vercel),
  * Fallback sang Cache Storage khi mất sóng / offline ngoài thực địa di tích.
  */
-const CACHE_NAME = 'multiguide-v4.7';
+const CACHE_NAME = 'multiguide-v4.8';
 
 const STATIC_ASSETS = [
   './',
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   './css/admin.css?v=3.2',
   './js/app.js?v=2.9',
   './js/admin.js?v=3.2',
+  './js/admin-translations.js',
   './js/i18n.js',
   './js/config.js',
   './js/state.js',
