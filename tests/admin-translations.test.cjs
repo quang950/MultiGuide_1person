@@ -8,6 +8,13 @@ const save = vm.runInNewContext(source.replace('export async function', 'async f
 const response = (status, data = {}) => ({status, ok:status >= 200 && status < 300, json:async()=>data});
 const generateContent = (topic, lang) => ({title:topic, script:lang === 'zh' ? '' : 'Narration'});
 
+test('An optional empty Chinese translation is skipped instead of sending an invalid POST', async () => {
+  const sent = [];
+  await save({poiId:'poi', drafts:{}, topic:'New POI', generateContent,
+    request:async(url, options) => {sent.push(JSON.parse(options.body).language_code); return response(201,{id:'saved'});}});
+  assert.deepEqual(sent, ['vi','en','ja']);
+});
+
 test('422 and 500 responses must reject the save operation', async () => {
   for (const status of [422,500]) {
     await assert.rejects(save({poiId:'poi', drafts:{vi:{id:'vi'}}, topic:'POI', generateContent,
@@ -21,3 +28,7 @@ test('A failed conflict-recovery PUT is reported, not treated as success', async
     request:async()=>[response(409),response(200,[{id:'existing',languageCode:'vi'}]),response(500)][calls++]}), /HTTP 500/);
 });
 
+test('An existing Chinese translation cannot be silently cleared', async () => {
+  await assert.rejects(save({poiId:'poi', drafts:{zh:{id:'existing-zh'}}, topic:'POI', generateContent,
+    request:async()=>response(200)}), /ZH:/);
+});
