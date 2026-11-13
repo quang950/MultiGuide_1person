@@ -82,6 +82,24 @@ function POI_ID(stop) {
   return ['c1875fb2-84ad-4a5a-936a-173fdbf4f7f3', '3ede2134-c305-4270-9413-39c9743f9cb8'][stop - 1];
 }
 
+test('Selecting another pin during fade immediately changes the current selection', async () => {
+  const requested = [];
+  const {audioEngine, elements} = engine(async id => {
+    requested.push(id);
+    return {language:'vi', title:'B', audioUrl:'b.mp3'};
+  }, 'vi');
+  audioEngine.audioElement.paused = false;
+  audioEngine.audioElement.currentTime = 1;
+  const first = audioEngine.playPoi(1);
+  const second = audioEngine.playPoi(2);
+  assert.equal(audioEngine.currentPoiId, 2);
+  assert.equal(elements.sheetPoiTitle.textContent, 'Khuê Văn Các');
+  await Promise.all([first, second]);
+  assert.deepEqual(requested, [POI_ID(2)]);
+  assert.equal(audioEngine.audioElement.src, 'b.mp3');
+  assert.equal(audioEngine.audioElement.paused, false);
+});
+
 test('Chinese narration stays Chinese when the API falls back to English', async () => {
   const {audioEngine, POI_STORIES} = engine({language:'en', title:'English fallback', audioUrl:'https://example.com/en.mp3'});
   for (let stop=1;stop<=6;stop++) {
