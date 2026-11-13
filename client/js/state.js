@@ -5,12 +5,18 @@ import { CONFIG } from './config.js?v=3.6';
 
 class StateStore {
   constructor() {
+    const token = localStorage.getItem('mg_access_token') || null;
+    let savedPass = null;
+    try {
+      const saved = JSON.parse(localStorage.getItem('mg_pass_data') || 'null');
+      if (token && saved?.token === token) savedPass = saved.data;
+    } catch { /* Ignore corrupted or old cached pass metadata. */ }
     this.state = {
       apiBaseUrl: CONFIG.API_BASE_URL,
       areaCode: CONFIG.DEFAULT_AREA_CODE,
       areaData: null,
-      accessToken: localStorage.getItem('mg_access_token') || null,
-      passData: null,
+      accessToken: token,
+      passData: savedPass,
       userLocation: {
         lat: CONFIG.MAP_CENTER.lat,
         lng: CONFIG.MAP_CENTER.lng,
