@@ -55,10 +55,14 @@ class StateStore {
   }
 
   setAccessToken(token, passData = null) {
+    if (token && token === this.state.accessToken && !passData) passData = this.state.passData;
     if (token) {
       localStorage.setItem('mg_access_token', token);
+      if (passData) localStorage.setItem('mg_pass_data', JSON.stringify({ token, data: passData }));
+      else localStorage.removeItem('mg_pass_data');
     } else {
       localStorage.removeItem('mg_access_token');
+      localStorage.removeItem('mg_pass_data');
     }
     this.set({ accessToken: token, passData });
   }
