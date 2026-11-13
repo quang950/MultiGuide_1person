@@ -73,6 +73,9 @@ export const TRANSLATIONS = {
       btnDownload: 'Tải trước nội dung Offline',
       btnDownloadDone: '✓ Đã lưu Offline thành công',
       btnRefresh: 'Làm mới trạng thái vé',
+      statusActive: 'ĐANG HIỆU LỰC',
+      statusExpired: 'HẾT HẠN / KHÔNG HỢP LỆ',
+      statusUnknown: 'CHƯA XÁC MINH',
       btnLogout: 'Đăng xuất vé / Về màn chào đón'
     },
     modal: {
@@ -148,6 +151,9 @@ export const TRANSLATIONS = {
       btnDownload: 'Download offline audio pack',
       btnDownloadDone: '✓ Offline pack saved successfully',
       btnRefresh: 'Refresh pass status',
+      statusActive: 'ACTIVE',
+      statusExpired: 'EXPIRED / INVALID',
+      statusUnknown: 'NOT VERIFIED',
       btnLogout: 'Exit Pass / Return to Welcome'
     },
     modal: {
@@ -223,6 +229,9 @@ export const TRANSLATIONS = {
       btnDownload: '离线下载语音资源包',
       btnDownloadDone: '✓ 离线资源包已成功缓存',
       btnRefresh: '刷新通票状态',
+      statusActive: '有效',
+      statusExpired: '已过期或无效',
+      statusUnknown: '尚未验证',
       btnLogout: '退出通行证 / 返回欢迎页'
     },
     modal: {
@@ -298,6 +307,9 @@ export const TRANSLATIONS = {
       btnDownload: 'オフライン音声を事前保存',
       btnDownloadDone: '✓ オフライン保存完了',
       btnRefresh: 'パス状態を更新',
+      statusActive: '有効',
+      statusExpired: '期限切れ / 無効',
+      statusUnknown: '未確認',
       btnLogout: 'パスを終了 / ようこそ画面へ'
     },
     modal: {

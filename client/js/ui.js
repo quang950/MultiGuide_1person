@@ -539,21 +539,20 @@ export function initPassCountdown() {
   const codeEl = document.getElementById('passCardCode');
   if (!clockEl) return;
 
-  const passData = store.get().passData;
-  if (codeEl) {
-    codeEl.textContent = (passData && passData.passId) ? passData.passId : 'HN-VM-2026-PASS';
-  }
-
-  // Lấy mốc thời gian hết hạn hoặc mặc định 24h kể từ khi tải
-  let expiresTimestamp = passData && passData.expiresAt ? new Date(passData.expiresAt).getTime() : null;
-  if (!expiresTimestamp || isNaN(expiresTimestamp)) {
-    // 24 tiếng kể từ bây giờ
-    expiresTimestamp = Date.now() + 24 * 3600 * 1000 - 15000;
-  }
-
   const updateClock = () => {
+    const { passData, accessToken } = store.get();
+    if (codeEl) codeEl.textContent = passData?.passId || passData?.id || '—';
+    const expiresTimestamp = Date.parse(passData?.expiresAt);
     const now = Date.now();
-    const diff = Math.max(0, expiresTimestamp - now);
+    const knownExpiry = Number.isFinite(expiresTimestamp);
+    const expired = !accessToken || (knownExpiry && expiresTimestamp <= now) || passData?.status === 'revoked';
+    const badge = document.querySelector('.royal-pass-status-badge');
+    if (badge) badge.textContent = t(expired ? 'passTab.statusExpired' : knownExpiry ? 'passTab.statusActive' : 'passTab.statusUnknown');
+    if (!knownExpiry && !expired) {
+      clockEl.textContent = '--:--:--';
+      return;
+    }
+    const diff = expired ? 0 : Math.max(0, expiresTimestamp - now);
 
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
