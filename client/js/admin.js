@@ -4,6 +4,7 @@
  */
 import { CONFIG } from './config.js?v=5.0';
 import { POI_STORIES } from './audio.js';
+import { savePoiTranslations } from './admin-translations.js';
 
 const API_BASE = CONFIG.API_BASE_URL;
 
@@ -1980,9 +1981,11 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
         if (!poiRes.ok) throw new Error('Không thể tạo POI.');
         const createdPoi = await poiRes.json();
         savedPoiId = createdPoi.id;
+        // Keep the created ID if a later translation fails, so retry does not create a duplicate POI.
+        document.getElementById('editingPoiId').value = savedPoiId;
       } else {
         // Cập nhật POI
-        await adminFetch(`/admin/pois/${editingId}`, {
+        const poiRes = await adminFetch(`/admin/pois/${editingId}`, {
           method: 'PUT',
           body: JSON.stringify({
             lat,
@@ -1993,55 +1996,21 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
             is_active: true
           })
         });
+        if (!poiRes.ok) {
+          const problem = await poiRes.json().catch(() => ({}));
+          throw new Error(problem.detail || `Không thể cập nhật POI (HTTP ${poiRes.status}).`);
+        }
       }
 
       // Lưu bản dịch cho từng ngôn ngữ (tự động điền bản dịch chuẩn nếu để trống)
       const topicForSave = document.getElementById('poiTitleInput').value.trim() || 'Điểm di tích';
-      for (const lang of ['vi', 'en', 'zh', 'ja']) {
-        const draft = currentPoiTranslations[lang] || {};
-        const smartFallback = generateSmartHeritageContent(topicForSave, lang);
-        let title = (draft.title || '').trim() || smartFallback.title;
-        let desc = (draft.description || '').trim() || (draft.summary || '').trim() || smartFallback.script;
-
-        try {
-          if (draft.id) {
-            await adminFetch(`/admin/pois/${savedPoiId}/translations/${draft.id}`, {
-              method: 'PUT',
-              body: JSON.stringify({
-                title: title,
-                description: desc
-              })
-            });
-          } else {
-            const transRes = await adminFetch(`/admin/pois/${savedPoiId}/translations`, {
-              method: 'POST',
-              body: JSON.stringify({
-                language_code: lang,
-                title: title,
-                description: desc
-              })
-            });
-            if (transRes.status === 409) {
-              const listRes = await adminFetch(`/admin/pois/${savedPoiId}/translations`);
-              if (listRes.ok) {
-                const existingList = await listRes.json();
-                const found = existingList.find(t => (t.languageCode || t.language_code) === lang);
-                if (found) {
-                  await adminFetch(`/admin/pois/${savedPoiId}/translations/${found.id}`, {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                      title: title,
-                      description: desc
-                    })
-                  });
-                }
-              }
-            }
-          }
-        } catch (tErr) {
-          console.warn(`Lỗi cập nhật bản dịch ${lang}:`, tErr);
-        }
-      }
+      await savePoiTranslations({
+        poiId: savedPoiId,
+        drafts: currentPoiTranslations,
+        topic: topicForSave,
+        generateContent: generateSmartHeritageContent,
+        request: adminFetch
+      });
 
       alert('Đã lưu thông tin điểm POI thành công!');
       closeModal();
