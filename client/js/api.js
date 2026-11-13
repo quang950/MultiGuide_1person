@@ -47,7 +47,11 @@ export const apiService = {
     const res = await fetch(`${this.baseUrl}/passes/current`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
-    if (!res.ok) return null;
+    if (res.status === 401 || res.status === 403) {
+      store.setAccessToken(null);
+      return null;
+    }
+    if (!res.ok) throw new Error(`Lỗi kiểm tra vé (${res.status})`);
     return await res.json();
   },
 
