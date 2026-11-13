@@ -98,14 +98,25 @@ export function initPassCheckout() {
   const btnActivate = document.getElementById('btnActivatePass');
   if (!btnActivate) return;
 
-  // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy (bỏ qua token demo nếu có)
+  // Restore the original expiry, including an explicitly marked offline demo pass.
   let currentToken = store.get().accessToken;
   if (currentToken && currentToken.startsWith('mg_demo_pass_')) {
-    store.setAccessToken(null);
-    currentToken = null;
+    const cached = store.get().passData;
+    if (!cached?.isOfflineDemo || !(Date.parse(cached.expiresAt) > Date.now())) {
+      store.setAccessToken(null);
+      currentToken = null;
+    }
   }
 
   setPassCheckoutLabel(currentToken ? 'arrival.continueBtn' : 'arrival.unlockBtn');
+  if (currentToken && !currentToken.startsWith('mg_demo_pass_')) {
+    apiService.getCurrentPass().then(() => {
+      const key = btnActivate.querySelector('.btn-text')?.getAttribute('data-i18n');
+      if (key === 'arrival.continueBtn' || key === 'arrival.unlockBtn') {
+        setPassCheckoutLabel(store.get().accessToken ? 'arrival.continueBtn' : 'arrival.unlockBtn');
+      }
+    }).catch(() => { /* Keep cached metadata when the connection is unavailable. */ });
+  }
 
   btnActivate.addEventListener('click', async () => {
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
