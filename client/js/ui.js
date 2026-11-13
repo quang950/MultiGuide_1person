@@ -745,7 +745,7 @@ export function transitionToArrivalScreen() {
   } catch {}
 
   // 2. Xóa access token của khách trong localStorage
-  localStorage.removeItem('mg_access_token');
+  store.setAccessToken(null);
   localStorage.removeItem('mg_pass_code');
   localStorage.removeItem('mg_pass_expires_at');
   localStorage.removeItem('mg_admin_token');
