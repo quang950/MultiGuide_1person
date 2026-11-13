@@ -42,3 +42,17 @@ test('Corrupt or mismatched cached metadata does not attach to the current token
   }
 });
 
+test('A restored expired pass shows zero instead of another 24 hours', () => {
+  const s=session();s.store.setAccessToken('token',{expiresAt:new Date(Date.now()-60000).toISOString()});
+  vm.runInContext('initPassCountdown()',s.uiContext);
+  assert.equal(s.clock.textContent,'00:00:00');
+  assert.equal(s.badge.textContent,'passTab.statusExpired');
+});
+
+test('A token without expiry metadata is shown as unknown', () => {
+  const s=session();s.store.setAccessToken('token');
+  vm.runInContext('initPassCountdown()',s.uiContext);
+  assert.equal(s.clock.textContent,'--:--:--');
+  assert.equal(s.badge.textContent,'passTab.statusUnknown');
+});
+
