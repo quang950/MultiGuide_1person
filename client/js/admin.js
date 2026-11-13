@@ -1981,6 +1981,8 @@ const btnAiGen = document.getElementById('btnAiGenSummary');
         if (!poiRes.ok) throw new Error('Không thể tạo POI.');
         const createdPoi = await poiRes.json();
         savedPoiId = createdPoi.id;
+        // Keep the created ID if a later translation fails, so retry does not create a duplicate POI.
+        document.getElementById('editingPoiId').value = savedPoiId;
       } else {
         // Cập nhật POI
         const poiRes = await adminFetch(`/admin/pois/${editingId}`, {
