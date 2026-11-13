@@ -540,8 +540,8 @@ export class AudioEngine {
         this.setupSpeedControls();
     this.syncPoiContent(this.currentPoiId);
         const wasPlaying = this.audioElement && !this.audioElement.paused;
-        this.loadAudioForPoi(this.currentPoiId).then(() => {
-          if (wasPlaying && this.audioElement && !this.isUserPaused) {
+        this.loadAudioForPoi(this.currentPoiId).then((loaded) => {
+          if (loaded && wasPlaying && this.audioElement && !this.isUserPaused) {
             this.audioElement.play().catch(() => {});
           }
         });
