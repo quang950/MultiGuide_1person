@@ -620,12 +620,25 @@ function initPassActions() {
 
   if (btnRefresh && !btnRefresh._hasListener) {
     btnRefresh._hasListener = true;
-    btnRefresh.addEventListener('click', () => {
-      btnRefresh.innerHTML = '<span>⏳ Đang kiểm tra hệ thống...</span>';
-      setTimeout(() => {
-        btnRefresh.innerHTML = '<span>✓ Vé di sản đang kích hoạt</span>';
+    btnRefresh.addEventListener('click', async () => {
+      const label = btnRefresh.querySelector('[data-i18n]');
+      const show = key => {
+        if (!label) return;
+        label.setAttribute('data-i18n', key);
+        label.textContent = t(key);
+      };
+      btnRefresh.disabled = true;
+      show('passTab.btnCheckingPass');
+      try {
+        const pass = await apiService.getCurrentPass();
+        show(pass && Date.parse(pass.expiresAt) > Date.now() && pass.status !== 'revoked'
+          ? 'passTab.btnPassActive' : 'passTab.btnPassInvalid');
+      } catch {
+        show('passTab.btnPassCheckFailed');
+      } finally {
+        btnRefresh.disabled = false;
         initPassCountdown();
-      }, 800);
+      }
     });
   }
 
