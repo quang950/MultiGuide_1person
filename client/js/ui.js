@@ -608,10 +608,18 @@ function initPassActions() {
 
   if (btnDownload && !btnDownload._hasListener) {
     btnDownload._hasListener = true;
+    const label = btnDownload.querySelector('[data-i18n]');
+    const show = key => {
+      if (!label) return;
+      label.setAttribute('data-i18n', key);
+      label.textContent = t(key);
+    };
     btnDownload.addEventListener('click', () => {
-      btnDownload.innerHTML = '<span>⏳ Đang đồng bộ tài nguyên di sản...</span>';
+      btnDownload.disabled = true;
+      show('passTab.btnDownloading');
       setTimeout(() => {
-        btnDownload.innerHTML = '<span>✓ Đã lưu Offline thành công (PWA)</span>';
+        show('passTab.btnDownloadDone');
+        btnDownload.disabled = false;
         btnDownload.style.backgroundColor = '#E8F5E9';
         btnDownload.style.color = '#2E7D32';
       }, 1000);
