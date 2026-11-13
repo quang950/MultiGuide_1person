@@ -122,9 +122,29 @@ export function initPassCheckout() {
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
     unlockAudioContextSilently();
 
+    const cachedPass = store.get().passData;
+    if (store.get().accessToken?.startsWith('mg_demo_pass_') && cachedPass?.isOfflineDemo && Date.parse(cachedPass.expiresAt) > Date.now()) {
+      transitionToMainApp();
+      return;
+    }
+
     // Nếu đã có token vé thật từ trước, chuyển thẳng sang màn hình chính
     if (store.get().accessToken && !store.get().accessToken.startsWith('mg_demo_pass_')) {
-      transitionToMainApp();
+      btnActivate.disabled = true;
+      try {
+        const pass = await apiService.getCurrentPass();
+        if (pass && Date.parse(pass.expiresAt) > Date.now() && pass.status !== 'revoked') transitionToMainApp();
+        else {
+          store.setAccessToken(null);
+          setPassCheckoutLabel('arrival.unlockBtn');
+        }
+      } catch {
+        const cached = store.get().passData;
+        if (cached && Date.parse(cached.expiresAt) > Date.now()) transitionToMainApp();
+        else setPassCheckoutLabel('passTab.btnPassCheckFailed');
+      } finally {
+        btnActivate.disabled = false;
+      }
       return;
     }
 
