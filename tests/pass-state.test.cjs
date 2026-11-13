@@ -56,3 +56,45 @@ test('A token without expiry metadata is shown as unknown', () => {
   assert.equal(s.badge.textContent,'passTab.statusUnknown');
 });
 
+test('Refresh calls the API and updates both the saved expiry and the countdown', async () => {
+  const s=session();s.store.setAccessToken('token',{expiresAt:new Date(Date.now()-1000).toISOString()});
+  let requestedUrl;
+  const expiresAt=new Date(Date.now()+7200000).toISOString();
+  s.apiContext.fetch=async url=>{requestedUrl=url;return {ok:true,status:200,json:async()=>({id:'pass-id',status:'active',expiresAt})};};
+  vm.runInContext('initPassActions()',s.uiContext);
+  await s.refreshButton.click();
+  assert.equal(requestedUrl,'https://api.test/passes/current');
+  assert.equal(s.refreshLabel.key,'passTab.btnPassActive');
+  assert.equal(new s.StateStore().get().passData.expiresAt,expiresAt);
+  assert.match(s.clock.textContent,/^01:59:5\d$|^02:00:00$/);
+});
+
+test('A revoked or expired server response clears the saved pass and shows zero', async () => {
+  const s=session();s.store.setAccessToken('token',{expiresAt:'2099-01-01'});
+  s.apiContext.fetch=async()=>({ok:false,status:403});
+  vm.runInContext('initPassActions()',s.uiContext);
+  await s.refreshButton.click();
+  assert.equal(s.refreshLabel.key,'passTab.btnPassInvalid');
+  assert.equal(s.store.get().accessToken,null);
+  assert.equal(s.values.has('mg_pass_data'),false);
+  assert.equal(s.clock.textContent,'00:00:00');
+});
+
+test('Server failures preserve cached expiry and do not report an active pass', async () => {
+  const s=session();s.store.setAccessToken('token',{expiresAt:'2099-01-01'});
+  s.apiContext.fetch=async()=>({ok:false,status:500});
+  vm.runInContext('initPassActions()',s.uiContext);
+  await s.refreshButton.click();
+  assert.equal(s.refreshLabel.key,'passTab.btnPassCheckFailed');
+  assert.equal(s.store.get().passData.expiresAt,'2099-01-01');
+  assert.equal(s.refreshButton.disabled,false);
+});
+
+test('A stale validation response cannot clear a newly purchased pass', async () => {
+  const s=session();s.store.setAccessToken('old');
+  let resolve;s.apiContext.fetch=()=>new Promise(done=>{resolve=done;});
+  const pending=s.apiService.getCurrentPass();
+  s.store.setAccessToken('new',{expiresAt:'2099-01-01'});
+  resolve({ok:false,status:403});await pending;
+  assert.equal(s.store.get().accessToken,'new');
+});
