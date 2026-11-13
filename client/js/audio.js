@@ -591,6 +591,8 @@ export class AudioEngine {
     this.recordPlayProgress(false);
     this.isUserPaused = false;
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
+    this.currentPoiId = poiId;
+    this.syncPoiContent(poiId);
     // 1. Fade-out mượt mà âm thanh đang phát trước khi chuyển sang POI mới (Single Audio Instance)
     if (this.audioElement && !this.audioElement.paused && this.audioElement.currentTime > 0) {
       try {
@@ -613,8 +615,6 @@ export class AudioEngine {
       }
     }
 
-    this.currentPoiId = poiId;
-    this.syncPoiContent(poiId);
     if (requestId !== this.audioRequestId) return;
 
     try {
