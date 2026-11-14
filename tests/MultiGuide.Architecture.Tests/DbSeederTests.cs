@@ -56,6 +56,7 @@ public class DbSeederTests
         Assert.Contains(languages, l => l.Code == "en");
         Assert.Contains(languages, l => l.Code == "zh");
         Assert.Contains(languages, l => l.Code == "ja");
+        Assert.Contains(languages, l => l.Code == "zh");
 
         // Verify Area
         var area = await context.TourAreas.FirstOrDefaultAsync(a => a.Code == "van-mieu");
