@@ -335,8 +335,8 @@
 
 /* Khung Pin bia đá */
 .poi-stele-pin {
-  width: 38px;
-  height: 48px;
+  width: 52px;
+  height: 40px;
   filter: drop-shadow(0 4px 10px rgba(24, 24, 22, 0.14));
   transition: transform var(--transition-fast);
 }

@@ -853,8 +853,12 @@ export class AudioEngine {
       const totalCount = window.HERITAGE_POIS?.length || 6;
       const orderStr = String(orderNum).padStart(2, '0');
       const totalStr = String(totalCount).padStart(2, '0');
+      const currentArea = store.get().areaData;
+      const getPrefixFn = (typeof window !== 'undefined' && window.getAreaStationPrefix) ? window.getAreaStationPrefix : (a => 'POI');
+      const prefix = getPrefixFn(currentArea || { code: store.get().areaCode });
+      const stationCode = `[${prefix}-${orderStr}]`;
       const poiTitle = (lang === 'en' && targetPoi.titleEn) ? targetPoi.titleEn : (targetPoi.title || 'Điểm di tích');
-      const poiSubtitle = `Điểm ${orderStr}/${totalStr} · Thuyết minh di tích`;
+      const poiSubtitle = `${stationCode} · Điểm ${orderStr}/${totalStr} · Thuyết minh di tích`;
       const poiDesc = targetPoi.description || targetPoi.summary || 'Chào mừng bạn đến với điểm dừng thuyết minh di sản.';
       let quoteText = '';
       if (poiDesc) {

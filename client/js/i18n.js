@@ -18,7 +18,7 @@ export const TRANSLATIONS = {
       subtitle: 'Thong thả dạo bước. Để những câu chuyện lịch sử ngàn năm tự tìm đến bạn trên từng bước chân.',
       passCategory: 'THẺ DI SẢN SỐ',
       passTitle: 'Vé Tham Quan 24 Giờ',
-      passPrice: '50.000 VNĐ',
+      passPrice: '70.000 VNĐ',
       passValidity: 'Kích hoạt khi bắt đầu',
       feat1: 'Thuyết minh GPS',
       feat2: '6 điểm Thần đạo',
@@ -80,6 +80,43 @@ export const TRANSLATIONS = {
       exitMessage: 'Bạn có muốn đăng xuất vé và quay lại màn hình chào đón ban đầu không?',
       confirm: 'Đồng ý',
       cancel: 'Hủy'
+    },
+    areaPicker: {
+      title: 'Chọn Khu Di Tích Thuyết Minh',
+      subtitle: 'Khám phá các di tích lịch sử hoặc tìm địa điểm gần bạn',
+      badgeHint: 'Khu Di Tích Thuyết Minh',
+      nearMeBtn: '🎯 Gần Bạn',
+      changeAreaBtn: 'Đổi Khu ▾',
+      changeAreaFromStops: 'Đổi Khu Di Tích',
+      myLocationPrefix: '📍 Vị trí của bạn: ',
+      gpsScanBtn: 'Định vị GPS & Tìm di tích gần bạn',
+      gpsScanBtnActive: '⏳ Đang quét vị trí GPS...',
+      gpsScanBtnDone: '✓ Đã cập nhật GPS gần bạn',
+      gpsScanBtnRetry: '🎯 Thử lại định vị GPS',
+      radiusAll: 'Tất cả',
+      radius5km: 'Trong 5 km',
+      radius15km: 'Trong 15 km',
+      radius50km: 'Trong 50 km',
+      ticketPrefix: 'Vé: ',
+      selected: '✓ Đang chọn',
+      selectThis: 'Chọn khu này',
+      switchThis: 'Chuyển khu này',
+      nearYou: '🟢 Ngay gần bạn',
+      distancePrefix: 'Cách ~',
+      loading: 'Đang tải danh sách khu di tích...',
+      emptyRadius: 'Không tìm thấy khu di tích nào trong bán kính đã chọn.',
+      resetRadius: 'Xem tất cả di tích',
+      gpsError: 'Không thể lấy vị trí GPS. Vui lòng cho phép quyền truy cập vị trí trên trình duyệt.'
+    },
+    suggestion: {
+      badgeNotUnlocked: '🏛️ KHU DI TÍCH CHƯA MỞ KHÓA',
+      poiListTitle: '🎧 CÁC ĐIỂM SẼ ĐƯỢC THUYẾT MINH',
+      loadingPois: 'Đang tải các điểm thuyết minh...',
+      priceBoxTitle: 'GIÁ VÉ THAM QUAN',
+      ttlHoursPrefix: 'Hiệu lực ',
+      ttlHoursSuffix: ' giờ',
+      btnDismiss: 'Để Sau',
+      btnChangeAndGoToBuy: 'Thay Đổi & Trở Về Giao Diện Mua Vé'
     }
   },
 
@@ -155,6 +192,43 @@ export const TRANSLATIONS = {
       exitMessage: 'Do you want to exit your active pass and return to the welcome screen?',
       confirm: 'Exit',
       cancel: 'Cancel'
+    },
+    areaPicker: {
+      title: 'Select Heritage Site',
+      subtitle: 'Explore historical sites or discover heritage near you',
+      badgeHint: 'Heritage Site Tour',
+      nearMeBtn: '🎯 Near Me',
+      changeAreaBtn: 'Change ▾',
+      changeAreaFromStops: 'Change Heritage Site',
+      myLocationPrefix: '📍 Your location: ',
+      gpsScanBtn: 'Scan GPS & Find nearby heritage',
+      gpsScanBtnActive: '⏳ Scanning GPS location...',
+      gpsScanBtnDone: '✓ GPS location updated',
+      gpsScanBtnRetry: '🎯 Retry GPS Scan',
+      radiusAll: 'All',
+      radius5km: 'Within 5 km',
+      radius15km: 'Within 15 km',
+      radius50km: 'Within 50 km',
+      ticketPrefix: 'Pass: ',
+      selected: '✓ Selected',
+      selectThis: 'Select this',
+      switchThis: 'Switch to this',
+      nearYou: '🟢 Near you',
+      distancePrefix: 'Distance ~',
+      loading: 'Loading heritage sites...',
+      emptyRadius: 'No heritage sites found within selected radius.',
+      resetRadius: 'View all sites',
+      gpsError: 'Unable to acquire GPS location. Please allow location access in your browser.'
+    },
+    suggestion: {
+      badgeNotUnlocked: '🏛️ HERITAGE SITE LOCKED',
+      poiListTitle: '🎧 AUDIO GUIDE STOPS INCLUDED',
+      loadingPois: 'Loading audio stops...',
+      priceBoxTitle: 'TICKET PRICE',
+      ttlHoursPrefix: 'Valid for ',
+      ttlHoursSuffix: ' hours',
+      btnDismiss: 'Later',
+      btnChangeAndGoToBuy: 'Change & Return to Ticket Screen'
     }
   },
 
@@ -230,6 +304,43 @@ export const TRANSLATIONS = {
       exitMessage: '您确定要退出当前通行证并返回欢迎页面吗？',
       confirm: '确定',
       cancel: '取消'
+    },
+    areaPicker: {
+      title: '选择语音导览古迹',
+      subtitle: '探索历史遗迹或发现附近的文化遗产',
+      badgeHint: '古迹语音导览',
+      nearMeBtn: '🎯 附近古迹',
+      changeAreaBtn: '更换 ▾',
+      changeAreaFromStops: '更换景区',
+      myLocationPrefix: '📍 您的位置: ',
+      gpsScanBtn: 'GPS定位并查找附近古迹',
+      gpsScanBtnActive: '⏳ 正在扫描GPS定位...',
+      gpsScanBtnDone: '✓ GPS定位已更新',
+      gpsScanBtnRetry: '🎯 重试GPS定位',
+      radiusAll: '全部',
+      radius5km: '5公里以内',
+      radius15km: '15公里以内',
+      radius50km: '50公里以内',
+      ticketPrefix: '门票: ',
+      selected: '✓ 当前选择',
+      selectThis: '选择此景区',
+      switchThis: '切换到此景区',
+      nearYou: '🟢 就在附近',
+      distancePrefix: '距离 ~',
+      loading: '正在加载古迹列表...',
+      emptyRadius: '所选范围内未找到古迹景区。',
+      resetRadius: '查看全部古迹',
+      gpsError: '无法获取GPS位置，请开启浏览器定位权限。'
+    },
+    suggestion: {
+      badgeNotUnlocked: '🏛️ 尚未解锁此景区',
+      poiListTitle: '🎧 购票后包含的语音导览点',
+      loadingPois: '正在加载语音讲解点...',
+      priceBoxTitle: '门票价格',
+      ttlHoursPrefix: '有效期 ',
+      ttlHoursSuffix: ' 小时',
+      btnDismiss: '稍后再说',
+      btnChangeAndGoToBuy: '更换并返回购票界面'
     }
   },
 
@@ -305,6 +416,43 @@ export const TRANSLATIONS = {
       exitMessage: 'パスを終了して最初のようこそ画面に戻りますか？',
       confirm: '終了する',
       cancel: 'キャンセル'
+    },
+    areaPicker: {
+      title: '史跡を選択',
+      subtitle: '歴史遺産を探索、または近くの史跡を検出',
+      badgeHint: '史跡音声ガイド',
+      nearMeBtn: '🎯 近くの史跡',
+      changeAreaBtn: '変更 ▾',
+      changeAreaFromStops: '史跡を変更',
+      myLocationPrefix: '📍 現在地: ',
+      gpsScanBtn: 'GPS検出＆近くの史跡を探す',
+      gpsScanBtnActive: '⏳ GPS位置情報をスキャン中...',
+      gpsScanBtnDone: '✓ GPS位置を更新しました',
+      gpsScanBtnRetry: '🎯 GPSを再スキャン',
+      radiusAll: 'すべて',
+      radius5km: '5km以内',
+      radius15km: '15km以内',
+      radius50km: '50km以内',
+      ticketPrefix: 'チケット: ',
+      selected: '✓ 選択中',
+      selectThis: 'この史跡を選択',
+      switchThis: 'この史跡に切替',
+      nearYou: '🟢 近くにあります',
+      distancePrefix: '約 ~',
+      loading: '史跡一覧を読み込み中...',
+      emptyRadius: '指定した範囲内に史跡が見つかりません。',
+      resetRadius: 'すべての史跡を表示',
+      gpsError: 'GPS位置情報を取得できませんでした。ブラウザの位置情報利用を許可してください。'
+    },
+    suggestion: {
+      badgeNotUnlocked: '🏛️ 未アンロックの史跡',
+      poiListTitle: '🎧 音声ガイドに含まれるスポット',
+      loadingPois: '解説スポットを読み込み中...',
+      priceBoxTitle: 'チケット料金',
+      ttlHoursPrefix: '有効期限 ',
+      ttlHoursSuffix: ' 時間',
+      btnDismiss: '後で',
+      btnChangeAndGoToBuy: '変更してチケット購入画面へ'
     }
   }
 };
@@ -385,6 +533,11 @@ export function applyTranslations(lang = null) {
   if (navExplore) navExplore.textContent = t('bottomNav.explore', currentLang);
   if (navStops) navStops.textContent = t('bottomNav.stops', currentLang);
   if (navPass) navPass.textContent = t('bottomNav.pass', currentLang);
+
+  // 7. Đồng bộ danh sách khu di tích và modal nếu có
+  if (typeof window._reRenderAreaList === 'function') {
+    window._reRenderAreaList();
+  }
 }
 
 /**

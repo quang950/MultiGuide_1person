@@ -164,6 +164,490 @@
   transform: scale(0.97);
 }
 
+/* ========================================================
+   ARRIVAL SCREEN: AREA SELECTOR & GPS DISCOVERY
+   ======================================================== */
+.arrival-area-selector {
+  width: 100%;
+  max-width: 390px;
+  margin: 14px auto 0 auto;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(194, 142, 88, 0.32);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 20px rgba(24, 24, 22, 0.07);
+}
+
+.area-selector-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.area-current-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.area-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.area-text-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.area-badge-hint {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #8C827A;
+  font-weight: 600;
+}
+
+.area-selected-name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #181816;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.area-action-btns {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.btn-gps-find-areas {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #F4EFE6;
+  border: 1px solid #D9CFBE;
+  color: #C28E58;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-gps-find-areas:hover {
+  background: #C28E58;
+  color: #FFFFFF;
+}
+
+.btn-change-tour-area {
+  display: inline-flex;
+  align-items: center;
+  background: #181816;
+  border: none;
+  color: #FFFFFF;
+  font-size: 0.76rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-change-tour-area:hover {
+  background: #33312E;
+}
+
+/* Modal Chọn Khu Di Tích */
+.area-picker-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 18, 16, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.area-picker-modal-card {
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  background: #FFFFFF;
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: modalScaleUp 0.22s ease-out;
+}
+
+.area-picker-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 18px 20px 14px 20px;
+  border-bottom: 1px solid #F0ECE1;
+}
+
+.area-picker-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #181816;
+  margin: 0;
+}
+
+.area-picker-subtitle {
+  font-size: 0.78rem;
+  color: #8C827A;
+  margin: 4px 0 0 0;
+}
+
+.area-picker-close-btn {
+  background: #F4EFE6;
+  border: none;
+  font-size: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #55534E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.area-gps-filter-bar {
+  padding: 12px 20px;
+  background: #FAF8F5;
+  border-bottom: 1px solid #F0ECE1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.btn-scan-gps-action {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #C28E58;
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-scan-gps-action:hover {
+  background: #A06F3D;
+}
+
+.gps-radius-filter-pills {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.radius-pill {
+  padding: 4px 10px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  border-radius: 20px;
+  border: 1px solid #D9CFBE;
+  background: #FFFFFF;
+  color: #55534E;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.radius-pill.is-active {
+  background: #181816;
+  color: #FFFFFF;
+  border-color: #181816;
+}
+
+.gps-location-status {
+  padding: 8px 20px;
+  background: #EBF8EE;
+  color: #15803D;
+  font-size: 0.76rem;
+  font-weight: 600;
+  border-bottom: 1px solid #D1F2D9;
+}
+
+.area-list-container {
+  padding: 14px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.area-item-card {
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid #E4DCCF;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.area-item-card:hover {
+  border-color: #C28E58;
+  box-shadow: 0 4px 14px rgba(194, 142, 88, 0.15);
+  transform: translateY(-1px);
+}
+
+.area-item-card.is-current {
+  border-color: #C28E58;
+  background: #FDFBF7;
+  box-shadow: 0 0 0 1.5px #C28E58;
+}
+
+.area-item-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.area-item-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #181816;
+}
+
+.area-item-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: #78716C;
+  flex-wrap: wrap;
+}
+
+.area-distance-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  background: #EBF8EE;
+  color: #15803D;
+}
+
+.area-distance-badge.is-near {
+  background: #FEF3C7;
+  color: #B45309;
+}
+
+.btn-select-this-area {
+  background: #F4EFE6;
+  border: 1px solid #D9CFBE;
+  color: #C28E58;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.area-item-card.is-current .btn-select-this-area,
+.btn-select-this-area.is-current {
+  background: #C28E58 !important;
+  color: #FFFFFF !important;
+  border-color: #C28E58 !important;
+}
+
+.btn-select-this-area.is-unlocked {
+  background: #F0FDF4;
+  border-color: #86EFAC;
+  color: #15803D;
+  font-weight: 700;
+}
+.btn-select-this-area.is-unlocked:hover {
+  background: #DCFCE7;
+}
+
+.btn-select-this-area.is-locked-buy {
+  background: #FFF7ED;
+  border-color: #FDBA74;
+  color: #C2410C;
+  font-weight: 700;
+}
+.btn-select-this-area.is-locked-buy:hover {
+  background: #FFEDD5;
+}
+
+/* Widget Chỉnh Bán Kính Quét Vị Trí Hiện Tại (Scan Radius HUD) */
+.user-scan-radius-hud {
+  position: relative;
+  display: inline-flex;
+}
+
+.btn-scan-radius-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid #BFDBFE;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.15), 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #1E3A8A;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  white-space: nowrap;
+}
+
+.btn-scan-radius-pill:hover {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.22);
+}
+
+.btn-scan-radius-pill .scan-radius-icon {
+  font-size: 0.9rem;
+  display: inline-block;
+  animation: pulseScan 2.5s infinite ease-in-out;
+}
+
+@keyframes pulseScan {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.btn-scan-radius-pill .scan-radius-label {
+  color: #64748B;
+  font-weight: 500;
+}
+
+.btn-scan-radius-pill .scan-radius-val {
+  color: #2563EB;
+  font-weight: 700;
+  letter-spacing: -0.2px;
+}
+
+.btn-scan-radius-pill .scan-radius-arrow {
+  font-size: 0.7rem;
+  color: #93C5FD;
+}
+
+.scan-radius-popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  right: 0;
+  width: 250px;
+  background: #FFFFFF;
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 8px 24px rgba(43, 37, 35, 0.18);
+  border: 1px solid #EADBCC;
+  z-index: 1050;
+  text-align: left;
+}
+
+.scan-radius-popover-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2B2523;
+  margin-bottom: 10px;
+}
+
+.btn-close-radius-popover {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  color: #8C827A;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.scan-radius-slider-wrap {
+  margin-bottom: 10px;
+}
+
+.scan-radius-range {
+  width: 100%;
+  accent-color: #2563EB;
+  cursor: pointer;
+}
+
+.scan-radius-slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: #8C827A;
+  margin-top: 2px;
+}
+
+.scan-radius-presets {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.btn-radius-preset {
+  flex: 1;
+  padding: 5px 0;
+  background: #F1F5F9;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-radius-preset.is-active,
+.btn-radius-preset:hover {
+  background: #2563EB;
+  color: #FFFFFF;
+  border-color: #2563EB;
+}
+
+.scan-radius-hint {
+  font-size: 0.68rem;
+  color: #786C64;
+  line-height: 1.35;
+  background: #FDF9F4;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-left: 2px solid #C28E58;
+}
+
 /* Typography di sản nghệ thuật */
 .arrival-intro {
   margin-top: 24px;
@@ -1203,6 +1687,60 @@
   transition: background-color var(--transition-fast), transform var(--transition-fast);
 }
 
+.stops-area-selector-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFFDF9;
+  border: 1px solid #EFE4D6;
+  border-radius: 14px;
+  padding: 10px 14px;
+  margin: 12px 16px 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
+}
+
+.stops-area-selector-bar:hover {
+  background: #FAF3E8;
+  border-color: #C28E58;
+}
+
+.stops-area-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stops-area-icon {
+  font-size: 18px;
+}
+
+.stops-area-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: #382E2B;
+}
+
+.btn-change-area-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #C28E58;
+  color: #FFF;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.btn-change-area-pill:hover {
+  background: #A67543;
+}
+
 .btn-close-tab-view:active {
   transform: scale(0.92);
   background: rgba(24, 24, 22, 0.12);
@@ -2206,4 +2744,136 @@ html.is-admin-preview #btnReturnAdmin {
   background-color: #8E6030 !important;
   color: #FFFFFF !important;
   font-weight: 700 !important;
+}
+
+/* ========================================================
+   FLOATING PROXIMITY BANNER (Ảnh 3 - Gợi ý khi đến gần di tích)
+   ======================================================== */
+.nearby-area-float-banner {
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 440px;
+  background: linear-gradient(135deg, #2D2520 0%, #1A1614 100%);
+  color: #FFFFFF;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 1.5px rgba(194, 142, 88, 0.4);
+  z-index: 9990;
+  padding: 10px 14px;
+  animation: bannerSlideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bannerSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.nearby-area-float-banner .banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nearby-area-float-banner .banner-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  animation: pulseGlow 1.8s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.nearby-area-float-banner .banner-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.nearby-area-float-banner .banner-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #F8EFE4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-area-float-banner .banner-sub {
+  font-size: 11.5px;
+  color: #D5C7B8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nearby-area-float-banner .btn-banner-view {
+  background: #C28E58;
+  color: #FFFFFF;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.nearby-area-float-banner .btn-banner-view:hover {
+  background: #B07A46;
+}
+
+.nearby-area-float-banner .btn-banner-close {
+  background: transparent;
+  border: none;
+  color: #A3968C;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+
+.nearby-area-float-banner .btn-banner-close:hover {
+  color: #FFF;
+}
+
+/* POI Preview Items trong Modal Giới Thiệu */
+.suggestion-poi-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  background: #FAF8F5;
+  border-radius: 6px;
+  font-size: 12.5px;
+  color: #382E2B;
+}
+
+.suggestion-poi-num {
+  font-family: var(--font-serif, serif);
+  font-weight: 700;
+  font-size: 11.5px;
+  color: #C28E58;
+  background: #FFF;
+  border: 1px solid #E8DEC8;
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.suggestion-poi-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
 }

@@ -220,6 +220,10 @@ export class MapManager {
 
     this.userMarker = null;
 
+    this.userScanCircle = null;
+
+    this.scanRadius = 100;
+
     this.isCheckingGeofence = false;
 
     this.lastAutoTriggeredPoiId = null; // Tránh lặp âm thanh và giật popup (Anti-jitter)
@@ -239,84 +243,50 @@ export class MapManager {
   async init(containerId = 'mapCanvas') {
 
     const container = document.getElementById(containerId);
-
     if (!container || this.map) return;
 
+    // Lấy thông tin khu di tích hiện tại từ store (nếu khách đã chọn khu khác từ màn hình ngoài)
+    const currentStore = (typeof store !== 'undefined') ? store.get() : {};
+    const currentAreaCode = currentStore.areaCode || CONFIG.DEFAULT_AREA_CODE || 'van-mieu';
+    const currentAreaData = currentStore.areaData;
 
-
-    const center = [CONFIG.MAP_CENTER.lat, CONFIG.MAP_CENTER.lng];
-
-
+    let center = [CONFIG.MAP_CENTER.lat, CONFIG.MAP_CENTER.lng];
+    if (currentAreaData && currentAreaData.centerLat && currentAreaData.centerLng) {
+      center = [currentAreaData.centerLat, currentAreaData.centerLng];
+    }
 
     // 1. Khởi tạo đối tượng Leaflet Map (tự do kéo di chuyển khắp vùng lân cận)
-
     this.map = L.map(containerId, {
-
       center: center,
-
-      zoom: CONFIG.MAP_CENTER.zoom,
-
+      zoom: CONFIG.MAP_CENTER.zoom || 16.5,
       minZoom: CONFIG.MAP_CENTER.minZoom || 12,
-
       maxZoom: CONFIG.MAP_CENTER.maxZoom || 20,
-
       zoomControl: false,
-
       attributionControl: false
-
     });
-
-
 
     // 2. Nạp Tile Layer Google Maps chuẩn, sắc nét, không watermark, không cần API key
-
     const tileUrl = CONFIG.MAP_TILE_URL || 'https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}';
-
     L.tileLayer(tileUrl, {
-
       subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-
       maxZoom: 20,
-
       attribution: CONFIG.MAP_ATTRIBUTION || '&copy; Google Maps'
-
     }).addTo(this.map);
 
+    // 3. Nếu khu hiện tại là Văn Miếu mặc định và chưa tải backend, render nhanh 6 điểm mẫu
+    if (currentAreaCode === 'van-mieu' && HERITAGE_POIS.length > 0) {
+      this.renderSacredAxis();
+      this.renderPoiMarkers();
+      const poiCoords = HERITAGE_POIS.map(p => [p.lat, p.lng]);
+      this.map.fitBounds(poiCoords, {
+        paddingTopLeft: [40, 115],
+        paddingBottomRight: [40, 105],
+        maxZoom: 18.2
+      });
+    }
 
-
-    // 3. Vẽ đường trục Thần đạo nét đứt màu đồng ngay lập tức (FE-3.2)
-
-    this.renderSacredAxis();
-
-
-
-    // 4. Vẽ ngay các POI Custom Pin Markers lên bản đồ để hiển thị tức thì (FE-3.3)
-
-    this.renderPoiMarkers();
-
-
-
-    // 5. Tự động căn khung hình vừa vặn các POI giữa Header và Bottom controls
-
-    const poiCoords = HERITAGE_POIS.map(p => [p.lat, p.lng]);
-
-    this.map.fitBounds(poiCoords, {
-
-      paddingTopLeft: [40, 115],
-
-      paddingBottomRight: [40, 105],
-
-      maxZoom: 18.2
-
-    });
-
-
-
-    // 2.5 Nạp cập nhật POIs từ Backend API ngầm (không chặn giao diện hiển thị)
-
-    this.loadPoisFromBackend().catch(() => {});
-
-
+    // 4. Nạp chính thức POIs của khu di tích đã chọn từ Backend API
+    await this.loadPoisFromBackend(currentAreaCode).catch(() => {});
 
     this.bindRecenterButton();
 
@@ -406,37 +376,44 @@ export class MapManager {
 
    */
 
-  async loadPoisFromBackend() {
+  async loadPoisFromBackend(customCode = null) {
 
     try {
 
       const lang = store.get().selectedLang || 'vi';
 
-      const center = CONFIG.MAP_CENTER;
+      const areaCode = customCode || store.get().areaCode || localStorage.getItem('mg_selected_area') || 'van-mieu';
 
-      const data = await apiService.fetchNearbyPois(center.lat, center.lng, 480, lang);
+      let data = await apiService.getAreaPois(areaCode, lang);
+
+      // Nếu không có dữ liệu từ endpoint area-pois, thử fallback theo nearby
+      if (!data || !Array.isArray(data) || data.length === 0) {
+        if (areaCode === 'van-mieu') {
+          const center = CONFIG.MAP_CENTER;
+          data = await apiService.fetchNearbyPois(center.lat, center.lng, 480, lang);
+        }
+      }
 
       if (data && Array.isArray(data) && data.length > 0) {
 
-        console.log(`[MultiGuide Map] Đã nhận ${data.length} POIs từ Backend API.`);
-
-        // Sắp xếp theo priority (hoặc toạ độ từ Nam lên Bắc)
+        console.log(`[MultiGuide Map] Đã nhận ${data.length} POIs cho khu "${areaCode}" từ Backend API.`);
 
         const sorted = [...data]
           .filter(item => item && item.title && item.title.trim().length > 0)
-          .sort((a, b) => (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
-
-        
-
-        // Làm mới sạch sẽ danh sách POIs hiển thị, ngăn chặn triệt để tình trạng trùng lặp POI hoặc nhảy số thứ tự
+          .sort((a, b) => (a.order || 0) - (b.order || 0) || (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
 
         HERITAGE_POIS.length = 0;
 
         const currentActive = (typeof store !== 'undefined' && store.get().activePoi);
+        const currentStoreArea = (typeof store !== 'undefined' && store.get().areaData) || { code: areaCode };
+        const getPrefixFn = (typeof window !== 'undefined' && window.getAreaStationPrefix) ? window.getAreaStationPrefix : (a => (a?.code?.includes('hoang-thanh') || a?.code?.includes('thang-long')) ? 'HT' : 'VM');
+        const prefix = getPrefixFn(currentStoreArea);
 
         sorted.forEach((item, index) => {
 
-          const stopNumber = item.priority ? Math.round(item.priority / 10) : (index + 1);
+          const stopNumber = item.order || (item.priority ? Math.round(item.priority / 10) : (index + 1));
+          const stopNumStr = String(stopNumber).padStart(2, '0');
+          const stationCode = `${prefix}-${stopNumStr}`;
 
           const isCurrentlyActive = currentActive && (String(currentActive.id) === String(item.id) || String(currentActive.guid) === String(item.id));
 
@@ -447,6 +424,8 @@ export class MapManager {
             guid: item.id,
 
             order: stopNumber,
+
+            stationCode: stationCode,
 
             priority: item.priority || (stopNumber * 10),
 
@@ -460,32 +439,44 @@ export class MapManager {
 
             lng: item.lng,
 
-            triggerRadiusM: 20, // Chuẩn hóa 20m kích hoạt phát âm thanh tự động cho trục Thần đạo
+            triggerRadiusM: item.triggerRadiusM || 20,
 
             labelPos: (index % 2 === 0) ? 'left' : 'right',
 
             isActive: isCurrentlyActive ? true : false,
 
-            isNearby: false
+            isNearby: false,
+
+            summary: item.summary || item.description
 
           });
 
         });
 
+        window.HERITAGE_POIS = HERITAGE_POIS;
 
-
-        // Cập nhật lại đường trục Thần đạo và các ghim POI theo tọa độ động mới nhất từ Backend
-
-        if (this.sacredAxisLine) {
-
+        // Tuyến đường tham quan nối các điểm POI (áp dụng cho mọi khu di tích có từ 2 POIs trở lên)
+        if (HERITAGE_POIS.length >= 2) {
           this.renderSacredAxis();
-
+        } else if (this.sacredAxisLine) {
+          this.map.removeLayer(this.sacredAxisLine);
+          this.sacredAxisLine = null;
         }
 
-        if (this.poiMarkers && this.poiMarkers.size > 0) {
+        this.renderPoiMarkers();
 
-          this.renderPoiMarkers();
-
+        // Căn khung bản đồ vừa vặn với các điểm POI của khu di tích
+        if (this.map && HERITAGE_POIS.length > 0) {
+          if (HERITAGE_POIS.length === 1) {
+            this.map.setView([HERITAGE_POIS[0].lat, HERITAGE_POIS[0].lng], 16.5);
+          } else {
+            const poiCoords = HERITAGE_POIS.map(p => [p.lat, p.lng]);
+            this.map.fitBounds(poiCoords, {
+              paddingTopLeft: [40, 115],
+              paddingBottomRight: [40, 105],
+              maxZoom: 18.2
+            });
+          }
         }
 
       }
@@ -498,6 +489,13 @@ export class MapManager {
 
   }
 
+  async switchArea(areaCode, areaData = null) {
+    if (areaData && areaData.centerLat && areaData.centerLng && this.map) {
+      this.map.setView([areaData.centerLat, areaData.centerLng], 16.5);
+    }
+    await this.loadPoisFromBackend(areaCode);
+  }
+
 
 
   /**
@@ -507,14 +505,18 @@ export class MapManager {
    */
 
   initUserMarker() {
-
     if (!this.map) return;
 
+    // Vị trí mặc định lấy theo khu di tích đang chọn (hoặc POI đầu tiên của khu đó)
+    const currentStore = (typeof store !== 'undefined') ? store.get() : {};
+    const currentAreaData = currentStore.areaData;
 
-
-    // Vị trí mặc định chuẩn ảnh mẫu: Trước Cổng Đại Trung (2)
-
-    const initialLocation = [21.02765, 105.8358];
+    let initialLocation = [21.02765, 105.8358];
+    if (currentAreaData && currentAreaData.centerLat && currentAreaData.centerLng) {
+      initialLocation = [currentAreaData.centerLat, currentAreaData.centerLng];
+    } else if (window.HERITAGE_POIS && window.HERITAGE_POIS.length > 0) {
+      initialLocation = [window.HERITAGE_POIS[0].lat, window.HERITAGE_POIS[0].lng];
+    }
 
     this.updateUserCoordsUI(initialLocation[0], initialLocation[1], true);
 
@@ -578,6 +580,22 @@ export class MapManager {
 
   }
 
+  /**
+   * Thay đổi bán kính quét vị trí hiện tại
+   */
+  setScanRadius(newRadius) {
+    const r = Math.max(15, Math.min(300, parseInt(newRadius, 10) || 100));
+    this.scanRadius = r;
+    store.set({ scanRadius: r });
+
+    if (this.userMarker) {
+      const pos = this.userMarker.getLatLng();
+      if (typeof this.checkGeofencing === 'function') {
+        this.checkGeofencing(pos.lat, pos.lng);
+      }
+    }
+  }
+
 
 
   /**
@@ -629,6 +647,16 @@ export class MapManager {
       // 2. Kích hoạt thuật toán Geofencing tự động kết nối Backend thật (FE-4.3)
 
       this.checkGeofencing(lat, lng);
+
+
+
+      // 3. Kiểm tra khoảng cách tới các khu di tích khác để hiển thị đề xuất mua vé (Ảnh 3)
+
+      if (window.checkNearAreasProximity) {
+
+        window.checkNearAreasProximity(lat, lng);
+
+      }
 
     });
 
@@ -686,7 +714,7 @@ export class MapManager {
 
     const lang = store.get().selectedLang || 'vi';
 
-    const DISCOVERY_RADIUS = CONFIG.DEFAULT_SCAN_RADIUS || 50; // 50m quét lân cận
+    const DISCOVERY_RADIUS = store.get().scanRadius || this.scanRadius || CONFIG.DEFAULT_SCAN_RADIUS || 100; // Quét lân cận theo bán kính vị trí hiện tại (chuẩn 100m)
 
     const AUTO_TRIGGER_RADIUS = 20; // 20m tự động kích hoạt âm thanh
 
@@ -704,17 +732,17 @@ export class MapManager {
 
 
 
-      // 2. Cập nhật trạng thái 'Ở gần bạn' đồng thời cho TẤT CẢ các POI trong bán kính 50m
+      // 2. Cập nhật trạng thái 'Gần bạn' cho tất cả POI trong phạm vi bán kính vị trí hiện tại (100m)
+      const nearbyCandidates = HERITAGE_POIS
+        .filter(p => !p.isActive && p.distanceM <= DISCOVERY_RADIUS)
+        .sort((a, b) => a.distanceM - b.distanceM);
 
-      const nearbyPoiIds = new Set(
-
-        HERITAGE_POIS
-
-          .filter(p => p.distanceM <= DISCOVERY_RADIUS)
-
-          .map(p => String(p.id))
-
-      );
+      const nearbyPoiIds = new Set();
+      nearbyCandidates.forEach(p => {
+        nearbyPoiIds.add(String(p.id));
+        if (p.guid) nearbyPoiIds.add(String(p.guid));
+        if (p.order) nearbyPoiIds.add(String(p.order));
+      });
 
       this.updateNearbyPois(nearbyPoiIds);
 
@@ -827,39 +855,27 @@ export class MapManager {
 
 
   renderSacredAxis() {
-
     if (!this.map) return;
 
-
-
     if (this.sacredAxisLine) {
-
       this.map.removeLayer(this.sacredAxisLine);
-
+      this.sacredAxisLine = null;
     }
 
+    const pois = (window.HERITAGE_POIS && window.HERITAGE_POIS.length > 0) ? window.HERITAGE_POIS : HERITAGE_POIS;
+    if (!pois || pois.length < 2) return;
 
-
-    // Tuyến đường trục chính nối thẳng từ Cổng Văn Miếu (Nam) lên Nhà Thái Học (Bắc) theo thứ tự trạm
-
-    const sortedPois = [...HERITAGE_POIS].sort((a, b) => (a.order || 0) - (b.order || 0) || a.lat - b.lat);
-
+    // Tuyến đường tham quan nối các điểm POI theo thứ tự trạm (order/priority)
+    const sortedPois = [...pois].sort((a, b) => (a.order || 0) - (b.order || 0) || (a.priority || 0) - (b.priority || 0) || a.lat - b.lat);
     const mainAxisCoords = sortedPois.map(p => [p.lat, p.lng]);
 
-
-
     this.sacredAxisLine = L.polyline(mainAxisCoords, {
-
       color: '#C28E58',
-
-      weight: 2,
-
+      weight: 2.5,
       dashArray: '5, 8',
-
-      opacity: 0.75,
-
-      lineCap: 'round'
-
+      opacity: 0.85,
+      lineCap: 'round',
+      lineJoin: 'round'
     }).addTo(this.map);
 
   }
@@ -900,7 +916,7 @@ export class MapManager {
 
       bgColor = '#C28E58';
 
-      borderColor = '#C28E58';
+      borderColor = '#8E6030';
 
       textColor = '#FFFFFF';
 
@@ -928,37 +944,49 @@ export class MapManager {
 
 
 
+    let stationCode = String(order);
+    if (!stationCode.includes('-')) {
+      const currentStoreArea = (typeof store !== 'undefined' && store.get().areaData) || { code: (typeof store !== 'undefined' && store.get().areaCode) || 'van-mieu' };
+      const getPrefixFn = (typeof window !== 'undefined' && window.getAreaStationPrefix) ? window.getAreaStationPrefix : (a => (a?.code?.includes('hoang-thanh') || a?.code?.includes('thang-long')) ? 'HT' : 'VM');
+      const prefix = getPrefixFn(currentStoreArea);
+      stationCode = `${prefix}-${String(order).padStart(2, '0')}`;
+    }
+
     return `
 
-      <div class="poi-marker-wrapper ${wrapperClass}" data-poi-id="${order}">
+      <div class="poi-marker-wrapper ${wrapperClass}" data-poi-id="${stationCode}">
 
-        <svg class="poi-stele-pin" viewBox="0 0 38 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <svg class="poi-stele-pin" viewBox="0 0 52 40" width="52" height="40" fill="none" xmlns="http://www.w3.org/2000/svg">
 
-          <!-- Hình vòm bia đá di sản giọt nước bo tròn trên, nhọn vuốt đáy -->
+          <!-- Mũi nhọn neo vị trí chính xác ở đáy -->
 
-          <path d="M19 46C19 46 3 32 3 19C3 10.1634 10.1634 3 19 3C27.8366 3 35 10.1634 35 19C35 32 19 46 19 46Z" 
+          <polygon points="21,25 26,38 31,25" fill="${bgColor}" stroke="${borderColor}" stroke-width="2" stroke-linejoin="round" />
 
-                fill="${bgColor}" stroke="${borderColor}" stroke-width="2" />
+          <!-- Thân viên thuốc bo tròn sang trọng chứa mã trạm di sản (VM-01, HT-01,...) -->
+
+          <rect x="2" y="2" width="48" height="25" rx="12.5" fill="${bgColor}" stroke="${borderColor}" stroke-width="2" />
+
+          <line x1="21" y1="25" x2="31" y2="25" stroke="${bgColor}" stroke-width="2.5" />
 
           
 
-          <!-- Số thứ tự bia đá -->
+          <!-- Chữ mã trạm di sản (VM-01, HT-01,...) -->
 
-          <text x="19" y="24" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="700" 
+          <text x="24.5" y="15" font-family="'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
 
-                fill="${textColor}" text-anchor="middle" dominant-baseline="central">${order}</text>
+                font-size="11" font-weight="800" letter-spacing="-0.3px" fill="${textColor}" text-anchor="middle" dominant-baseline="central">${stationCode}</text>
 
           
 
           <!-- Huy hiệu sóng âm thanh tròn nhỏ góc trên bên phải -->
 
-          <circle cx="28" cy="10" r="5.5" fill="${waveBadgeBg}" stroke="${borderColor}" stroke-width="1" />
+          <circle cx="43" cy="7.5" r="4.5" fill="${waveBadgeBg}" stroke="${borderColor}" stroke-width="1" />
 
-          <line x1="26" y1="9" x2="26" y2="11" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
+          <line x1="41.5" y1="6.5" x2="41.5" y2="8.5" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
 
-          <line x1="28" y1="7.5" x2="28" y2="12.5" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
+          <line x1="43" y1="5" x2="43" y2="10" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
 
-          <line x1="30" y1="9" x2="30" y2="11" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
+          <line x1="44.5" y1="6.5" x2="44.5" y2="8.5" stroke="${waveColor}" stroke-width="1" stroke-linecap="round"/>
 
         </svg>
 
@@ -968,11 +996,23 @@ export class MapManager {
 
   }
 
+  /**
+   * Trích xuất mã trạm chuyên nghiệp ([VM-01], [HT-01],...)
+   */
+  getStationCode(poi) {
+    if (poi && poi.stationCode) return poi.stationCode;
+    const currentStoreArea = (typeof store !== 'undefined' && store.get().areaData) || { code: (typeof store !== 'undefined' && store.get().areaCode) || 'van-mieu' };
+    const getPrefixFn = (typeof window !== 'undefined' && window.getAreaStationPrefix) ? window.getAreaStationPrefix : (a => (a?.code?.includes('hoang-thanh') || a?.code?.includes('thang-long')) ? 'HT' : 'VM');
+    const prefix = getPrefixFn(currentStoreArea);
+    const stopNum = poi ? (poi.order || 1) : 1;
+    return `${prefix}-${String(stopNum).padStart(2, '0')}`;
+  }
+
 
 
   /**
 
-   * Định vị và gắn 6 Custom Pin Markers lên bản đồ (FE-3.3)
+   * Định vị và gắn các Custom Pin Markers lên bản đồ (FE-3.3)
 
    */
 
@@ -996,7 +1036,10 @@ export class MapManager {
 
       const state = poi.isActive ? 'active' : (poi.isNearby ? 'nearby' : 'idle');
 
-      const pinHtml = this.createStelePinSvg(poi.order, state);
+      const stationCode = this.getStationCode(poi);
+      poi.stationCode = stationCode;
+
+      const pinHtml = this.createStelePinSvg(stationCode, state);
 
 
 
@@ -1006,9 +1049,9 @@ export class MapManager {
 
         className: 'custom-poi-div-icon',
 
-        iconSize: [38, 48],
+        iconSize: [52, 40],
 
-        iconAnchor: [19, 48]
+        iconAnchor: [26, 38]
 
       });
 
@@ -1052,7 +1095,7 @@ export class MapManager {
 
       } else if (poi.isNearby) {
 
-        const nearbyText = currentLang === 'vi' ? 'Ở GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
+        const nearbyText = currentLang === 'vi' ? 'GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
 
         statusHtml = `<span class="poi-label-status status-nearby">${nearbyText}</span>`;
 
@@ -1060,7 +1103,7 @@ export class MapManager {
 
       
 
-      // Chỉ gắn nhãn trạng thái khi POI đang active hoặc nearby (đã xóa tên địa danh in đậm trên map)
+      // Gắn nhãn trạng thái khi POI đang active hoặc nearby
 
       if (statusHtml) {
 
@@ -1082,7 +1125,7 @@ export class MapManager {
 
           className: 'poi-tooltip-transparent',
 
-          offset: poi.labelPos === 'left' ? [-16, -24] : [16, -24]
+          offset: poi.labelPos === 'left' ? [-16, -20] : [16, -20]
 
         });
 
@@ -1124,15 +1167,18 @@ export class MapManager {
 
     const state = p.isActive ? 'active' : (p.isNearby ? 'nearby' : 'idle');
 
+    const stationCode = this.getStationCode(p);
+    p.stationCode = stationCode;
+
     const updatedIcon = L.divIcon({
 
-      html: this.createStelePinSvg(p.order, state),
+      html: this.createStelePinSvg(stationCode, state),
 
       className: 'custom-poi-div-icon',
 
-      iconSize: [38, 48],
+      iconSize: [52, 40],
 
-      iconAnchor: [19, 48]
+      iconAnchor: [26, 38]
 
     });
 
@@ -1156,7 +1202,7 @@ export class MapManager {
 
     } else if (p.isNearby) {
 
-      const nearbyText = currentLang === 'vi' ? 'Ở GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
+      const nearbyText = currentLang === 'vi' ? 'GẦN BẠN' : (currentLang === 'zh' ? '就在附近' : (currentLang === 'ja' ? 'すぐ近く' : 'NEARBY'));
 
       statusHtml = `<span class="poi-label-status status-nearby">${nearbyText}</span>`;
 
@@ -1679,10 +1725,8 @@ export class MapManager {
       if (toast && toastText) {
 
         toastText.textContent = this.isAutoPlayAudio
-
-          ? (lang === 'en' ? '🎙️ GPS Auto-play: ENABLED' : lang === 'ja' ? '🎙️ GPS自動音声ガイド: 有効' : '🎙️ Tự động thuyết minh GPS: ĐÃ BẬT')
-
-          : (lang === 'en' ? '⏸️ GPS Auto-play: DISABLED' : lang === 'ja' ? '⏸️ GPS自動音声ガイド: 停止中' : '⏸️ Tự động thuyết minh GPS: ĐÃ TẮT');
+          ? (lang === 'en' ? '🎙️ GPS Auto-play: ENABLED' : lang === 'ja' ? '🎙️ GPS自動音声ガイド: 有効' : lang === 'zh' ? '🎙️ GPS语音导览已开启' : '🎙️ Tự động thuyết minh GPS: ĐÃ BẬT')
+          : (lang === 'en' ? '⏸️ GPS Auto-play: DISABLED' : lang === 'ja' ? '⏸️ GPS自動音声ガイド: 停止中' : lang === 'zh' ? '⏸️ GPS语音导览已关闭' : '⏸️ Tự động thuyết minh GPS: ĐÃ TẮT');
 
         toast.classList.add('is-visible');
 
