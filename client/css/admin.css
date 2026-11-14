@@ -760,13 +760,252 @@ html, body.admin-body {
   margin-top: 4px;
 }
 
+.portal-modal-card.has-expanded-map {
+  overflow: visible !important;
+}
+
 .mini-map-container {
+  position: relative;
   width: 100%;
   height: 200px;
   border-radius: var(--admin-radius-md);
   border: 1px solid var(--admin-border);
   overflow: hidden;
   margin-top: 6px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mini-map-container.is-expanded {
+  position: fixed !important;
+  top: 2vh !important;
+  left: 2vw !important;
+  width: 96vw !important;
+  height: 96vh !important;
+  max-width: none !important;
+  max-height: none !important;
+  z-index: 10000 !important;
+  border-radius: 14px !important;
+  box-shadow: 0 20px 70px rgba(0, 0, 0, 0.75), 0 0 0 2px var(--admin-accent) !important;
+}
+
+.btn-toggle-map-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #F4EFE6;
+  border: 1px solid #D9CFBE;
+  color: var(--admin-accent, #C28E58);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--admin-radius-sm, 6px);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-toggle-map-expand:hover {
+  background: var(--admin-accent, #C28E58);
+  color: #FFFFFF;
+  border-color: var(--admin-accent, #C28E58);
+}
+
+/* Thanh tìm kiếm nổi ở giữa phía trên khi mở rộng bản đồ */
+.expanded-map-search-bar {
+  display: none;
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10001;
+  width: min(540px, 46vw);
+}
+
+.mini-map-container.is-expanded .expanded-map-search-bar {
+  display: block;
+}
+
+.expanded-search-input-wrap {
+  display: flex;
+  background: #FFFFFF;
+  border: 1.5px solid var(--admin-accent, #C28E58);
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  overflow: hidden;
+}
+
+.expanded-search-input {
+  flex: 1;
+  border: none;
+  padding: 9px 14px;
+  font-size: 0.86rem;
+  color: #181816;
+  outline: none;
+  background: transparent;
+  min-width: 0;
+}
+
+.expanded-search-input::placeholder {
+  color: #8C827A;
+  font-size: 0.82rem;
+}
+
+.btn-expanded-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--admin-accent, #C28E58);
+  color: #FFFFFF;
+  border: none;
+  padding: 0 16px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+
+.btn-expanded-search:hover {
+  background: #A06F3D;
+}
+
+.expanded-search-results-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--admin-border, #E4DCCF);
+  border-radius: 8px;
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 10002;
+}
+
+/* Thanh điều khiển nổi khi mở rộng bản đồ */
+.expanded-map-toolbar {
+  display: none;
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10000;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid rgba(194, 142, 88, 0.35);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
+  border-radius: 10px;
+  padding: 6px 10px 6px 14px;
+  align-items: center;
+  gap: 14px;
+}
+
+.mini-map-container.is-expanded .expanded-map-toolbar {
+  display: inline-flex;
+}
+
+.expanded-map-radius-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expanded-map-radius-control label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #2D241E;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.expanded-radius-input {
+  width: 80px;
+  padding: 6px 8px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #C28E58;
+  border: 1.5px solid #C28E58;
+  border-radius: 6px;
+  text-align: center;
+  background: #FFFFFF;
+  outline: none;
+}
+
+.expanded-radius-input:focus {
+  box-shadow: 0 0 0 2px rgba(194, 142, 88, 0.3);
+}
+
+.floating-collapse-map-btn {
+  background: #C28E58;
+  color: #FFFFFF;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.floating-collapse-map-btn:hover {
+  background: #A06F3D;
+}
+
+.floating-map-hint {
+  display: none;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  background: rgba(30, 24, 18, 0.88);
+  color: #FFFFFF;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.mini-map-container.is-expanded .floating-map-hint {
+  display: block;
+}
+
+/* Currency Converter & Presets */
+.currency-converter-box {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.currency-chip-preview {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #5C5248;
+  background: #F4EFE6;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #E4DCCF;
+}
+
+.btn-price-preset {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #5C5248;
+  background: #FFFFFF;
+  border: 1px solid #D9CFBE;
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-price-preset:hover, .btn-price-preset.is-active {
+  background: var(--admin-accent, #C28E58);
+  color: #FFFFFF;
+  border-color: var(--admin-accent, #C28E58);
 }
 
 /* Geocoding Search Input */
@@ -796,32 +1035,41 @@ html, body.admin-body {
   background: var(--admin-accent-hover);
 }
 
+.geocode-search-group {
+  position: relative;
+}
+
 .search-results-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 4px);
   left: 0;
   right: 0;
   background: #FFFFFF;
-  border: 1px solid var(--admin-border);
-  border-radius: var(--admin-radius-sm);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  max-height: 200px;
+  border: 1.5px solid var(--admin-accent, #C28E58);
+  border-radius: var(--admin-radius-sm, 8px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  max-height: 220px;
   overflow-y: auto;
-  z-index: 50;
-  margin-top: 4px;
+  z-index: 1050;
+  padding: 4px 0;
 }
 
 .search-result-item {
   padding: 10px 14px;
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   cursor: pointer;
   border-bottom: 1px solid #f3f0e6;
   transition: background 0.15s;
+  line-height: 1.4;
+}
+
+.search-result-item:last-child {
+  border-bottom: none;
 }
 
 .search-result-item:hover {
-  background: #F8F6F0;
-  color: var(--admin-accent);
+  background: #FDF9F4;
+  color: var(--admin-accent, #C28E58);
 }
 
 /* Poi Translation & Audio Generator Box */
