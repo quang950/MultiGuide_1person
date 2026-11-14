@@ -32,7 +32,7 @@ public static class DbSeeder
 
     }
 
-    public static async Task SeedDemoDataAsync(MultiGuideDbContext context, bool force = false)
+    public static async Task SeedDemoDataAsync(MultiGuideDbContext context, bool force = false, bool seedThangLong = false)
 
     {
 
@@ -45,7 +45,7 @@ public static class DbSeeder
             new() { Code = "vi", Name = "Tiếng Việt", IsActive = true },
 
             new() { Code = "en", Name = "English", IsActive = true },
-
+            new() { Code = "zh", Name = "中文", IsActive = true },
             new() { Code = "ja", Name = "日本語", IsActive = true }
 
         };
@@ -122,9 +122,34 @@ public static class DbSeeder
 
         }
 
-        // 4. Seed 6 POIs and 18 PoiTranslations
-
+        // 4. Seed 6 POIs and 24 PoiTranslations (VI, EN, ZH, JA)
         var poiDataList = GetDemoPoisWithTranslations(area.Id);
+
+        var chineseStories = new Dictionary<Guid, (string Title, string Description)>
+        {
+            [Guid.Parse("c1875fb2-84ad-4a5a-936a-173fdbf4f7f3")] = ("文庙门 (大门)", "文庙大门始建于1070年李圣宗时期，是一座庄严的三开门式建筑。门前立有一对“下马碑”，明文规定凡文武百官乃至皇亲国戚行经于此，皆须下马步行，以示对儒学至圣先师与学问道德的崇高敬意。\n\n大门两侧立有华表石柱，顶端雕刻神兽，象征着国家选拔人才的公正、廉明与纯正。"),
+            [Guid.Parse("3ede2134-c305-4270-9413-39c9743f9cb8")] = ("奎文阁", "奎文阁建于1805年阮朝时期，是首都河内的文化标志性建筑。木质双层楼阁四面辟有象征奎宿之光的圆形窗扉，倒映在正方形的天光井水面上，完美展现了古代“天圆地方”的宇宙哲学与天人合一境界。\n\n古时科举及第的举人们在晋见皇帝之前，常在此聚会品评绝妙诗文。"),
+            [Guid.Parse("70dabf88-5450-48e7-9603-b753f5350047")] = ("天光井与进士题名碑", "天光井意为“映照上天之光的明镜”。水池两侧整齐排列着82座由灵龟驮负的进士题名碑，被列入联合国教科文组织世界记忆名录。碑上镌刻着1442至1779年间1304位进士姓名，昭示着千古不朽的真理。\n\n石龟驮碑寓意着学术精神与国家文脉的长青永驻，以及后世对先贤的无限追思。"),
+            [Guid.Parse("cc63b968-096f-4b06-b4f8-19f8f829ef42")] = ("大成门与大拜庭", "大成门是通往核心祭祀区域的庄严之门。门后铺展着由古老钵场砖铺砌的宽阔大拜庭，历代帝王与儒臣曾在此举行隆重的祭孔释奠大礼。"),
+            [Guid.Parse("0c23b2e0-73d1-4f37-90a0-f95201abf43b")] = ("大成殿", "大成殿是整个文庙建筑群的核心与最神圣所在。九开间宏伟的铁木大殿雕梁画栋、金碧辉煌。殿内正中庄严肃穆供奉至圣先师孔子神位，两侧为复圣颜回、宗圣曾子、述圣子思、亚圣孟子“四配”。\n\n殿堂正中高悬清康熙皇帝御题的“万世师表”金字匾额，辉映千载。"),
+            [Guid.Parse("cd3c98eb-79fe-4980-a870-6f690f9e40cd")] = ("太学 (国子监)", "国子监由李仁宗于1076年创建，被公认为越南历史上的第一所最高国立学府。这里特别纪念敬仰被誉为“帝师”的一代名儒朱文安，以及李圣宗、李仁宗、黎圣宗三位开创并繁荣国家文治的贤明君主。\n\n二楼陈列着进士朝服、青石砚台以及昔日殿试科举的微缩场景模型。")
+        };
+        foreach (var (poi, translations) in poiDataList)
+        {
+            if (chineseStories.TryGetValue(poi.Id, out var chinese))
+            {
+                translations.Add(new PoiTranslation
+                {
+                    Id = Guid.NewGuid(),
+                    PoiId = poi.Id,
+                    LanguageCode = "zh",
+                    Title = chinese.Title,
+                    Description = chinese.Description,
+                    AudioPath = $"assets/audio/pois/{poi.Id}_zh.mp3",
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+        }
 
         var validPoiIds = poiDataList.Select(x => x.Poi.Id).ToList();
 
@@ -309,6 +334,144 @@ public static class DbSeeder
 
         await context.SaveChangesAsync();
 
+        if (seedThangLong)
+        {
+            // 5. Seed TourArea: Hoàng Thành Thăng Long (Idempotent)
+            const string thangLongCode = "hoang-thanh-thang-long";
+            var existingThangLong = await context.TourAreas.FirstOrDefaultAsync(a => a.Code == thangLongCode);
+            if (existingThangLong == null)
+            {
+                var thangLongArea = new TourArea
+                {
+                    Id = Guid.Parse("a0000000-0000-0000-0000-000000000002"),
+                    Code = thangLongCode,
+                    Name = "Hoàng Thành Thăng Long",
+                    CenterLat = 21.03536,
+                    CenterLng = 105.840256,
+                    RadiusM = 400,
+                    PriceUsd = 3.00m,
+                    PassTtlHours = 24,
+                    IsActive = true
+                };
+                context.TourAreas.Add(thangLongArea);
+                await context.SaveChangesAsync();
+
+                var tlPois = GetThangLongDemoPois(thangLongArea.Id);
+                foreach (var (poi, translations) in tlPois)
+                {
+                    context.Pois.Add(poi);
+                    foreach (var trans in translations)
+                    {
+                        trans.PoiId = poi.Id;
+                        context.PoiTranslations.Add(trans);
+                    }
+                }
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                existingThangLong.IsActive = true;
+                await context.SaveChangesAsync();
+            }
+        }
+
+    }
+
+    private static List<(Poi Poi, List<PoiTranslation> Translations)> GetThangLongDemoPois(Guid areaId)
+    {
+        return new List<(Poi, List<PoiTranslation>)>
+        {
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000001"),
+                    AreaId = areaId,
+                    Lat = 21.0324,
+                    Lng = 105.8398,
+                    TriggerRadiusM = 25,
+                    Priority = 10,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Cột Cờ Hà Nội (Kỳ Đài)", Description = "Cột cờ Hà Nội được xây dựng từ năm 1812 dưới thời vua Gia Long triều Nguyễn, cao hơn 33m với kiến trúc tam cấp kiên cố, là biểu tượng lịch sử bất khuất của thủ đô ngàn năm văn hiến." },
+                    new() { LanguageCode = "en", Title = "Hanoi Flag Tower", Description = "Built in 1812 under King Gia Long of the Nguyen Dynasty, Hanoi Flag Tower stands over 33 meters high as an enduring symbol of Hanoi's rich cultural heritage and resilience." },
+                    new() { LanguageCode = "ja", Title = "ハノイ旗塔", Description = "1812年にグエン朝ザーロン帝のもとで建設されたハノイ旗塔は、高さ33メートル以上を誇り、千年の都ハノイの不屈の歴史の象徴です。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000002"),
+                    AreaId = areaId,
+                    Lat = 21.0345,
+                    Lng = 105.8403,
+                    TriggerRadiusM = 25,
+                    Priority = 20,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Đoan Môn (Cổng Chính Cấm Thành)", Description = "Đoan Môn là cổng vòm chính dẫn thẳng vào Cấm thành Thăng Long thời Lê, sở hữu kiến trúc cuốn vòm bằng đá và gạch vồ độc đáo, từng là nơi cử hành nghi lễ đón tiếp sứ thần triều đình." },
+                    new() { LanguageCode = "en", Title = "Doan Mon (Main Gate)", Description = "Doan Mon was the main gate leading into the Forbidden City of Thang Long during the Le Dynasty, featuring majestic brick arches and royal stone steps." },
+                    new() { LanguageCode = "ja", Title = "端門（正門）", Description = "端門はレ朝時代のタンロン紫禁城へと通じる正門であり、石とレンガによるアーチ構造が壮麗な王朝の威容を今に伝えています。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000003"),
+                    AreaId = areaId,
+                    Lat = 21.0360,
+                    Lng = 105.8404,
+                    TriggerRadiusM = 25,
+                    Priority = 30,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Điện Kính Thiên (Thềm Rồng Đá)", Description = "Điện Kính Thiên là trung tâm quyền lực tối cao của Hoàng thành Thăng Long, nổi bật với đôi rồng đá tuyệt mỹ thời Lê Sơ được chạm khắc từ đá xanh nguyên khối uy nghi dọc bậc thềm ngự đạo." },
+                    new() { LanguageCode = "en", Title = "Kinh Thien Palace (Dragon Steps)", Description = "Kinh Thien Palace was the royal center of power in Thang Long Citadel, famous for the magnificent monolithic stone dragons carved in the early Le Dynasty." },
+                    new() { LanguageCode = "ja", Title = "敬天殿（龍の石階段）", Description = "敬天殿はタンロン皇城の権力の中心地であり、黎朝初期に彫刻された見事な一枚岩の龍の石階段が宮殿の威厳を象徴しています。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000004"),
+                    AreaId = areaId,
+                    Lat = 21.0372,
+                    Lng = 105.8403,
+                    TriggerRadiusM = 25,
+                    Priority = 40,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Hậu Lâu (Lầu Tĩnh Bắc)", Description = "Hậu Lâu còn gọi là Tĩnh Bắc Lâu hay Lầu Công Chúa, xây dựng phía sau điện Kính Thiên, nơi sinh hoạt và ngắm cảnh thanh tịnh của các cung tần mỹ nữ hoàng triều xưa." },
+                    new() { LanguageCode = "en", Title = "Hau Lau (Princess Pavilion)", Description = "Located behind Kinh Thien Palace, Hau Lau was designed as a tranquil pavilion and living quarters for royal princesses in imperial times." },
+                    new() { LanguageCode = "ja", Title = "後楼（王女の楼閣）", Description = "敬天殿の北側に位置する後楼は、かつて王族の女性たちが静かに暮らし、庭園を眺めた風雅な楼閣です。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000005"),
+                    AreaId = areaId,
+                    Lat = 21.0390,
+                    Lng = 105.8402,
+                    TriggerRadiusM = 25,
+                    Priority = 50,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Bắc Môn (Chính Bắc Môn)", Description = "Bắc Môn là cổng thành duy nhất còn nguyên vẹn của thành Hà Nội thời Nguyễn, trên tường thành vẫn còn lưu giữ dấu vết hai vết đạn đại bác quân Pháp bắn năm 1882." },
+                    new() { LanguageCode = "en", Title = "Bac Mon (North Gate)", Description = "Bac Mon is the only surviving gate of Hanoi Citadel from the Nguyen Dynasty, still bearing scars from French artillery shells fired in 1882." },
+                    new() { LanguageCode = "ja", Title = "北門（城門）", Description = "北門はグエン朝ハノイ城の中で唯一現存する城門であり、1882年にフランス軍が撃ち込んだ大砲の弾痕が今も生々しく残っています。" }
+                }
+            )
+        };
     }
 
     private static List<(Poi Poi, List<PoiTranslation> Translations)> GetDemoPoisWithTranslations(Guid areaId)
