@@ -32,7 +32,7 @@ public static class DbSeeder
 
     }
 
-    public static async Task SeedDemoDataAsync(MultiGuideDbContext context, bool force = false)
+    public static async Task SeedDemoDataAsync(MultiGuideDbContext context, bool force = false, bool seedThangLong = false)
 
     {
 
@@ -45,7 +45,6 @@ public static class DbSeeder
             new() { Code = "vi", Name = "Tiếng Việt", IsActive = true },
 
             new() { Code = "en", Name = "English", IsActive = true },
-
             new() { Code = "zh", Name = "中文", IsActive = true },
             new() { Code = "ja", Name = "日本語", IsActive = true }
 
@@ -123,8 +122,7 @@ public static class DbSeeder
 
         }
 
-        // 4. Seed 6 POIs and 18 PoiTranslations
-
+        // 4. Seed 6 POIs and 24 PoiTranslations (VI, EN, ZH, JA)
         var poiDataList = GetDemoPoisWithTranslations(area.Id);
 
         var chineseStories = new Dictionary<Guid, (string Title, string Description)>
@@ -138,17 +136,19 @@ public static class DbSeeder
         };
         foreach (var (poi, translations) in poiDataList)
         {
-            var chinese = chineseStories[poi.Id];
-            translations.Add(new PoiTranslation
+            if (chineseStories.TryGetValue(poi.Id, out var chinese))
             {
-                Id = Guid.NewGuid(),
-                PoiId = poi.Id,
-                LanguageCode = "zh",
-                Title = chinese.Title,
-                Description = chinese.Description,
-                AudioPath = $"assets/audio/pois/{poi.Id}_zh.mp3",
-                UpdatedAt = DateTime.UtcNow
-            });
+                translations.Add(new PoiTranslation
+                {
+                    Id = Guid.NewGuid(),
+                    PoiId = poi.Id,
+                    LanguageCode = "zh",
+                    Title = chinese.Title,
+                    Description = chinese.Description,
+                    AudioPath = $"assets/audio/pois/{poi.Id}_zh.mp3",
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
         }
 
         var validPoiIds = poiDataList.Select(x => x.Poi.Id).ToList();
@@ -334,6 +334,144 @@ public static class DbSeeder
 
         await context.SaveChangesAsync();
 
+        if (seedThangLong)
+        {
+            // 5. Seed TourArea: Hoàng Thành Thăng Long (Idempotent)
+            const string thangLongCode = "hoang-thanh-thang-long";
+            var existingThangLong = await context.TourAreas.FirstOrDefaultAsync(a => a.Code == thangLongCode);
+            if (existingThangLong == null)
+            {
+                var thangLongArea = new TourArea
+                {
+                    Id = Guid.Parse("a0000000-0000-0000-0000-000000000002"),
+                    Code = thangLongCode,
+                    Name = "Hoàng Thành Thăng Long",
+                    CenterLat = 21.03536,
+                    CenterLng = 105.840256,
+                    RadiusM = 400,
+                    PriceUsd = 3.00m,
+                    PassTtlHours = 24,
+                    IsActive = true
+                };
+                context.TourAreas.Add(thangLongArea);
+                await context.SaveChangesAsync();
+
+                var tlPois = GetThangLongDemoPois(thangLongArea.Id);
+                foreach (var (poi, translations) in tlPois)
+                {
+                    context.Pois.Add(poi);
+                    foreach (var trans in translations)
+                    {
+                        trans.PoiId = poi.Id;
+                        context.PoiTranslations.Add(trans);
+                    }
+                }
+                await context.SaveChangesAsync();
+            }
+            else
+            {
+                existingThangLong.IsActive = true;
+                await context.SaveChangesAsync();
+            }
+        }
+
+    }
+
+    private static List<(Poi Poi, List<PoiTranslation> Translations)> GetThangLongDemoPois(Guid areaId)
+    {
+        return new List<(Poi, List<PoiTranslation>)>
+        {
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000001"),
+                    AreaId = areaId,
+                    Lat = 21.0324,
+                    Lng = 105.8398,
+                    TriggerRadiusM = 25,
+                    Priority = 10,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Cột Cờ Hà Nội (Kỳ Đài)", Description = "Cột cờ Hà Nội được xây dựng từ năm 1812 dưới thời vua Gia Long triều Nguyễn, cao hơn 33m với kiến trúc tam cấp kiên cố, là biểu tượng lịch sử bất khuất của thủ đô ngàn năm văn hiến." },
+                    new() { LanguageCode = "en", Title = "Hanoi Flag Tower", Description = "Built in 1812 under King Gia Long of the Nguyen Dynasty, Hanoi Flag Tower stands over 33 meters high as an enduring symbol of Hanoi's rich cultural heritage and resilience." },
+                    new() { LanguageCode = "ja", Title = "ハノイ旗塔", Description = "1812年にグエン朝ザーロン帝のもとで建設されたハノイ旗塔は、高さ33メートル以上を誇り、千年の都ハノイの不屈の歴史の象徴です。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000002"),
+                    AreaId = areaId,
+                    Lat = 21.0345,
+                    Lng = 105.8403,
+                    TriggerRadiusM = 25,
+                    Priority = 20,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Đoan Môn (Cổng Chính Cấm Thành)", Description = "Đoan Môn là cổng vòm chính dẫn thẳng vào Cấm thành Thăng Long thời Lê, sở hữu kiến trúc cuốn vòm bằng đá và gạch vồ độc đáo, từng là nơi cử hành nghi lễ đón tiếp sứ thần triều đình." },
+                    new() { LanguageCode = "en", Title = "Doan Mon (Main Gate)", Description = "Doan Mon was the main gate leading into the Forbidden City of Thang Long during the Le Dynasty, featuring majestic brick arches and royal stone steps." },
+                    new() { LanguageCode = "ja", Title = "端門（正門）", Description = "端門はレ朝時代のタンロン紫禁城へと通じる正門であり、石とレンガによるアーチ構造が壮麗な王朝の威容を今に伝えています。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000003"),
+                    AreaId = areaId,
+                    Lat = 21.0360,
+                    Lng = 105.8404,
+                    TriggerRadiusM = 25,
+                    Priority = 30,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Điện Kính Thiên (Thềm Rồng Đá)", Description = "Điện Kính Thiên là trung tâm quyền lực tối cao của Hoàng thành Thăng Long, nổi bật với đôi rồng đá tuyệt mỹ thời Lê Sơ được chạm khắc từ đá xanh nguyên khối uy nghi dọc bậc thềm ngự đạo." },
+                    new() { LanguageCode = "en", Title = "Kinh Thien Palace (Dragon Steps)", Description = "Kinh Thien Palace was the royal center of power in Thang Long Citadel, famous for the magnificent monolithic stone dragons carved in the early Le Dynasty." },
+                    new() { LanguageCode = "ja", Title = "敬天殿（龍の石階段）", Description = "敬天殿はタンロン皇城の権力の中心地であり、黎朝初期に彫刻された見事な一枚岩の龍の石階段が宮殿の威厳を象徴しています。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000004"),
+                    AreaId = areaId,
+                    Lat = 21.0372,
+                    Lng = 105.8403,
+                    TriggerRadiusM = 25,
+                    Priority = 40,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Hậu Lâu (Lầu Tĩnh Bắc)", Description = "Hậu Lâu còn gọi là Tĩnh Bắc Lâu hay Lầu Công Chúa, xây dựng phía sau điện Kính Thiên, nơi sinh hoạt và ngắm cảnh thanh tịnh của các cung tần mỹ nữ hoàng triều xưa." },
+                    new() { LanguageCode = "en", Title = "Hau Lau (Princess Pavilion)", Description = "Located behind Kinh Thien Palace, Hau Lau was designed as a tranquil pavilion and living quarters for royal princesses in imperial times." },
+                    new() { LanguageCode = "ja", Title = "後楼（王女の楼閣）", Description = "敬天殿の北側に位置する後楼は、かつて王族の女性たちが静かに暮らし、庭園を眺めた風雅な楼閣です。" }
+                }
+            ),
+            (
+                new Poi
+                {
+                    Id = Guid.Parse("b0000000-0000-0000-0000-000000000005"),
+                    AreaId = areaId,
+                    Lat = 21.0390,
+                    Lng = 105.8402,
+                    TriggerRadiusM = 25,
+                    Priority = 50,
+                    IsActive = true
+                },
+                new List<PoiTranslation>
+                {
+                    new() { LanguageCode = "vi", Title = "Bắc Môn (Chính Bắc Môn)", Description = "Bắc Môn là cổng thành duy nhất còn nguyên vẹn của thành Hà Nội thời Nguyễn, trên tường thành vẫn còn lưu giữ dấu vết hai vết đạn đại bác quân Pháp bắn năm 1882." },
+                    new() { LanguageCode = "en", Title = "Bac Mon (North Gate)", Description = "Bac Mon is the only surviving gate of Hanoi Citadel from the Nguyen Dynasty, still bearing scars from French artillery shells fired in 1882." },
+                    new() { LanguageCode = "ja", Title = "北門（城門）", Description = "北門はグエン朝ハノイ城の中で唯一現存する城門であり、1882年にフランス軍が撃ち込んだ大砲の弾痕が今も生々しく残っています。" }
+                }
+            )
+        };
     }
 
     private static List<(Poi Poi, List<PoiTranslation> Translations)> GetDemoPoisWithTranslations(Guid areaId)

@@ -7,6 +7,7 @@ public class CreatePassRequest
 {
     public string AreaCode { get; set; } = string.Empty;
     public string IdempotencyKey { get; set; } = string.Empty;
+    public string? ActivePassToken { get; set; }
 }
 
 /// <summary>
@@ -20,4 +21,7 @@ public class CreatePassResponse
     public Guid AreaId { get; set; }
     public string AreaCode { get; set; } = string.Empty;
     public decimal PriceUsd { get; set; }
+    public bool DiscountApplied { get; set; } = false;
+    public int DiscountPercent { get; set; } = 0;
+    public decimal OriginalPriceUsd { get; set; }
 }

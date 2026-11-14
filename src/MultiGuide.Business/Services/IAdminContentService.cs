@@ -12,7 +12,8 @@ public interface IAdminContentService
     Task<AreaResponse> GetAreaByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<AreaResponse> CreateAreaAsync(CreateAreaRequest request, CancellationToken cancellationToken = default);
     Task<AreaResponse> UpdateAreaAsync(Guid id, UpdateAreaRequest request, CancellationToken cancellationToken = default);
-    Task DeleteAreaAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AreaResponse> SetAreaStatusAsync(Guid id, bool isActive, CancellationToken cancellationToken = default);
+    Task DeleteAreaAsync(Guid id, bool hardDelete = false, CancellationToken cancellationToken = default);
     Task<(byte[] PngBytes, string FileName)> GenerateAreaQrCodeAsync(Guid areaId, string? publicWebUrl = null, CancellationToken cancellationToken = default);
 
     // POI

@@ -3,14 +3,35 @@
  */
 import { CONFIG } from './config.js?v=3.6';
 
+const TOKENS_BY_AREA_KEY = 'mg_tokens_by_area';
+
+function getStoredTokensMap() {
+  try {
+    const raw = sessionStorage.getItem(TOKENS_BY_AREA_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveTokensMap(map) {
+  try {
+    sessionStorage.setItem(TOKENS_BY_AREA_KEY, JSON.stringify(map));
+  } catch {}
+}
+
 class StateStore {
   constructor() {
+    const initialArea = CONFIG.DEFAULT_AREA_CODE;
+    const tokens = getStoredTokensMap();
+    const curAreaTokenInfo = tokens[initialArea] || null;
+
     this.state = {
       apiBaseUrl: CONFIG.API_BASE_URL,
-      areaCode: CONFIG.DEFAULT_AREA_CODE,
+      areaCode: initialArea,
       areaData: null,
-      accessToken: localStorage.getItem('mg_access_token') || null,
-      passData: null,
+      accessToken: curAreaTokenInfo?.token || localStorage.getItem('mg_access_token') || null,
+      passData: curAreaTokenInfo?.passData || null,
       userLocation: {
         lat: CONFIG.MAP_CENTER.lat,
         lng: CONFIG.MAP_CENTER.lng,
@@ -54,13 +75,40 @@ class StateStore {
     this.set({ selectedLang: langCode });
   }
 
-  setAccessToken(token, passData = null) {
+  setAreaAccessToken(areaCode, token, passData = null) {
+    const targetCode = areaCode || this.state.areaCode || CONFIG.DEFAULT_AREA_CODE;
+    const tokens = getStoredTokensMap();
     if (token) {
-      localStorage.setItem('mg_access_token', token);
+      tokens[targetCode] = {
+        token,
+        passData,
+        areaCode: targetCode,
+        savedAt: Date.now()
+      };
+      saveTokensMap(tokens);
+      if (this.state.areaCode === targetCode) {
+        localStorage.setItem('mg_access_token', token);
+        this.set({ accessToken: token, passData });
+      }
     } else {
-      localStorage.removeItem('mg_access_token');
+      delete tokens[targetCode];
+      saveTokensMap(tokens);
+      if (this.state.areaCode === targetCode) {
+        localStorage.removeItem('mg_access_token');
+        this.set({ accessToken: null, passData: null });
+      }
     }
-    this.set({ accessToken: token, passData });
+  }
+
+  getAreaAccessToken(areaCode) {
+    const targetCode = areaCode || this.state.areaCode || CONFIG.DEFAULT_AREA_CODE;
+    const tokens = getStoredTokensMap();
+    return tokens[targetCode] || null;
+  }
+
+  setAccessToken(token, passData = null) {
+    const curArea = this.state.areaCode || CONFIG.DEFAULT_AREA_CODE;
+    this.setAreaAccessToken(curArea, token, passData);
   }
 }
 

@@ -53,7 +53,7 @@ export const CONFIG = {
   MAP_BOUNDS: null,
   
   // Bán kính quét mặc định
-  DEFAULT_SCAN_RADIUS: 50, // mét
+  DEFAULT_SCAN_RADIUS: 100, // mét (chuẩn 100m theo yêu cầu du khách)
   
   // Giá trị vé tham quan
   PASS_PRICE_VND: 50000,

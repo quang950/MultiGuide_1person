@@ -113,12 +113,31 @@ public class AdminContentService : IAdminContentService
         return MapToResponse(area);
     }
 
-    public async Task DeleteAreaAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<AreaResponse> SetAreaStatusAsync(Guid id, bool isActive, CancellationToken cancellationToken = default)
     {
         var area = await _areaRepository.GetByIdAsync(id, cancellationToken);
         if (area == null)
         {
             throw new NotFoundException(ErrorCodes.AreaNotFound, $"Không tìm thấy khu với mã định danh '{id}'.");
+        }
+
+        area.IsActive = isActive;
+        await _areaRepository.UpdateAsync(area, cancellationToken);
+        return MapToResponse(area);
+    }
+
+    public async Task DeleteAreaAsync(Guid id, bool hardDelete = false, CancellationToken cancellationToken = default)
+    {
+        var area = await _areaRepository.GetByIdAsync(id, cancellationToken);
+        if (area == null)
+        {
+            throw new NotFoundException(ErrorCodes.AreaNotFound, $"Không tìm thấy khu với mã định danh '{id}'.");
+        }
+
+        if (hardDelete)
+        {
+            await _areaRepository.DeleteAsync(area, cancellationToken);
+            return;
         }
 
         area.IsActive = false;

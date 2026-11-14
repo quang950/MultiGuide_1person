@@ -54,6 +54,7 @@ public class DbSeederTests
         Assert.Equal(4, languages.Count);
         Assert.Contains(languages, l => l.Code == "vi");
         Assert.Contains(languages, l => l.Code == "en");
+        Assert.Contains(languages, l => l.Code == "zh");
         Assert.Contains(languages, l => l.Code == "ja");
         Assert.Contains(languages, l => l.Code == "zh");
 

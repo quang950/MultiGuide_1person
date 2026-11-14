@@ -165,7 +165,7 @@ if (isSeedEnabled && !isTesting)
         try
         {
             var dbContext = services.GetRequiredService<MultiGuideDbContext>();
-            await DbSeeder.SeedDemoDataAsync(dbContext, force: true);
+            await DbSeeder.SeedDemoDataAsync(dbContext, force: true, seedThangLong: true);
         }
         catch (Exception ex)
         {
