@@ -66,11 +66,17 @@ public class PassService : IPassService
                 $"Giao dịch với Idempotency-Key '{normalizedIdempotencyKey}' đã tồn tại.");
         }
 
+        // Giữ nguyên giá vé theo cấu hình khu di tích từ Quản trị viên (Admin)
+        var originalPrice = area.PriceUsd;
+        var finalPrice = originalPrice;
+        var discountApplied = false;
+        var discountPercent = 0;
+
         var payment = new Payment
         {
             Id = Guid.NewGuid(),
             AreaId = area.Id,
-            Amount = area.PriceUsd,
+            Amount = finalPrice,
             Currency = "USD",
             Provider = "mock",
             IdempotencyKey = normalizedIdempotencyKey,
@@ -80,7 +86,7 @@ public class PassService : IPassService
 
         var paymentRequest = new PaymentRequest
         {
-            Amount = area.PriceUsd,
+            Amount = finalPrice,
             Currency = "USD",
             IdempotencyKey = normalizedIdempotencyKey,
             AreaId = area.Id
@@ -135,7 +141,10 @@ public class PassService : IPassService
             ExpiresAt = expiresAt,
             AreaId = area.Id,
             AreaCode = area.Code,
-            PriceUsd = area.PriceUsd
+            PriceUsd = finalPrice,
+            DiscountApplied = discountApplied,
+            DiscountPercent = discountPercent,
+            OriginalPriceUsd = originalPrice
         };
     }
 
