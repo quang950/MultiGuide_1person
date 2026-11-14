@@ -314,4 +314,119 @@ public class AdminAreasControllerTests : IClassFixture<WebApplicationFactory<Pro
         Assert.Equal(0x4E, bytes[2]);
         Assert.Equal(0x47, bytes[3]);
     }
+
+    [Fact]
+    public async Task CreateArea_WithSnakeCasePayload_Succeeds()
+    {
+        var adminToken = GenerateJwt("admin");
+        var uniqueCode = $"test-area-{Guid.NewGuid():N}";
+        var jsonSnakeCase = $$"""
+        {
+            "code": "{{uniqueCode}}",
+            "name": "Khu Di Tích Hoàng Thành",
+            "center_lat": 21.035350,
+            "center_lng": 105.840234,
+            "radius_m": 400.0,
+            "price_usd": 3.0,
+            "pass_ttl_hours": 24
+        }
+        """;
+
+        using var postMsg = new HttpRequestMessage(HttpMethod.Post, "/admin/areas")
+        {
+            Content = new StringContent(jsonSnakeCase, Encoding.UTF8, "application/json")
+        };
+        postMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+
+        var postRes = await _client.SendAsync(postMsg);
+        Assert.Equal(HttpStatusCode.Created, postRes.StatusCode);
+
+        var created = await postRes.Content.ReadFromJsonAsync<AreaResponse>();
+        Assert.NotNull(created);
+        Assert.Equal(uniqueCode, created.Code);
+        Assert.Equal(3.0m, created.PriceUsd);
+        Assert.Equal(21.035350, created.CenterLat);
+        Assert.Equal(105.840234, created.CenterLng);
+        Assert.Equal(400.0, created.RadiusM);
+    }
+
+    [Fact]
+    public async Task UpdateAreaStatus_Patch_TogglesActiveState()
+    {
+        var adminToken = GenerateJwt("admin");
+        var uniqueCode = $"patch-status-{Guid.NewGuid():N}"[..20];
+
+        var createReq = new CreateAreaRequest
+        {
+            Code = uniqueCode,
+            Name = "Khu Test Patch Status",
+            CenterLat = 21.0,
+            CenterLng = 105.0,
+            RadiusM = 300,
+            PriceUsd = 5.0m,
+            PassTtlHours = 24
+        };
+
+        using var postMsg = new HttpRequestMessage(HttpMethod.Post, "/admin/areas")
+        {
+            Content = JsonContent.Create(createReq)
+        };
+        postMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var postRes = await _client.SendAsync(postMsg);
+        var created = await postRes.Content.ReadFromJsonAsync<AreaResponse>();
+        Assert.NotNull(created);
+        Assert.True(created.IsActive);
+
+        // Patch status to false
+        using var patchMsg = new HttpRequestMessage(HttpMethod.Patch, $"/admin/areas/{created.Id}/status")
+        {
+            Content = JsonContent.Create(new { isActive = false })
+        };
+        patchMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var patchRes = await _client.SendAsync(patchMsg);
+        Assert.Equal(HttpStatusCode.OK, patchRes.StatusCode);
+
+        var patched = await patchRes.Content.ReadFromJsonAsync<AreaResponse>();
+        Assert.NotNull(patched);
+        Assert.False(patched.IsActive);
+    }
+
+    [Fact]
+    public async Task DeleteArea_HardDelete_PermanentlyRemovesArea()
+    {
+        var adminToken = GenerateJwt("admin");
+        var uniqueCode = $"hard-del-{Guid.NewGuid():N}"[..20];
+
+        var createReq = new CreateAreaRequest
+        {
+            Code = uniqueCode,
+            Name = "Khu Test Hard Delete",
+            CenterLat = 21.0,
+            CenterLng = 105.0,
+            RadiusM = 300,
+            PriceUsd = 5.0m,
+            PassTtlHours = 24
+        };
+
+        using var postMsg = new HttpRequestMessage(HttpMethod.Post, "/admin/areas")
+        {
+            Content = JsonContent.Create(createReq)
+        };
+        postMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var postRes = await _client.SendAsync(postMsg);
+        var created = await postRes.Content.ReadFromJsonAsync<AreaResponse>();
+        Assert.NotNull(created);
+
+        // Hard delete
+        using var delMsg = new HttpRequestMessage(HttpMethod.Delete, $"/admin/areas/{created.Id}?hard=true");
+        delMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var delRes = await _client.SendAsync(delMsg);
+        Assert.Equal(HttpStatusCode.NoContent, delRes.StatusCode);
+
+        // Get by id should now return 404
+        using var getMsg = new HttpRequestMessage(HttpMethod.Get, $"/admin/areas/{created.Id}");
+        getMsg.Headers.Authorization = new AuthenticationHeaderValue("Bearer", adminToken);
+        var getRes = await _client.SendAsync(getMsg);
+        Assert.Equal(HttpStatusCode.NotFound, getRes.StatusCode);
+    }
 }
