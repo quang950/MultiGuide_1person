@@ -610,13 +610,16 @@
 
         </div>
 
-        <button type="button" class="btn-primary" id="btnOpenNewAreaModal">
-
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-
-          <span>Thêm Khu Di Tích Mới</span>
-
-        </button>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <button type="button" class="btn-secondary" id="btnOpenAllAreasRadiusMap" style="display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border-radius: 10px; font-weight: 600; background: #FFF; border: 1.5px solid #C28E58; color: #8E6030; cursor: pointer;">
+            <span style="font-size: 16px;">🗺️</span>
+            <span>Xem Bán Kính Tất Cả Khu Di Tích</span>
+          </button>
+          <button type="button" class="btn-primary" id="btnOpenNewAreaModal">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Thêm Khu Di Tích Mới</span>
+          </button>
+        </div>
 
       </div>
 
@@ -752,7 +755,46 @@
 
   </main>
 
+  <!-- ==========================================
+       MODAL: XEM BẢN ĐỒ BÁN KÍNH TẤT CẢ KHU DI TÍCH
+       ========================================== -->
+  <div class="portal-modal-overlay" id="modalAllAreasRadiusOverview" style="display: none;">
+    <div class="portal-modal-card" style="max-width: 900px; width: 95vw;">
+      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 class="modal-title" style="margin: 0; font-size: 1.25rem;">🗺️ Bản Đồ Bán Kính Tất Cả Khu Di Tích</h3>
+          <p style="margin: 4px 0 0; font-size: 0.82rem; color: #786C64;">Xem tổng quan vị trí và phạm vi bán kính geofencing của toàn bộ khu di tích trên địa bàn</p>
+        </div>
+        <button type="button" class="modal-close-btn" id="btnCloseAllAreasRadiusModal">&times;</button>
+      </div>
 
+      <div class="modal-body" style="padding: 14px 20px;">
+        <!-- Chú giải Legend & Thống kê -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; background: #FAF7F2; padding: 10px 14px; border-radius: 10px; font-size: 0.84rem; border: 1px solid #EFE6DC; flex-wrap: wrap; gap: 10px;">
+          <div style="display: flex; gap: 18px; align-items: center;">
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              <span style="width: 14px; height: 14px; border-radius: 50%; background: rgba(34, 197, 94, 0.25); border: 2px solid #16A34A; display: inline-block;"></span>
+              <strong>🟢 Hoạt động</strong>
+            </span>
+            <span style="display: inline-flex; align-items: center; gap: 6px;">
+              <span style="width: 14px; height: 14px; border-radius: 50%; background: rgba(156, 163, 175, 0.25); border: 2px dashed #9CA3AF; display: inline-block;"></span>
+              <strong>⚪ Tạm dừng</strong>
+            </span>
+          </div>
+          <div id="allAreasRadiusStats" style="color: #8E6030; font-weight: 700;">
+            Đang tải dữ liệu khu di tích...
+          </div>
+        </div>
+
+        <!-- Khung bản đồ Leaflet -->
+        <div id="allAreasOverviewMap" style="height: 520px; width: 100%; border-radius: 12px; border: 1.5px solid #E8DEC8; box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);"></div>
+      </div>
+
+      <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-secondary" id="btnCloseAllAreasRadiusFooterBtn">Đóng</button>
+      </div>
+    </div>
+  </div>
 
   <!-- ==========================================
 
@@ -768,7 +810,7 @@
 
       <div class="modal-header">
 
-        <h3 class="modal-title">Thêm Khu Di Tích Mới</h3>
+        <h3 class="modal-title" id="modalAreaTitle">Thêm Khu Di Tích Mới</h3>
 
         <button type="button" class="modal-close-btn" id="btnCloseNewAreaModal">&times;</button>
 
@@ -777,6 +819,7 @@
 
 
       <form id="formNewArea" class="modal-form">
+        <input type="hidden" id="areaEditIdInput" value="">
 
         <div class="form-grid-2">
 
@@ -852,7 +895,7 @@
 
             <label for="areaRadiusInput">Bán Kính Hoạt Động (m) *</label>
 
-            <input type="number" id="areaRadiusInput" class="admin-input" value="300" min="50" max="5000" required>
+            <input type="number" id="areaRadiusInput" class="admin-input" value="100" min="20" max="5000" required>
 
           </div>
 
@@ -864,9 +907,39 @@
 
         <div class="form-group">
 
-          <label>Bản Đồ Định Vị Khu Vực</label>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin: 0;">Bản Đồ Định Vị Khu Vực</label>
+            <button type="button" class="btn-toggle-map-expand" data-map-id="areaMiniMap" title="Phóng to khung bản đồ">
+              <span class="btn-expand-icon">⛶</span> <span class="btn-expand-text">Phóng to bản đồ</span>
+            </button>
+          </div>
 
-          <div id="areaMiniMap" class="mini-map-container"></div>
+          <div id="areaMiniMap" class="mini-map-container">
+            <!-- Thanh tìm kiếm địa điểm ở giữa phía trên -->
+            <div class="expanded-map-search-bar">
+              <div class="expanded-search-input-wrap">
+                <input type="text" id="expandedAreaSearchInput" class="expanded-search-input" placeholder="Nhập địa chỉ, tên di tích (ví dụ: 19C Hoàng Diệu, Ba Đình, Hà Nội)...">
+                <button type="button" id="btnExpandedAreaSearch" class="btn-expanded-search">
+                  🔍 Tìm Vị Trí
+                </button>
+              </div>
+              <div class="expanded-search-results-dropdown" id="expandedAreaSearchResults" style="display: none;"></div>
+            </div>
+
+            <!-- Thanh điều khiển bán kính và nút thu nhỏ bên phải -->
+            <div class="expanded-map-toolbar">
+              <div class="expanded-map-radius-control">
+                <label for="expandedAreaRadiusInput">Bán kính hoạt động (m):</label>
+                <input type="number" id="expandedAreaRadiusInput" class="expanded-radius-input" min="20" max="5000" step="10" value="100" title="Chỉnh bán kính hoạt động trực tiếp khi xem bản đồ to">
+              </div>
+              <button type="button" class="floating-collapse-map-btn" title="Thu nhỏ lại (Esc)">
+                ✕ Thu nhỏ bản đồ (Esc)
+              </button>
+            </div>
+            <div class="floating-map-hint">
+              💡 Tìm kiếm địa điểm ở trên hoặc click / kéo ghim để định vị. Bán kính tự động co giãn.
+            </div>
+          </div>
 
           <small class="form-hint">Click trên bản đồ để thay đổi tâm vị trí của khu di tích.</small>
 
@@ -880,9 +953,21 @@
 
           <div class="form-group">
 
-            <label for="areaPriceInput">Giá Vé Pass (USD) *</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <label for="areaPriceInput" style="margin: 0;">Giá Vé Pass (USD) *</label>
+              <div class="currency-converter-box" id="areaCurrencyConverter">
+                <span class="currency-chip-preview" id="priceVndPreview">🇻🇳 ≈ 70.000 VNĐ</span>
+                <span class="currency-chip-preview" id="priceJpyPreview">🇯🇵 ≈ 750 JPY</span>
+              </div>
+            </div>
 
-            <input type="number" step="0.01" id="areaPriceInput" class="admin-input" value="5.00" required>
+            <input type="text" inputmode="decimal" id="areaPriceInput" class="admin-input" value="5.00" placeholder="5.00" required>
+
+            <div class="quick-price-chips" style="margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn-price-preset is-active" data-usd="5.00">5 USD (70k VNĐ / 750 JPY)</button>
+              <button type="button" class="btn-price-preset" data-usd="3.00">3 USD (42k VNĐ / 450 JPY)</button>
+              <button type="button" class="btn-price-preset" data-usd="10.00">10 USD (140k VNĐ / 1.500 JPY)</button>
+            </div>
 
           </div>
 
@@ -992,7 +1077,39 @@
 
           </div>
 
-          <div id="poiMiniMap" class="mini-map-container" style="height: 240px;"></div>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+            <label style="margin: 0;">Bản Đồ Định Vị Điểm Dừng (POI)</label>
+            <button type="button" class="btn-toggle-map-expand" data-map-id="poiMiniMap" title="Phóng to khung bản đồ">
+              <span class="btn-expand-icon">⛶</span> <span class="btn-expand-text">Phóng to bản đồ</span>
+            </button>
+          </div>
+
+          <div id="poiMiniMap" class="mini-map-container" style="height: 240px;">
+            <!-- Thanh tìm kiếm địa điểm ở giữa phía trên -->
+            <div class="expanded-map-search-bar">
+              <div class="expanded-search-input-wrap">
+                <input type="text" id="expandedPoiSearchInput" class="expanded-search-input" placeholder="Nhập địa chỉ, tên hiện vật hoặc di tích...">
+                <button type="button" id="btnExpandedPoiSearch" class="btn-expanded-search">
+                  🔍 Tìm Vị Trí
+                </button>
+              </div>
+              <div class="expanded-search-results-dropdown" id="expandedPoiSearchResults" style="display: none;"></div>
+            </div>
+
+            <!-- Thanh điều khiển bán kính và nút thu nhỏ bên phải -->
+            <div class="expanded-map-toolbar">
+              <div class="expanded-map-radius-control">
+                <label for="expandedPoiRadiusInput">Bán kính quét (m):</label>
+                <input type="number" id="expandedPoiRadiusInput" class="expanded-radius-input" min="5" max="500" step="5" value="30" title="Chỉnh bán kính kích hoạt POI trực tiếp khi xem bản đồ to">
+              </div>
+              <button type="button" class="floating-collapse-map-btn" title="Thu nhỏ lại (Esc)">
+                ✕ Thu nhỏ bản đồ (Esc)
+              </button>
+            </div>
+            <div class="floating-map-hint">
+              💡 Tìm kiếm địa điểm ở trên hoặc click / kéo ghim để định vị. Bán kính quét tự động co giãn.
+            </div>
+          </div>
 
         </div>
 
@@ -1002,7 +1119,10 @@
 
           <div class="form-group">
 
-            <label for="poiOrderInput">Thứ Tự Trạm (#) *</label>
+            <label for="poiOrderInput" style="display: flex; align-items: center; justify-content: space-between;">
+              <span>Thứ Tự Trạm (#) *</span>
+              <span id="poiStationCodePreview" style="font-family: monospace; font-size: 11px; font-weight: 700; color: #92400E; background: #FEF3C7; padding: 1px 6px; border-radius: 4px; border: 1px solid #FCD34D;" title="Mã trạm chuyên nghiệp">[VM-01]</span>
+            </label>
 
             <input type="number" id="poiOrderInput" class="admin-input" value="1" min="1" max="20" required title="Số thứ tự trạm dừng (1 -> 6, tương ứng ưu tiên 10 -> 60)">
 
@@ -1049,7 +1169,7 @@
               <button type="button" class="btn-lang-tab is-active" data-lang="vi">🇻🇳 Tiếng Việt</button>
 
               <button type="button" class="btn-lang-tab" data-lang="en">🇬🇧 English</button>
-
+              <button type="button" class="btn-lang-tab" data-lang="zh">🇨🇳 中文</button>
               <button type="button" class="btn-lang-tab" data-lang="ja">🇯🇵 日本語</button>
 
             </div>
