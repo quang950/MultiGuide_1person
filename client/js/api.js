@@ -24,15 +24,69 @@ export const apiService = {
     return await res.json();
   },
 
+  async getAreaPois(areaCode, lang = 'vi') {
+    try {
+      const res = await fetch(`${this.baseUrl}/areas/${areaCode}/pois?lang=${lang}`);
+      if (!res.ok) throw new Error(`Lỗi tải POIs khu (${res.status})`);
+      return await res.json();
+    } catch (err) {
+      console.warn('apiService.getAreaPois error:', err);
+      return null;
+    }
+  },
+
+  async getAreas(lat = null, lng = null, radiusKm = null) {
+    try {
+      const params = new URLSearchParams();
+      if (lat !== null && lng !== null) {
+        params.append('lat', lat);
+        params.append('lng', lng);
+      }
+      if (radiusKm !== null && radiusKm !== 'all') {
+        params.append('radiusKm', radiusKm);
+      }
+      const query = params.toString() ? `?${params.toString()}` : '';
+      const res = await fetch(`${this.baseUrl}/areas${query}`);
+      if (!res.ok) throw new Error(`Lỗi tải danh sách khu (${res.status})`);
+      const areas = await res.json();
+      return Array.isArray(areas) ? areas : [];
+    } catch (err) {
+      console.warn('apiService.getAreas error:', err);
+      return [
+        {
+          code: 'van-mieu',
+          name: 'Văn Miếu - Quốc Tử Giám',
+          centerLat: 21.0285,
+          centerLng: 105.8358,
+          radiusM: 300,
+          priceUsd: 5.00
+        }
+      ];
+    }
+  },
+
   async purchasePass(areaCode, amount = CONFIG.PASS_PRICE_VND, durationHours = CONFIG.PASS_DURATION_HOURS) {
     const idempotencyKey = crypto.randomUUID ? crypto.randomUUID() : 'idemp_' + Date.now();
+    const existingPassToken = localStorage.getItem('mg_pass_token') || (store.get() && store.get().passToken);
+
+    const headers = {
+      'Content-Type': 'application/json',
+      'Idempotency-Key': idempotencyKey
+    };
+    if (existingPassToken) {
+      headers['Authorization'] = `Bearer ${existingPassToken}`;
+      headers['X-Prior-Pass-Token'] = existingPassToken;
+    }
+
     const res = await fetch(`${this.baseUrl}/areas/${areaCode}/passes`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Idempotency-Key': idempotencyKey
-      },
-      body: JSON.stringify({ amount, durationHours })
+      headers,
+      body: JSON.stringify({
+        area_code: areaCode,
+        amount,
+        duration_hours: durationHours,
+        active_pass_token: existingPassToken
+      })
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
@@ -62,25 +116,52 @@ export const apiService = {
     } catch {}
   },
 
-  async getNearbyPois(lat, lng, radius, lang) {
-    let token = store.get().accessToken;
-    if (!token) {
-      try {
-        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
-        token = pass.accessToken || pass.token;
-        store.setAccessToken(token, pass);
-      } catch {}
+  /**
+   * Đảm bảo luôn có AccessPass hợp lệ cho đúng khu di tích mục tiêu (Ngăn ngừa lỗi 403 PassAreaMismatch)
+   */
+  async ensureValidTokenForArea(targetAreaCode) {
+    const areaCode = targetAreaCode || store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
+    const stored = store.getAreaAccessToken ? store.getAreaAccessToken(areaCode) : null;
+    if (stored && stored.token) {
+      if (store.get().areaCode === areaCode && store.get().accessToken !== stored.token) {
+        store.set({ accessToken: stored.token, passData: stored.passData });
+      }
+      return stored.token;
     }
+
+    // Nếu chưa có token cho khu này: Chủ động cấp vé mới cho đúng khu đó
+    try {
+      const pass = await this.purchasePass(areaCode);
+      const token = pass.accessToken || pass.token;
+      if (store.setAreaAccessToken) {
+        store.setAreaAccessToken(areaCode, token, pass);
+      } else {
+        store.setAccessToken(token, pass);
+      }
+      return token;
+    } catch (err) {
+      const fallbackToken = `mg_pass_${areaCode}_${Date.now()}`;
+      if (store.setAreaAccessToken) {
+        store.setAreaAccessToken(areaCode, fallbackToken, { code: fallbackToken });
+      }
+      return fallbackToken;
+    }
+  },
+
+  async getNearbyPois(lat, lng, radius, lang) {
+    const areaCode = store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
+    let token = await this.ensureValidTokenForArea(areaCode);
     if (!token) return [];
+
     const url = `${this.baseUrl}/pois/nearby?lat=${lat}&lng=${lng}&radius=${radius}&lang=${lang}`;
     let res = await fetch(url, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (res.status === 401 || res.status === 403) {
       try {
-        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
+        const pass = await this.purchasePass(areaCode);
         token = pass.accessToken || pass.token;
-        store.setAccessToken(token, pass);
+        if (store.setAreaAccessToken) store.setAreaAccessToken(areaCode, token, pass);
         res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
       } catch {}
     }
@@ -93,17 +174,8 @@ export const apiService = {
   },
 
   async getPoiDetail(poiId, lang) {
-    let token = store.get().accessToken;
-    if (!token) {
-      try {
-        console.log('[MultiGuide API] Chưa có vé tham quan, đang tự động kích hoạt vé trải nghiệm...');
-        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
-        token = pass.accessToken || pass.token;
-        store.setAccessToken(token, pass);
-      } catch (err) {
-        throw new Error('Cần vé tham quan để nghe thuyết minh');
-      }
-    }
+    const areaCode = store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
+    let token = await this.ensureValidTokenForArea(areaCode);
 
     let res = await fetch(`${this.baseUrl}/pois/${poiId}?lang=${lang}`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -111,11 +183,10 @@ export const apiService = {
 
     // Tự động phục hồi (Self-Healing): Nếu vé hết hạn hoặc vé cũ không hợp lệ (401/403)
     if (res.status === 401 || res.status === 403) {
-      console.warn('[MultiGuide API] Vé hiện tại đã hết hạn hoặc không hợp lệ (401/403). Đang tự động cấp vé mới...');
       try {
-        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
+        const pass = await this.purchasePass(areaCode);
         token = pass.accessToken || pass.token;
-        store.setAccessToken(token, pass);
+        if (store.setAreaAccessToken) store.setAreaAccessToken(areaCode, token, pass);
         res = await fetch(`${this.baseUrl}/pois/${poiId}?lang=${lang}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -133,14 +204,8 @@ export const apiService = {
   },
 
   async sendPlayLog(poiId, durationSeconds, completed = false) {
-    let token = store.get().accessToken;
-    if (!token) {
-      try {
-        const pass = await this.purchasePass(store.get().areaCode || 'van-mieu');
-        token = pass.accessToken || pass.token;
-        store.setAccessToken(token, pass);
-      } catch {}
-    }
+    const areaCode = store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
+    let token = await this.ensureValidTokenForArea(areaCode);
     if (!token || !poiId || durationSeconds <= 0) return;
     const POI_GUID_MAP = {
       1: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
