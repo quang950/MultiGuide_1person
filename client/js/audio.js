@@ -52,8 +52,8 @@ export const POI_STORIES = {
       paragraph: '文庙大门始建于1070年李圣宗时期，是一座庄严的三开门式建筑。门前立有一对“下马碑”，明文规定凡文武百官乃至皇亲国戚行经于此，皆须下马步行，以示对儒学至圣先师与学问道德的崇高敬意。',
       quote: '“下马敬贤 — 在圣贤学问与道德面前，人人皆怀敬畏之心。”',
       subtext: '大门两侧立有华表石柱，顶端雕刻神兽，象征着国家选拔人才的公正、廉明与纯正。',
-      duration: '3:45',
-      durationSec: 225
+      duration: '0:40',
+      durationSec: 40
     }
   },
   2: {
@@ -99,8 +99,8 @@ export const POI_STORIES = {
       paragraph: '奎文阁建于1805年阮朝时期，是首都河内的文化标志性建筑。木质双层楼阁四面辟有象征奎宿之光的圆形窗扉，倒映在正方形的天光井水面上，完美展现了古代“天圆地方”的宇宙哲学与天人合一境界。',
       quote: '“奎星天朗人文友 — 奎光朗照，斯文鼎盛，天下太平。”',
       subtext: '古时科举及第的举人们在晋见皇帝之前，常在此聚会品评绝妙诗文。',
-      duration: '4:36',
-      durationSec: 276
+      duration: '0:36',
+      durationSec: 36
     }
   },
   3: {
@@ -146,8 +146,8 @@ export const POI_STORIES = {
       paragraph: '天光井意为“映照上天之光的明镜”。水池两侧整齐排列着82座由灵龟驮负的进士题名碑，被列入联合国教科文组织世界记忆名录。碑上镌刻着1442至1779年间1304位进士姓名，昭示着千古不朽的真理。',
       quote: '“贤才是国家之元气 — 元气盛则国势强，元气衰则国势弱。”',
       subtext: '石龟驮碑寓意着学术精神与国家文脉的长青永驻，以及后世对先贤的无限追思。',
-      duration: '5:12',
-      durationSec: 312
+      duration: '0:41',
+      durationSec: 41
     }
   },
   4: {
@@ -191,8 +191,8 @@ export const POI_STORIES = {
       heading: '大成门与大拜庭 — 肃穆的祭典圣地',
       paragraph: '大成门是通往核心祭祀区域的庄严之门。门后铺展着由古老钵场砖铺砌的宽阔大拜庭，历代帝王与儒臣曾在此举行隆重的祭孔释奠大礼。',
       quote: '“大成至圣 — 千秋文脉，盛德巍巍。”',
-      duration: '4:20',
-      durationSec: 260
+      duration: '0:20',
+      durationSec: 20
     }
   },
   5: {
@@ -238,8 +238,8 @@ export const POI_STORIES = {
       paragraph: '大成殿是整个文庙建筑群的核心与最神圣所在。九开间宏伟的铁木大殿雕梁画栋、金碧辉煌。殿内正中庄严肃穆供奉至圣先师孔子神位，两侧为复圣颜回、宗圣曾子、述圣子思、亚圣孟子“四配”。',
       quote: '“万世师表 — 照亮东方文明的千古师德之光。”',
       subtext: '殿堂正中高悬清康熙皇帝御题的“万世师表”金字匾额，辉映千载。',
-      duration: '4:50',
-      durationSec: 290
+      duration: '0:37',
+      durationSec: 37
     }
   },
   6: {
@@ -285,8 +285,8 @@ export const POI_STORIES = {
       paragraph: '国子监由李仁宗于1076年创建，被公认为越南历史上的第一所最高国立学府。这里特别纪念敬仰被誉为“帝师”的一代名儒朱文安，以及李圣宗、李仁宗、黎圣宗三位开创并繁荣国家文治的贤明君主。',
       quote: '“尊师重道 — 崇尚师尊，勤学笃行，修身齐家以报江山。”',
       subtext: '二楼陈列着进士朝服、青石砚台以及昔日殿试科举的微缩场景模型。',
-      duration: '5:30',
-      durationSec: 330
+      duration: '0:38',
+      durationSec: 38
     }
   }
 };
@@ -384,6 +384,7 @@ export class AudioEngine {
     this.isSeeking = false;
     this.isInitialized = false;
     this.isUserPaused = false;
+    this.audioRequestId = 0;
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
   }
 
@@ -519,13 +520,13 @@ export class AudioEngine {
     const langBadge = document.getElementById('playerLangBadge');
     if (langBadge) {
       langBadge.style.cursor = 'pointer';
-      langBadge.title = 'Chạm để đổi ngôn ngữ thuyết minh (VI / EN / JA)';
+      langBadge.title = 'Chạm để đổi ngôn ngữ thuyết minh (VI / EN / ZH / JA)';
       langBadge.addEventListener('click', (e) => {
         e.stopPropagation();
         e.preventDefault();
         e.stopImmediatePropagation();
         const current = store.get().selectedLang || 'vi';
-        const cycle = ['vi', 'en', 'ja'];
+        const cycle = ['vi', 'en', 'zh', 'ja'];
         const nextLang = cycle[(cycle.indexOf(current) + 1) % cycle.length];
         store.setLanguage(nextLang);
       });
@@ -539,8 +540,8 @@ export class AudioEngine {
         this.setupSpeedControls();
     this.syncPoiContent(this.currentPoiId);
         const wasPlaying = this.audioElement && !this.audioElement.paused;
-        this.loadAudioForPoi(this.currentPoiId).then(() => {
-          if (wasPlaying && this.audioElement && !this.isUserPaused) {
+        this.loadAudioForPoi(this.currentPoiId).then((loaded) => {
+          if (loaded && wasPlaying && this.audioElement && !this.isUserPaused) {
             this.audioElement.play().catch(() => {});
           }
         });
@@ -559,7 +560,7 @@ export class AudioEngine {
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
       try {
         if (!this.audioElement.src || this.audioElement.src === window.location.href || this.audioElement.src.startsWith('blob:')) {
-          await this.loadAudioForPoi(this.currentPoiId);
+          if (!await this.loadAudioForPoi(this.currentPoiId)) return;
         }
         await this.audioElement.play();
         this.updatePlayPauseButtonUI(true);
@@ -586,9 +587,12 @@ export class AudioEngine {
    * Bắt đầu phát âm thanh cho một POI cụ thể (Single Audio Stream + Fade-out mượt mà)
    */
   async playPoi(poiId) {
+    const requestId = ++this.audioRequestId;
     this.recordPlayProgress(false);
     this.isUserPaused = false;
     this.currentSpeed = Number(localStorage.getItem('mg_playback_speed') || 100);
+    this.currentPoiId = poiId;
+    this.syncPoiContent(poiId);
     // 1. Fade-out mượt mà âm thanh đang phát trước khi chuyển sang POI mới (Single Audio Instance)
     if (this.audioElement && !this.audioElement.paused && this.audioElement.currentTime > 0) {
       try {
@@ -597,6 +601,7 @@ export class AudioEngine {
         const stepDelay = 50; // 6 * 50ms = 300ms
         for (let i = 1; i <= steps; i++) {
           await new Promise(r => setTimeout(r, stepDelay));
+          if (requestId !== this.audioRequestId) return;
           if (this.audioElement) {
             this.audioElement.volume = Math.max(0, origVol * (1 - i / steps));
           }
@@ -610,16 +615,17 @@ export class AudioEngine {
       }
     }
 
-    this.currentPoiId = poiId;
-    this.syncPoiContent(poiId);
+    if (requestId !== this.audioRequestId) return;
 
     try {
-      await this.loadAudioForPoi(poiId);
+      if (!await this.loadAudioForPoi(poiId, requestId)) return;
+      if (requestId !== this.audioRequestId) return;
       if (this.audioElement) {
         this.audioElement.volume = 1.0;
         await this.audioElement.play();
       }
     } catch (err) {
+      if (requestId !== this.audioRequestId) return;
       if (err && err.name === 'NotAllowedError') {
         console.warn(`[MultiGuide Audio] Trình duyệt yêu cầu cử chỉ tương tác trước khi tự động phát âm thanh. Bảng thông tin đã mở sẵn, du khách có thể chạm nút Phát bất kỳ lúc nào.`);
         return;
@@ -641,8 +647,9 @@ export class AudioEngine {
     }
   }
 
-  async loadAudioForPoi(poiId) {
+  async loadAudioForPoi(poiId, requestId = ++this.audioRequestId) {
     const lang = store.get().selectedLang || 'vi';
+    const isCurrent = () => requestId === this.audioRequestId && lang === (store.get().selectedLang || 'vi');
     const targetPoi = window.HERITAGE_POIS?.find(p => String(p.id) === String(poiId) || String(p.order) === String(poiId));
     const targetGuid = targetPoi?.id || targetPoi?.guid || POI_GUID_MAP[poiId] || poiId;
     const langSuffix = (lang === 'vi' || !lang) ? '' : `_${lang}`;
@@ -650,8 +657,9 @@ export class AudioEngine {
     try {
       console.log(`[MultiGuide Audio] Tải thông tin POI ${poiId} (${targetGuid}, ${lang})...`);
       const detail = await apiService.getPoiDetail(targetGuid, lang).catch(() => null);
+      if (!isCurrent()) return false;
 
-      if (detail) {
+      if (detail && (lang !== 'zh' || detail.language === 'zh')) {
         if (detail.title) {
           const titleElem = document.getElementById('sheetPoiTitle');
           const storyHeading = document.getElementById('storyHeading');
@@ -682,18 +690,19 @@ export class AudioEngine {
             this.audioElement.src = detail.audioUrl;
             this.audioElement.load();
           }
-          return;
+          return true;
         }
       }
     } catch (e) {
       console.warn(`[MultiGuide Audio] Lỗi tải từ API (${e.message}).`);
     }
 
-    if (targetPoi && (targetPoi.audioUrl || targetPoi.audio_url)) {
+    if (!isCurrent()) return false;
+    if (lang !== 'zh' && targetPoi && (targetPoi.audioUrl || targetPoi.audio_url)) {
       const src = targetPoi.audioUrl || targetPoi.audio_url;
       this.audioElement.src = src;
       this.audioElement.load();
-      return;
+      return true;
     }
 
     // Nạp trực tiếp file MP3 thật theo ngôn ngữ nếu có
@@ -720,6 +729,7 @@ export class AudioEngine {
       this.audioElement.src = localAudioSrc;
       this.audioElement.load();
     }
+    return true;
   }
 
   /**
@@ -749,6 +759,9 @@ export class AudioEngine {
 
     if (isStandardGuid) {
       return `assets/audio/pois/${targetGuid}${langSuffix}.mp3`;
+    }
+    if (lang === 'zh' && validStop <= 6) {
+      return `assets/audio/pois/${standardGuids[validStop - 1]}_zh.mp3`;
     }
     return `assets/audio/pois/${validStop}${langSuffix}.mp3`;
   }

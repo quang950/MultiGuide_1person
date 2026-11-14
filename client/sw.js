@@ -3,7 +3,7 @@
  * Chiến lược: Network-First cho HTML/JS/CSS (luôn lấy bản mới nhất trên Vercel),
  * Fallback sang Cache Storage khi mất sóng / offline ngoài thực địa di tích.
  */
-const CACHE_NAME = 'multiguide-v4.6';
+const CACHE_NAME = 'multiguide-v4.8';
 
 const STATIC_ASSETS = [
   './',
@@ -17,6 +17,7 @@ const STATIC_ASSETS = [
   './css/admin.css?v=3.2',
   './js/app.js?v=2.9',
   './js/admin.js?v=3.2',
+  './js/admin-translations.js',
   './js/i18n.js',
   './js/config.js',
   './js/state.js',
@@ -25,6 +26,13 @@ const STATIC_ASSETS = [
   './js/map.js',
   './js/audio.js',
   './js/ui.js',
+  './js/modal.js',
+  './assets/audio/pois/c1875fb2-84ad-4a5a-936a-173fdbf4f7f3_zh.mp3',
+  './assets/audio/pois/3ede2134-c305-4270-9413-39c9743f9cb8_zh.mp3',
+  './assets/audio/pois/70dabf88-5450-48e7-9603-b753f5350047_zh.mp3',
+  './assets/audio/pois/cc63b968-096f-4b06-b4f8-19f8f829ef42_zh.mp3',
+  './assets/audio/pois/0c23b2e0-73d1-4f37-90a0-f95201abf43b_zh.mp3',
+  './assets/audio/pois/cd3c98eb-79fe-4980-a870-6f690f9e40cd_zh.mp3',
   './assets/icons/flag-vn.svg',
   './assets/icons/flag-en.svg',
   './assets/icons/flag-zh.svg',

@@ -71,17 +71,8 @@ export function initLanguageSwitcher() {
     if (!btn) return;
 
     const langCode = btn.dataset.lang;
-    if (langCode === 'zh') {
-      modalService.showComingSoon({
-        badge: '🇨🇳 中文',
-        title: 'Tính Năng Đang Hoàn Thiện',
-        message: 'Bản dịch và giọng đọc thuyết minh tiếng Trung đang được đội ngũ di sản hoàn thiện và sẽ sớm ra mắt du khách!',
-        confirmText: 'Đã hiểu'
-      });
-      return;
-    }
 
-    if (langCode && ['vi', 'en', 'ja'].includes(langCode)) {
+    if (langCode && ['vi', 'en', 'zh', 'ja'].includes(langCode)) {
       // 1. Mở khóa AudioContext im lặng cho mobile
       unlockAudioContextSilently();
 
@@ -96,11 +87,16 @@ export function initLanguageSwitcher() {
  * Khởi tạo Nút Mua/Kích hoạt vé 1-chạm (FE-2.4)
  * Kết nối RESTful API Backend: POST /areas/van-mieu/passes
  */
+function setPassCheckoutLabel(key) {
+  const btnText = document.getElementById('btnActivatePass')?.querySelector('.btn-text');
+  if (!btnText) return;
+  btnText.setAttribute('data-i18n', key);
+  btnText.textContent = t(key);
+}
+
 export function initPassCheckout() {
   const btnActivate = document.getElementById('btnActivatePass');
   if (!btnActivate) return;
-
-  const btnText = btnActivate.querySelector('.btn-text');
 
   // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy (bỏ qua token demo nếu có)
   let currentToken = store.get().accessToken;
@@ -109,9 +105,7 @@ export function initPassCheckout() {
     currentToken = null;
   }
 
-  if (currentToken) {
-    if (btnText) btnText.textContent = 'Tiếp tục khám phá di tích →';
-  }
+  setPassCheckoutLabel(currentToken ? 'arrival.continueBtn' : 'arrival.unlockBtn');
 
   btnActivate.addEventListener('click', async () => {
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
@@ -126,7 +120,7 @@ export function initPassCheckout() {
     // 2. Hiệu ứng Loading "Calm Technology"
     btnActivate.disabled = true;
     btnActivate.classList.add('is-loading');
-    if (btnText) btnText.textContent = 'Đang kết nối không gian di sản...';
+    setPassCheckoutLabel('arrival.connectingBtn');
 
     const areaCode = store.get().areaCode || 'van-mieu';
 
@@ -142,8 +136,7 @@ export function initPassCheckout() {
       store.setAccessToken(token, passData);
 
       // Cập nhật trạng thái thành công
-      if (btnText) btnText.textContent = '✓ Vé di sản đã kích hoạt';
-      btnActivate.style.backgroundColor = '#2E7D32';
+      setPassCheckoutLabel('arrival.activatedBtn');
 
       // Chuyển cảnh sang màn hình chính
       setTimeout(() => {
@@ -165,8 +158,7 @@ export function initPassCheckout() {
 
       store.setAccessToken(fallbackToken, mockPassData);
 
-      if (btnText) btnText.textContent = '✓ Đã kích hoạt vé tham quan';
-      btnActivate.style.backgroundColor = '#C28E58';
+      setPassCheckoutLabel('arrival.activatedBtn');
 
       setTimeout(() => {
         transitionToMainApp();
@@ -192,7 +184,8 @@ export function showProximityBeacon(poi, isAutoPlaying = false) {
   if (!toast || !toastText || !poi) return;
 
   const lang = store.get().selectedLang || 'vi';
-  const poiName = (lang === 'en' && poi.titleEn) ? poi.titleEn : (poi.title || poi.name || 'di tích');
+  const story = (POI_STORIES[poi.id] || POI_STORIES[poi.order])?.[lang];
+  const poiName = story?.title || ((lang === 'en' && poi.titleEn) ? poi.titleEn : (poi.title || poi.name || 'di tích'));
 
   // Haptic feedback nhẹ nhàng (Calm Technology)
   if ('vibrate' in navigator) {
@@ -207,13 +200,13 @@ export function showProximityBeacon(poi, isAutoPlaying = false) {
       ? `🎙️ Auto-playing: ${poiName}`
       : lang === 'ja'
         ? `🎙️ 自動再生中: ${poiName}`
-        : `🎙️ Đang tự động thuyết minh: ${poiName}`;
+        : lang === 'zh' ? `🎙️ 正在自动播放：${poiName}` : `🎙️ Đang tự động thuyết minh: ${poiName}`;
   } else {
     message = lang === 'en'
       ? `Nearby: ${poiName} · Tap to explore`
       : lang === 'ja'
         ? `近くに ${poiName} があります · タップして探索`
-        : `Bạn đang ở gần ${poiName} · Chạm để khám phá`;
+        : lang === 'zh' ? `附近景点：${poiName} · 点击探索` : `Bạn đang ở gần ${poiName} · Chạm để khám phá`;
   }
 
   toastText.textContent = message;
@@ -690,6 +683,12 @@ export function transitionToMainApp() {
  */
 export function transitionToArrivalScreen() {
   stopVisitorHeartbeat();
+  const btnActivate = document.getElementById('btnActivatePass');
+  if (btnActivate) {
+    btnActivate.disabled = false;
+    btnActivate.classList.remove('is-loading');
+  }
+  setPassCheckoutLabel('arrival.unlockBtn');
   const arrivalScreen = document.getElementById('arrivalScreen');
   const mainAppContainer = document.getElementById('mainAppContainer');
 
