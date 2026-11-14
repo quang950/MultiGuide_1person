@@ -10,5 +10,7 @@ public interface IAreaRepository
     Task<bool> ExistsByCodeAsync(string code, Guid? excludeId = null, CancellationToken cancellationToken = default);
     Task<TourArea> AddAsync(TourArea area, CancellationToken cancellationToken = default);
     Task UpdateAsync(TourArea area, CancellationToken cancellationToken = default);
+    Task DeleteAsync(TourArea area, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Language>> GetSupportedLanguagesAsync(Guid areaId, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<Poi>> GetPoisByAreaIdAsync(Guid areaId, bool? isActive = true, CancellationToken cancellationToken = default);
 }
