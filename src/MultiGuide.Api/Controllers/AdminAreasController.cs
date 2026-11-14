@@ -118,9 +118,30 @@ public class AdminAreasController : AdminBaseController
     }
 
     /// <summary>
-    /// Xóa mềm một khu tham quan (is_active = false).
+    /// Thay đổi nhanh trạng thái hoạt động (bật/tắt) của khu tham quan.
     /// </summary>
     /// <param name="id">Mã định danh khu</param>
+    /// <param name="request">Trạng thái mới</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpPatch("{id:guid}/status")]
+    [ProducesResponseType(typeof(AreaResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<AreaResponse>> UpdateStatus(
+        Guid id,
+        [FromBody] UpdateAreaStatusRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var updated = await _adminContentService.SetAreaStatusAsync(id, request.IsActive, cancellationToken);
+        return Ok(updated);
+    }
+
+    /// <summary>
+    /// Xóa một khu tham quan (hỗ trợ xóa mềm hoặc xóa hẳn vĩnh viễn cascade).
+    /// </summary>
+    /// <param name="id">Mã định danh khu</param>
+    /// <param name="hard">Xóa hẳn vĩnh viễn (true) hoặc xóa mềm (false)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -129,9 +150,10 @@ public class AdminAreasController : AdminBaseController
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> Delete(
         Guid id,
+        [FromQuery] bool hard = false,
         CancellationToken cancellationToken = default)
     {
-        await _adminContentService.DeleteAreaAsync(id, cancellationToken);
+        await _adminContentService.DeleteAreaAsync(id, hard, cancellationToken);
         return NoContent();
     }
 }

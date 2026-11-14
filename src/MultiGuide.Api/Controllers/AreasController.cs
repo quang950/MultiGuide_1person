@@ -25,6 +25,25 @@ public class AreasController : BaseApiController
     }
 
     /// <summary>
+    /// Lấy danh sách các khu tham quan đang hoạt động, có thể lọc theo khoảng cách GPS (US-01).
+    /// </summary>
+    /// <param name="lat">Vĩ độ của du khách (tùy chọn)</param>
+    /// <param name="lng">Kinh độ của du khách (tùy chọn)</param>
+    /// <param name="radiusKm">Bán kính tìm kiếm (km, tùy chọn)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<AreaSummaryDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<AreaSummaryDto>>> GetAll(
+        [FromQuery] double? lat = null,
+        [FromQuery] double? lng = null,
+        [FromQuery] double? radiusKm = null,
+        CancellationToken cancellationToken = default)
+    {
+        var areas = await _areaService.GetActiveAreasAsync(lat, lng, radiusKm, cancellationToken);
+        return Ok(areas);
+    }
+
+    /// <summary>
     /// Lấy thông tin chi tiết khu tham quan và danh sách ngôn ngữ được hỗ trợ từ mã khu (US-01).
     /// </summary>
     /// <param name="code">Mã khu tham quan (ví dụ: van-mieu)</param>
@@ -39,6 +58,24 @@ public class AreasController : BaseApiController
     {
         var area = await _areaService.GetAreaByCodeAsync(code, cancellationToken);
         return Ok(area);
+    }
+
+    /// <summary>
+    /// Lấy danh sách điểm di tích (POIs) của một khu tham quan (để hiển thị trên bản đồ và lộ trình).
+    /// </summary>
+    /// <param name="code">Mã khu tham quan</param>
+    /// <param name="lang">Ngôn ngữ hiển thị (mặc định vi)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    [HttpGet("{code}/pois")]
+    [ProducesResponseType(typeof(IReadOnlyList<AreaPoiSummaryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<IReadOnlyList<AreaPoiSummaryDto>>> GetPois(
+        string code,
+        [FromQuery] string? lang = "vi",
+        CancellationToken cancellationToken = default)
+    {
+        var pois = await _areaService.GetAreaPoisAsync(code, lang, cancellationToken);
+        return Ok(pois);
     }
 
     /// <summary>
@@ -68,10 +105,25 @@ public class AreasController : BaseApiController
                 "Header 'Idempotency-Key' là bắt buộc để thực hiện giao dịch thanh toán.");
         }
 
+        string? activePassToken = null;
+        if (Request.Headers.TryGetValue("Authorization", out var authHeader))
+        {
+            var authStr = authHeader.ToString().Trim();
+            if (!string.IsNullOrWhiteSpace(authStr))
+            {
+                activePassToken = authStr;
+            }
+        }
+        else if (Request.Headers.TryGetValue("X-Prior-Pass-Token", out var priorHeader))
+        {
+            activePassToken = priorHeader.ToString().Trim();
+        }
+
         var request = new CreatePassRequest
         {
             AreaCode = code,
-            IdempotencyKey = idempotencyKey
+            IdempotencyKey = idempotencyKey,
+            ActivePassToken = activePassToken
         };
 
         var response = await _passService.CreatePassAsync(request, cancellationToken);
