@@ -23,7 +23,7 @@
   <!-- Design System CSS Tokens & Components -->
   <link rel="stylesheet" href="css/variables.css?v=2.9">
   <link rel="stylesheet" href="css/base.css?v=2.9">
-  <link rel="stylesheet" href="css/components.css?v=2.9">
+  <link rel="stylesheet" href="css/components.css?v=3.0">
   <link rel="stylesheet" href="css/map.css?v=4.2">
   <script>
     (function() {
@@ -80,6 +80,27 @@
           </button>
         </div>
       </nav>
+
+      <!-- Thanh Chọn Khu Di Tích & Định vị GPS (Khách tham quan) -->
+      <div class="arrival-area-selector" id="arrivalAreaSelector">
+        <div class="area-selector-content">
+          <div class="area-current-info">
+            <span class="area-icon">🏛️</span>
+            <div class="area-text-wrap">
+              <span class="area-badge-hint" data-i18n="areaPicker.badgeHint">Khu Di Tích Thuyết Minh</span>
+              <strong class="area-selected-name" id="selectedAreaNameDisplay">Văn Miếu - Quốc Tử Giám</strong>
+            </div>
+          </div>
+          <div class="area-action-btns">
+            <button type="button" class="btn-gps-find-areas" id="btnGpsFindAreas" title="Định vị GPS để tìm di tích gần bạn">
+              <span data-i18n="areaPicker.nearMeBtn">🎯 Gần Bạn</span>
+            </button>
+            <button type="button" class="btn-change-tour-area" id="btnChangeTourArea">
+              <span data-i18n="areaPicker.changeAreaBtn">Đổi Khu ▾</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- Khối Giới thiệu Nghệ thuật (FE-2.1) -->
       <section class="arrival-intro">
@@ -330,7 +351,7 @@
         <div class="tab-view-heading-group">
           <div class="tab-view-brand-row">
             <img src="assets/icons/logo-mark.svg" alt="" class="tab-view-brand-icon">
-            <span class="tab-view-badge" data-i18n="stopsTab.badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
+            <span class="tab-view-badge" id="stopsTabBadge" data-i18n="stopsTab.badge">LỘ TRÌNH THẦN ĐẠO · 6 ĐIỂM</span>
           </div>
           <h2 class="tab-view-title" data-i18n="stopsTab.title">Hành Trình Di Sản</h2>
           <p class="tab-view-subtitle" data-i18n="stopsTab.subtitle">Chạm vào bất kỳ điểm nào để xem vị trí trên bản đồ và lắng nghe thuyết minh</p>
@@ -338,8 +359,20 @@
         <button type="button" class="btn-close-tab-view" id="btnCloseStopsView" aria-label="Quay lại bản đồ">✕</button>
       </div>
 
+      <!-- Thanh chọn khu di tích trong Tab Lộ trình -->
+      <div class="stops-area-selector-bar" id="btnChangeAreaFromStops" title="Chạm để đổi sang khu di tích khác">
+        <div class="stops-area-info">
+          <span class="stops-area-icon">🏛️</span>
+          <span class="stops-area-name" id="stopsAreaNameDisplay">Văn Miếu – Quốc Tử Giám</span>
+        </div>
+        <button type="button" class="btn-change-area-pill">
+          <span data-i18n="areaPicker.changeAreaFromStops">Đổi Khu Di Tích</span>
+          <span class="arrow-icon">▾</span>
+        </button>
+      </div>
+
       <div class="stops-list-container" id="stopsListContainer">
-        <!-- 6 Thẻ POI sẽ được khởi tạo linh hoạt bởi renderAllStops() trong js/ui.js -->
+        <!-- Các Thẻ POI sẽ được khởi tạo linh hoạt bởi renderAllStops() trong js/ui.js -->
       </div>
     </section>
 
@@ -410,6 +443,11 @@
 
         <!-- Cài đặt & Tiện ích thêm -->
         <div class="pass-actions-group">
+          <button type="button" class="btn-pass-action btn-change-area-pass" id="btnChangeAreaFromPassTab" style="background: #C28E58; color: #FFFFFF; font-weight: 700; margin-bottom: 8px;">
+            <span class="action-icon">🏛️</span>
+            <span>Chuyển Đổi Khu Di Tích Thuyết Minh</span>
+          </button>
+
           <div class="pass-option-row">
             <span class="option-label" data-i18n="passTab.langLabel">Ngôn ngữ thuyết minh:</span>
             <div class="pass-lang-pills" id="passLangSwitcher">
@@ -464,6 +502,100 @@
 
   </main>
 
+  <!-- Modal Chọn Khu Di Tích Tham Quan (App Khách) -->
+  <div class="area-picker-modal-overlay" id="modalAreaPicker" style="display: none;">
+    <div class="area-picker-modal-card">
+      <div class="area-picker-header">
+        <div class="area-picker-title-wrap">
+          <h3 class="area-picker-title" data-i18n="areaPicker.title">Chọn Khu Di Tích Thuyết Minh</h3>
+          <p class="area-picker-subtitle" data-i18n="areaPicker.subtitle">Khám phá các di tích lịch sử hoặc tìm địa điểm gần bạn</p>
+        </div>
+        <button type="button" class="area-picker-close-btn" id="btnCloseAreaPicker">✕</button>
+      </div>
+
+      <!-- Thanh công cụ GPS & Bán kính quét -->
+      <div class="area-gps-filter-bar">
+        <button type="button" class="btn-scan-gps-action" id="btnTriggerGpsScan">
+          <span class="gps-scan-icon">🎯</span>
+          <span id="gpsScanBtnText" data-i18n="areaPicker.gpsScanBtn">Định vị GPS & Tìm di tích gần bạn</span>
+        </button>
+        <div class="gps-radius-filter-pills" id="gpsRadiusFilters">
+          <button type="button" class="radius-pill is-active" data-radius="all" data-i18n="areaPicker.radiusAll">Tất cả</button>
+          <button type="button" class="radius-pill" data-radius="5" data-i18n="areaPicker.radius5km">Trong 5 km</button>
+          <button type="button" class="radius-pill" data-radius="15" data-i18n="areaPicker.radius15km">Trong 15 km</button>
+          <button type="button" class="radius-pill" data-radius="50" data-i18n="areaPicker.radius50km">Trong 50 km</button>
+        </div>
+      </div>
+
+      <div class="gps-location-status" id="gpsLocationStatus" style="display: none;">
+        <span data-i18n="areaPicker.myLocationPrefix">📍 Vị trí của bạn: </span><span id="gpsCoordsText"></span>
+      </div>
+
+      <!-- Danh sách các khu di tích -->
+      <div class="area-list-container" id="areaPickerList">
+        <div class="area-loading-item" style="padding: 16px; text-align: center; color: #8C827A;" data-i18n="areaPicker.loading">Đang tải danh sách khu di tích...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Giới Thiệu & Mở Khóa Vé Khu Di Tích (Wiki + Danh Sách POI Xem Trước) -->
+  <div class="area-picker-modal-overlay" id="modalAreaSuggestion" style="display: none;">
+    <div class="area-picker-modal-card" style="max-width: 440px; text-align: center; padding: 22px 20px 20px; max-height: 90vh;">
+      <div style="font-size: 36px; margin-bottom: 6px;">🏛️</div>
+      <div style="display: inline-block; background: #FFF4E5; color: #B45309; font-weight: 700; font-size: 11.5px; padding: 3px 12px; border-radius: 999px; margin-bottom: 8px; letter-spacing: 0.5px;" id="suggestionBadge" data-i18n="suggestion.badgeNotUnlocked">
+        🏛️ KHU DI TÍCH CHƯA MỞ KHÓA
+      </div>
+      <h3 id="suggestionAreaTitle" style="font-size: 20px; font-weight: 700; margin: 0 0 6px; color: #2B2523;">Hoàng Thành Thăng Long</h3>
+      
+      <!-- Mô tả sơ lược ngắn gọn, xúc tích kiểu Wikipedia -->
+      <div id="suggestionAreaWiki" style="background: #FAF7F2; border-left: 3px solid #C28E58; padding: 10px 12px; text-align: left; font-size: 13px; line-height: 1.55; color: #4A3F35; border-radius: 4px 8px 8px 4px; margin: 0 0 14px;">
+        Đang nạp thông tin di tích...
+      </div>
+
+      <!-- Danh sách các điểm POI sẽ được nghe khi mua vé -->
+      <div class="suggestion-pois-container" style="text-align: left; margin-bottom: 14px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+          <span style="font-size: 12px; font-weight: 700; color: #8E6030; text-transform: uppercase;" data-i18n="suggestion.poiListTitle">
+            🎧 Các Điểm Sẽ Được Thuyết Minh
+          </span>
+          <span id="suggestionPoiCount" style="font-size: 11px; background: #EFE6DC; color: #6D5B4F; padding: 1px 7px; border-radius: 999px; font-weight: 600;">0 ĐIỂM</span>
+        </div>
+        <div id="suggestionPoiList" style="max-height: 150px; overflow-y: auto; background: #FFFFFF; border: 1px solid #EFE6DC; border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 6px;">
+          <!-- Các POI được render tự động -->
+        </div>
+      </div>
+
+      <!-- Khung giá vé chuẩn (Bỏ giảm giá, số tiền theo quốc gia to và đầu tiên) -->
+      <div id="suggestionPriceBox" style="background: #FDF9F4; border: 1px solid #EADBCC; border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center;">
+        <div style="text-align: left;">
+          <div style="font-size: 11.5px; color: #8C827A; font-weight: 600; text-transform: uppercase;" data-i18n="suggestion.priceBoxTitle">Giá Vé Tham Quan</div>
+          <div style="font-size: 12.5px; color: #4A3F35;" id="suggestionTtlHours">Hiệu lực 24 giờ</div>
+        </div>
+        <div style="text-align: right;" id="suggestionPriceDisplay">
+          <!-- Số tiền to và đầu tiên theo ngôn ngữ -->
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="button" class="btn-secondary" id="btnDismissSuggestion" data-i18n="suggestion.btnDismiss" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; border: 1px solid #D5C7B8; background: #FFF; color: #4B5563;">Để Sau</button>
+        <button type="button" class="btn-primary" id="btnAcceptSuggestionPurchase" data-i18n="suggestion.btnChangeAndGoToBuy" style="flex: 2; padding: 12px; border-radius: 12px; font-weight: 700; background: #C28E58; color: #FFF; border: none; cursor: pointer;">Thay Đổi & Đến Trang Mua Vé</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Banner Nổi Thông Báo Khi Đến Gần Khu Di Tích (Ảnh 3) -->
+  <div id="nearbyAreaFloatBanner" class="nearby-area-float-banner" style="display: none;">
+    <div class="banner-inner">
+      <div class="banner-icon">📍</div>
+      <div class="banner-text">
+        <div class="banner-title" id="nearbyBannerTitle">Bạn đang ở gần di tích</div>
+        <div class="banner-sub" id="nearbyBannerSub">Chạm để xem chi tiết & mở khóa vé</div>
+      </div>
+      <button type="button" class="btn-banner-view" id="btnNearbyBannerView">Xem ngay</button>
+      <button type="button" class="btn-banner-close" id="btnNearbyBannerClose" title="Đóng">&times;</button>
+    </div>
+  </div>
+
   <!-- ==========================================
        MODAL: ĐĂNG NHẬP QUẢN TRỊ VIÊN (ADMIN AUTH)
        ========================================== -->
@@ -507,6 +639,6 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <!-- Modular JS Application Controller -->
-  <script type="module" src="js/app.js?v=4.6"></script>
+  <script type="module" src="js/app.js?v=5.0"></script>
 </body>
 </html>
