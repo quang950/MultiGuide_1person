@@ -163,3 +163,27 @@ test('The purchase modal waits for payment, blocks repeated clicks and switches 
   assert.equal(s.elements.modalAreaSuggestion.style.display,'none');
 });
 
+for (const failure of [402,500,'network']) {
+  test(`A modal purchase failure (${failure}) preserves the current pass and enables retry`, async () => {
+    const s=session();s.store.setAccessToken('paid-a',paidPass('van-mieu','paid-a'));
+    s.setPurchase(async()=>{
+      if (failure==='network') throw new Error('Network unavailable');
+      return response(failure,{detail:'Purchase failed'});
+    });
+    await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),false);
+    assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+    assert.equal(s.store.get().accessToken,'paid-a');
+    assert.equal(s.store.get().areaCode,'van-mieu');
+    assert.equal(s.switches(),0);
+    assert.equal(s.elements.modalAreaSuggestion.style.display,'flex');
+    assert.equal(s.elements.btnAcceptSuggestionPurchase.disabled,false);
+    assert.equal(s.elements.btnDismissSuggestion.disabled,false);
+    assert.equal(s.alerts.length,1);
+    s.setPurchase(async()=>response(201,paidPass('museum-b')));
+    await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),true);
+    assert.equal(s.switches(),1);
+  });
+}
+
