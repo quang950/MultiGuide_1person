@@ -202,3 +202,14 @@ test('A legacy fake area token is removed when the real purchase fails', async (
   assert.equal(s.store.getAreaAccessToken('museum-b'),null);
 });
 
+test('Successful HTTP responses without a real token or with the wrong area are rejected', async () => {
+  for (const invalid of [null,{}, {accessToken:''}, {accessToken:'mg_demo_pass_old'},paidPass('other-area')]) {
+    const s=session();s.setPurchase(async()=>response(201,invalid));
+    await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),false);
+    assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+    assert.equal(s.switches(),0);
+    assert.equal(s.alerts.length,1);
+  }
+});
+
