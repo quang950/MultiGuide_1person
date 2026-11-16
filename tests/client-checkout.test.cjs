@@ -213,3 +213,10 @@ test('Successful HTTP responses without a real token or with the wrong area are 
   }
 });
 
+test('A failed background play log does not create a fake pass or reject unhandled', async () => {
+  const s=session();s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+  await s.api.sendPlayLog('c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',10);
+  assert.equal(s.store.getAreaAccessToken('van-mieu'),null);
+  assert.equal(s.requests.some(r=>r.url.endsWith('/play-logs')),false);
+});
+
