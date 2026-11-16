@@ -92,7 +92,13 @@ export const apiService = {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || err.title || `Lỗi mua vé (${res.status})`);
     }
-    return await res.json();
+    const pass = await res.json();
+    const token = pass?.accessToken || pass?.token;
+    if (typeof token !== 'string' || !token.trim() || token.startsWith('mg_') ||
+        (pass.areaCode && pass.areaCode !== areaCode)) {
+      throw new Error('Phản hồi kích hoạt vé không hợp lệ. Vui lòng thử lại.');
+    }
+    return pass;
   },
 
   async getCurrentPass() {
