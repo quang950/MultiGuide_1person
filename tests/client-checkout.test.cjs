@@ -121,3 +121,10 @@ test('Repeated checkout clicks while payment is pending issue one purchase reque
   assert.equal(s.isUnlocked('van-mieu'),true);
 });
 
+test('Checkout updates the attached label after the area picker replaces it', async () => {
+  const s=session();s.initCheckout();
+  const label=s.replaceCheckoutLabel();
+  await s.elements.btnActivatePass.click();
+  assert.equal(label.textContent,vm.runInContext('t("arrival.activatedBtn")',s.context));
+});
+
