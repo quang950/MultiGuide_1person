@@ -187,3 +187,11 @@ for (const failure of [402,500,'network']) {
   });
 }
 
+test('A previously paid area reuses its token instead of purchasing another pass', async () => {
+  const s=session();s.store.setAreaAccessToken('museum-b','paid-b',paidPass('museum-b','paid-b'));
+  await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+  assert.equal(s.purchaseRequests().length,0);
+  assert.equal(s.switches(),1);
+  assert.equal(s.store.get().accessToken,'paid-b');
+});
+
