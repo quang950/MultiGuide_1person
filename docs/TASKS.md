@@ -61,3 +61,7 @@
 - [x] T-4.8 Rà soát PRD ↔ code; cập nhật Swagger, README, `.env.example`
 - [x] T-4.9 Chuẩn bị demo: đánh thức Render, kiểm tra Supabase không bị pause, kịch bản demo 5 phút
 - [x] T-4.10 Báo cáo: sơ đồ component, use case, ERD, pipeline CI/CD (xuất từ docs)
+
+## Bảo trì — 17/11/2026
+- [x] Sửa lỗi dùng mã khu trước khi khai báo ở nút tiếp tục trải nghiệm; kiểm thử vé đã có và vé của khu khác.
+- [x] Chỉ mở khóa sau khi mua vé thành công; bỏ token demo khi có lỗi, chặn thao tác mua lặp và kiểm thử luồng thất bại/thử lại.
