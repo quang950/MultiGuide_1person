@@ -141,3 +141,25 @@ test('An area change during checkout saves the paid pass under its original area
   assert.equal(s.timers.length,0);
 });
 
+test('The purchase modal waits for payment, blocks repeated clicks and switches once', async () => {
+  const s=session();let resolve, callbacks=0;
+  s.store.setAccessToken('paid-a',paidPass('van-mieu','paid-a'));
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  await s.openModal(()=>{callbacks++;s.context.window._selectAreaByName({code:'museum-b'});});
+  const pending=s.elements.btnAcceptSuggestionPurchase.onclick();
+  await s.elements.btnAcceptSuggestionPurchase.onclick();
+  s.elements.btnDismissSuggestion.onclick();
+  assert.equal(s.purchaseRequests().length,1);
+  assert.equal(s.isUnlocked('museum-b'),false);
+  assert.equal(s.switches(),0);
+  assert.equal(s.store.get().areaCode,'van-mieu');
+  assert.equal(s.elements.modalAreaSuggestion.style.display,'flex');
+  assert.equal(s.elements.btnAcceptSuggestionPurchase.disabled,true);
+  resolve(response(201,paidPass('museum-b')));await pending;
+  assert.equal(s.isUnlocked('museum-b'),true);
+  assert.equal(s.store.getAreaAccessToken('museum-b').token,'paid-museum-b');
+  assert.equal(s.switches(),1);
+  assert.equal(callbacks,1);
+  assert.equal(s.elements.modalAreaSuggestion.style.display,'none');
+});
+
