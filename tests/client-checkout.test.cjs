@@ -128,3 +128,16 @@ test('Checkout updates the attached label after the area picker replaces it', as
   assert.equal(label.textContent,vm.runInContext('t("arrival.activatedBtn")',s.context));
 });
 
+test('An area change during checkout saves the paid pass under its original area', async () => {
+  const s=session();let resolve;
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  s.initCheckout();const pending=s.elements.btnActivatePass.click();
+  s.store.set({areaCode:'museum-b'});
+  resolve(response(201,paidPass('van-mieu')));await pending;
+  assert.equal(s.store.getAreaAccessToken('van-mieu').token,'paid-van-mieu');
+  assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+  assert.equal(s.store.get().accessToken,null);
+  assert.equal(s.transitions(),0);
+  assert.equal(s.timers.length,0);
+});
+
