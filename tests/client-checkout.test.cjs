@@ -220,3 +220,13 @@ test('A failed background play log does not create a fake pass or reject unhandl
   assert.equal(s.requests.some(r=>r.url.endsWith('/play-logs')),false);
 });
 
+for (const lang of ['vi','en','zh','ja']) {
+  test(`Purchase failures use the selected ${lang} language`, async () => {
+    const s=session();s.store.setLanguage(lang);
+    s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+    s.initCheckout();await s.elements.btnActivatePass.click();
+    assert.equal(s.alerts[0].title,vm.runInContext('t("arrival.purchaseFailedTitle")',s.context));
+    assert.equal(s.alerts[0].message,vm.runInContext('t("arrival.purchaseFailedMessage")',s.context));
+    assert.notEqual(s.alerts[0].message,'arrival.purchaseFailedMessage');
+  });
+}
