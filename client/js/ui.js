@@ -1648,6 +1648,7 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
   }
 
   const isUnlocked = isAreaUnlocked(area.code);
+  let isPurchasing = false;
   const badgeEl = document.getElementById('suggestionBadge');
   if (badgeEl) {
     if (isUnlocked) {
@@ -1664,6 +1665,7 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
   // Nút đóng / để sau
   if (btnDismiss) {
     btnDismiss.onclick = () => {
+      if (isPurchasing) return;
       modal.style.display = 'none';
     };
   }
@@ -1678,7 +1680,27 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
       btnAccept.style.background = '#C28E58';
     }
 
-    btnAccept.onclick = () => {
+    btnAccept.onclick = async () => {
+      if (isPurchasing) return;
+      isPurchasing = true;
+      const idleLabel = btnAccept.textContent;
+      btnAccept.disabled = true;
+      btnAccept.textContent = t('arrival.connectingBtn');
+      if (btnDismiss) btnDismiss.disabled = true;
+      try {
+        await apiService.ensureValidTokenForArea(area.code);
+      } catch (error) {
+        console.warn('[MultiGuide API] Không thể mua vé cho khu đã chọn:', error);
+        showPassPurchaseError();
+        return;
+      } finally {
+        isPurchasing = false;
+        btnAccept.disabled = false;
+        btnAccept.textContent = idleLabel;
+        if (btnDismiss) btnDismiss.disabled = false;
+      }
+
+      unlockArea(area.code);
       modal.style.display = 'none';
 
       // Đóng modal chọn khu nếu còn mở
@@ -1689,21 +1711,11 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
       const floatBanner = document.getElementById('nearbyAreaFloatBanner');
       if (floatBanner) floatBanner.style.display = 'none';
 
-      // Mở khóa vé khu di tích này nếu chưa có
-      if (!isUnlocked) {
-        unlockArea(area.code);
-      }
-
-      // Chuyển thẳng app sang khu mới ngay lập tức
-      if (typeof window._selectAreaByName === 'function') {
-        window._selectAreaByName(area);
-      }
-
-      // Hiển thị thông báo chuyển đổi khu di tích rõ ràng
-      showSwitchAreaToast(area);
-
       if (typeof onUnlocked === 'function') {
         onUnlocked();
+      } else {
+        if (typeof window._selectAreaByName === 'function') window._selectAreaByName(area);
+        showSwitchAreaToast(area);
       }
     };
   }
