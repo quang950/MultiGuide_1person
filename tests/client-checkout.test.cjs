@@ -109,3 +109,15 @@ for (const failure of ['payment','network']) {
   });
 }
 
+test('Repeated checkout clicks while payment is pending issue one purchase request', async () => {
+  const s=session();let resolve;
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  s.initCheckout();
+  const pending=s.elements.btnActivatePass.click();
+  await s.elements.btnActivatePass.click();
+  assert.equal(s.purchaseRequests().length,1);
+  assert.equal(s.isUnlocked('van-mieu'),false);
+  resolve(response(201,paidPass('van-mieu')));await pending;
+  assert.equal(s.isUnlocked('van-mieu'),true);
+});
+
