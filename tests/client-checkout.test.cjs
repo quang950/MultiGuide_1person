@@ -91,3 +91,21 @@ test('A pass for another area cannot skip purchase of the selected area', async 
   assert.equal(s.store.getAreaAccessToken('museum-b').token,'paid-museum-b');
 });
 
+for (const failure of ['payment','network']) {
+  test(`Failed ${failure} checkout stays locked without creating a demo pass`, async () => {
+    const s=session();
+    s.setPurchase(async()=>{
+      if (failure==='network') throw new Error('Network unavailable');
+      return response(402,{detail:'Payment declined'});
+    });
+    s.initCheckout();await s.elements.btnActivatePass.click();
+    assert.equal(s.isUnlocked('van-mieu'),false);
+    assert.equal(s.store.get().accessToken,null);
+    assert.equal(s.store.getAreaAccessToken('van-mieu'),null);
+    assert.equal(s.transitions(),0);
+    assert.equal(s.timers.length,0);
+    assert.equal(s.alerts.length,1);
+    assert.equal(s.elements.btnActivatePass.disabled,false);
+  });
+}
+
