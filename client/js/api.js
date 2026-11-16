@@ -135,23 +135,16 @@ export const apiService = {
       return stored.token;
     }
 
-    // Nếu chưa có token cho khu này: Chủ động cấp vé mới cho đúng khu đó
-    try {
-      const pass = await this.purchasePass(areaCode);
-      const token = pass.accessToken || pass.token;
-      if (store.setAreaAccessToken) {
-        store.setAreaAccessToken(areaCode, token, pass);
-      } else {
-        store.setAccessToken(token, pass);
-      }
-      return token;
-    } catch (err) {
-      const fallbackToken = `mg_pass_${areaCode}_${Date.now()}`;
-      if (store.setAreaAccessToken) {
-        store.setAreaAccessToken(areaCode, fallbackToken, { code: fallbackToken });
-      }
-      return fallbackToken;
+    // Remove legacy demo tokens; a failed purchase must not create an active pass.
+    if (stored && store.setAreaAccessToken) store.setAreaAccessToken(areaCode, null);
+    const pass = await this.purchasePass(areaCode);
+    const token = pass.accessToken || pass.token;
+    if (store.setAreaAccessToken) {
+      store.setAreaAccessToken(areaCode, token, pass);
+    } else {
+      store.setAccessToken(token, pass);
     }
+    return token;
   },
 
   async getNearbyPois(lat, lng, radius, lang) {
