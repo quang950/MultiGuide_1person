@@ -195,3 +195,10 @@ test('A previously paid area reuses its token instead of purchasing another pass
   assert.equal(s.store.get().accessToken,'paid-b');
 });
 
+test('A legacy fake area token is removed when the real purchase fails', async () => {
+  const s=session();s.store.setAreaAccessToken('museum-b','mg_pass_museum-b_old',{code:'old'});
+  s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+  await assert.rejects(s.api.ensureValidTokenForArea('museum-b'),/Payment declined/);
+  assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+});
+
