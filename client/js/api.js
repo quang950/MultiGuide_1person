@@ -204,7 +204,7 @@ export const apiService = {
 
   async sendPlayLog(poiId, durationSeconds, completed = false) {
     const areaCode = store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
-    let token = await this.ensureValidTokenForArea(areaCode);
+    let token = await this.ensureValidTokenForArea(areaCode).catch(() => null);
     if (!token || !poiId || durationSeconds <= 0) return;
     const POI_GUID_MAP = {
       1: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',
