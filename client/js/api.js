@@ -128,7 +128,7 @@ export const apiService = {
   async ensureValidTokenForArea(targetAreaCode) {
     const areaCode = targetAreaCode || store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
     const stored = store.getAreaAccessToken ? store.getAreaAccessToken(areaCode) : null;
-    if (stored && stored.token) {
+    if (typeof stored?.token === 'string' && stored.token && !stored.token.startsWith('mg_')) {
       if (store.get().areaCode === areaCode && store.get().accessToken !== stored.token) {
         store.set({ accessToken: stored.token, passData: stored.passData });
       }
