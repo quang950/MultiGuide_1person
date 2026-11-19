@@ -168,6 +168,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initPoiDistanceCalculator();
   setupMapExpandFeature();
   initAllAreasOverviewMapModal();
+  initHourlyVisitorsModal();
 });
 
 let analyticsPollingInterval = null;
@@ -289,6 +290,9 @@ async function loadAnalyticsDashboard() {
     if (elActive) {
       elActive.textContent = (data.activeVisitorsCount || 0).toLocaleString();
     }
+
+    // Cập nhật KPI Lượt vào theo giờ (12h gần nhất)
+    loadHourlyVisitorsSummary();
 
     // 2. Bảng Top POIs: Chỉ hiển thị 6 điểm đầu tiên, có nút "Xem thêm sẽ hiện ra tất cả" khi có từ POI thứ 7 trở lên
     currentTopPoisList = data.topPois || [];
@@ -3487,4 +3491,163 @@ function setupMapExpandFeature() {
       }
     }
   });
+}
+
+// ========================================================
+// THỐNG KÊ LƯỢT KHÁCH THEO TỪNG KHUNG GIỜ
+// ========================================================
+let cachedHourlyVisitors12h = null;
+
+async function loadHourlyVisitorsSummary() {
+  const kpiEl = document.getElementById('kpiHourlyVisitorsTotal');
+  if (!kpiEl) return;
+
+  try {
+    const res = await adminFetch('/admin/analytics/hourly-visitors?hours=12');
+    if (!res.ok) return;
+    const data = await res.json();
+    cachedHourlyVisitors12h = data;
+    kpiEl.textContent = (data.totalVisitors || 0).toLocaleString();
+  } catch (err) {
+    console.warn('Không thể tải thống kê theo giờ:', err);
+  }
+}
+
+function initHourlyVisitorsModal() {
+  const card = document.getElementById('cardHourlyVisitors');
+  const modal = document.getElementById('modalHourlyVisitors');
+  const btnClose = document.getElementById('btnCloseHourlyVisitorsModal');
+  const btnCloseFooter = document.getElementById('btnCloseHourlyVisitorsFooterBtn');
+  const rangeSelect = document.getElementById('hourlyVisitorsRangeSelect');
+
+  if (!card || !modal) return;
+
+  const openModal = () => {
+    modal.style.display = 'flex';
+    const hours = Number(rangeSelect?.value || 12);
+    loadHourlyVisitorsTable(hours);
+  };
+
+  const closeModal = () => {
+    modal.style.display = 'none';
+  };
+
+  card.addEventListener('click', openModal);
+  card.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openModal();
+    }
+  });
+
+  if (btnClose) btnClose.addEventListener('click', closeModal);
+  if (btnCloseFooter) btnCloseFooter.addEventListener('click', closeModal);
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal();
+  });
+
+  if (rangeSelect) {
+    rangeSelect.addEventListener('change', () => {
+      loadHourlyVisitorsTable(Number(rangeSelect.value || 12));
+    });
+  }
+}
+
+async function loadHourlyVisitorsTable(hours = 12) {
+  const tbody = document.getElementById('hourlyVisitorsTableBody');
+  const summaryEl = document.getElementById('hourlyVisitorsSummary');
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">Đang tải dữ liệu khung giờ...</td></tr>`;
+
+  try {
+    let data = null;
+    if (hours === 12 && cachedHourlyVisitors12h) {
+      data = cachedHourlyVisitors12h;
+      // Vẫn gọi nền để làm mới nếu người dùng mở lại
+      adminFetch(`/admin/analytics/hourly-visitors?hours=${hours}`)
+        .then(r => (r.ok ? r.json() : null))
+        .then(fresh => {
+          if (fresh) {
+            cachedHourlyVisitors12h = fresh;
+            renderHourlyVisitorsRows(fresh, tbody, summaryEl);
+          }
+        })
+        .catch(() => {});
+    } else {
+      const res = await adminFetch(`/admin/analytics/hourly-visitors?hours=${hours}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      data = await res.json();
+    }
+
+    if (data) {
+      renderHourlyVisitorsRows(data, tbody, summaryEl);
+    }
+  } catch (err) {
+    console.error('Lỗi tải bảng thống kê theo giờ:', err);
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">Không thể tải dữ liệu thống kê theo giờ.</td></tr>`;
+    if (summaryEl) summaryEl.textContent = 'Lỗi tải dữ liệu';
+  }
+}
+
+function renderHourlyVisitorsRows(data, tbody, summaryEl) {
+  const buckets = data.buckets || [];
+  if (summaryEl) {
+    summaryEl.textContent = `Tổng: ${(data.totalVisitors || 0).toLocaleString()} lượt trong ${data.hours || buckets.length} giờ qua`;
+  }
+
+  if (buckets.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="3" class="text-center text-muted">Chưa có dữ liệu.</td></tr>`;
+    return;
+  }
+
+  const fmtTime = (iso) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '--:--';
+    return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  const esc = (str) => String(str ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+
+  const statusLabel = (s) => {
+    if (s === 'active') return 'Đang hiệu lực';
+    if (s === 'revoked') return 'Đã thu hồi';
+    return 'Hết hạn';
+  };
+
+  tbody.innerHTML = buckets.map((b) => {
+    const relLabel = b.hoursAgo === 0
+      ? '1 giờ qua'
+      : `${b.hoursAgo} - ${b.hoursAgo + 1} giờ trước`;
+    const timeRange = `${fmtTime(b.windowStartUtc)} – ${fmtTime(b.windowEndUtc)}`;
+    const visitors = b.visitors || [];
+
+    const visitorsHtml = visitors.length === 0
+      ? `<span class="text-muted" style="font-size:0.82rem;">Không có lượt vào</span>`
+      : `<div class="hourly-pass-list">${visitors.map(v => `
+          <span class="hourly-pass-chip" title="Pass ID: ${esc(v.passId)} | Khu: ${esc(v.areaName)}">
+            <span class="pass-code">${esc(v.passLabel)}</span>
+            <span>${esc(v.areaName)}</span>
+            <span class="text-muted">${fmtTime(v.issuedAtUtc)}</span>
+            <span class="pass-status is-${esc(v.status)}">${statusLabel(v.status)}</span>
+          </span>
+        `).join('')}</div>`;
+
+    return `
+      <tr>
+        <td>
+          <strong>${relLabel}</strong><br>
+          <span class="text-muted" style="font-size:0.78rem;">${timeRange}</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="badge ${b.visitorCount > 0 ? 'badge-success' : 'badge-muted'}">${b.visitorCount}</span>
+        </td>
+        <td>${visitorsHtml}</td>
+      </tr>
+    `;
+  }).join('');
 }

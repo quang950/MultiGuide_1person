@@ -105,4 +105,78 @@ public class AnalyticsRepository : IAnalyticsRepository
             LanguageDistribution = languageDistribution
         };
     }
+
+    public async Task<HourlyVisitorsResponse> GetHourlyVisitorsAsync(
+        int hours,
+        DateTime utcNow,
+        CancellationToken cancellationToken = default)
+    {
+        var windowStart = utcNow.AddHours(-hours);
+
+        var passes = await _context.AccessPasses
+            .AsNoTracking()
+            .Include(p => p.Area)
+            .Where(p => p.IssuedAt >= windowStart && p.IssuedAt <= utcNow)
+            .OrderByDescending(p => p.IssuedAt)
+            .Select(p => new
+            {
+                p.Id,
+                p.AreaId,
+                AreaName = p.Area != null ? p.Area.Name : "Không xác định",
+                AreaCode = p.Area != null ? p.Area.Code : string.Empty,
+                p.IssuedAt,
+                p.ExpiresAt,
+                p.Status
+            })
+            .ToListAsync(cancellationToken);
+
+        var buckets = new List<HourlyVisitorBucketDto>(hours);
+        for (var h = 0; h < hours; h++)
+        {
+            var bucketEnd = utcNow.AddHours(-h);
+            var bucketStart = utcNow.AddHours(-(h + 1));
+
+            var bucketPasses = passes
+                .Where(p => h == 0
+                    ? p.IssuedAt >= bucketStart && p.IssuedAt <= bucketEnd
+                    : p.IssuedAt >= bucketStart && p.IssuedAt < bucketEnd)
+                .Select(p =>
+                {
+                    var statusText = p.Status == MultiGuide.Domain.Enums.AccessPassStatus.Revoked
+                        ? "revoked"
+                        : p.ExpiresAt <= utcNow
+                            ? "expired"
+                            : "active";
+
+                    var shortId = p.Id.ToString("N")[..8].ToUpperInvariant();
+                    return new HourlyVisitorPassDto(
+                        p.Id,
+                        $"PASS-{shortId}",
+                        p.AreaId,
+                        p.AreaName,
+                        p.AreaCode,
+                        p.IssuedAt,
+                        p.ExpiresAt,
+                        statusText);
+                })
+                .ToList();
+
+            buckets.Add(new HourlyVisitorBucketDto
+            {
+                HoursAgo = h,
+                WindowStartUtc = bucketStart,
+                WindowEndUtc = bucketEnd,
+                VisitorCount = bucketPasses.Count,
+                Visitors = bucketPasses
+            });
+        }
+
+        return new HourlyVisitorsResponse
+        {
+            Hours = hours,
+            GeneratedAtUtc = utcNow,
+            TotalVisitors = passes.Count,
+            Buckets = buckets
+        };
+    }
 }

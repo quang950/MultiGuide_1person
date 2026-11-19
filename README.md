@@ -62,6 +62,7 @@ MultiGuide.Domain (Core)       ──┘               │
 | `POST` | `/admin/translations/{id}/audio` | Tải lên file âm thanh MP3 (US-13, ≤ 10MB, kiểm tra magic bytes) |
 | `POST` | `/admin/translations/{id}/generate-audio` | Tự động sinh audio MP3 bằng Microsoft Edge Neural TTS (US-20) |
 | `GET` | `/admin/analytics/dashboard` | Báo cáo hiệu suất, phân bổ ngôn ngữ và du khách trực tuyến (US-21) |
+| `GET` | `/admin/analytics/hourly-visitors` | Thống kê lượt khách (`AccessPass`) vào theo từng khung giờ (1–24h gần nhất) |
 
 ### 3.3. Hệ thống & Giám sát
 | Method | Endpoint | Mô tả |

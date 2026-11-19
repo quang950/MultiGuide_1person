@@ -282,6 +282,26 @@
 
         </div>
 
+        <div class="kpi-card kpi-card-clickable" id="cardHourlyVisitors" role="button" tabindex="0" title="Nhấn để xem bảng thống kê lượt vào theo từng khung giờ">
+
+          <div class="kpi-icon-wrap" style="color: #0f766e; background: #f0fdfa;">
+
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M2 12h2M20 12h2"/></svg>
+
+          </div>
+
+          <div class="kpi-details">
+
+            <span class="kpi-label">Lượt Vào Theo Giờ</span>
+
+            <h3 class="kpi-value" id="kpiHourlyVisitorsTotal">--</h3>
+
+            <span class="kpi-subtext kpi-link-hint">Xem chi tiết 12h qua ↗</span>
+
+          </div>
+
+        </div>
+
       </div>
 
 
@@ -792,6 +812,47 @@
 
       <div class="modal-footer" style="padding: 12px 20px; display: flex; justify-content: flex-end;">
         <button type="button" class="btn-secondary" id="btnCloseAllAreasRadiusFooterBtn">Đóng</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: THỐNG KÊ LƯỢT KHÁCH THEO KHUNG GIỜ -->
+  <div class="portal-modal-overlay" id="modalHourlyVisitors" style="display: none;">
+    <div class="portal-modal-card modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">🕒 Thống Kê Lượt Khách Theo Khung Giờ</h3>
+        <button type="button" class="modal-close-btn" id="btnCloseHourlyVisitorsModal">&times;</button>
+      </div>
+      <div class="modal-body" style="padding: 16px 22px;">
+        <div class="hourly-toolbar">
+          <div class="hourly-range-group">
+            <label for="hourlyVisitorsRangeSelect" class="hourly-range-label">Khoảng thời gian:</label>
+            <select id="hourlyVisitorsRangeSelect" class="admin-select" style="width: auto; min-width: 150px;">
+              <option value="6">6 giờ gần nhất</option>
+              <option value="12" selected>12 giờ gần nhất</option>
+              <option value="24">24 giờ gần nhất</option>
+            </select>
+          </div>
+          <div id="hourlyVisitorsSummary" class="hourly-summary-badge">Đang tải dữ liệu...</div>
+        </div>
+
+        <div class="table-responsive" style="max-height: 460px; overflow-y: auto; margin-top: 14px;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th style="width: 24%;">Khung Giờ</th>
+                <th style="width: 14%; text-align: center;">Số Người Vào</th>
+                <th style="width: 62%;">Danh Sách Vé / Tài Khoản (AccessPass)</th>
+              </tr>
+            </thead>
+            <tbody id="hourlyVisitorsTableBody">
+              <tr><td colspan="3" class="text-center text-muted">Đang tải dữ liệu...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer" style="padding: 12px 22px; display: flex; justify-content: flex-end;">
+        <button type="button" class="btn-secondary" id="btnCloseHourlyVisitorsFooterBtn">Đóng</button>
       </div>
     </div>
   </div>
