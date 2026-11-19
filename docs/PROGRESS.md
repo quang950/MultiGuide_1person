@@ -2,6 +2,17 @@
 
 > AI cập nhật file này cuối **mỗi task**. Chỉ giữ trạng thái hiện tại ở đầu file; lịch sử nằm bên dưới (mới nhất ở trên).
 
+## Trạng thái hiện tại (17/11/2026 — Sửa lỗi tiếp tục trải nghiệm và mở khóa vé)
+- **Vừa xong:** Sửa hai lỗi 1 và 3 được xác nhận khi rà soát bản `main@5d50c66`.
+  - Khai báo mã khu trước khi dùng trong luồng tiếp tục; dùng vé của đúng khu, tránh mua lại vé đã có.
+  - Chờ API trả token hợp lệ trước khi mở khóa và chuyển khu; lỗi thanh toán/kết nối giữ nguyên khu và vé hiện tại, cho phép thử lại.
+  - Loại bỏ token demo tự sinh khi mua vé thất bại, kiểm tra phản hồi mua vé và dọn token giả còn lưu từ bản cũ.
+  - Chặn bấm mua liên tiếp khi đang chờ, chỉ chuyển khu một lần và bổ sung thông báo lỗi cho bốn ngôn ngữ.
+- **Kiểm thử:** `dotnet build MultiGuide.sln --no-restore -warnaserror`: 0 warning, 0 error; 335/335 test backend và 34/34 test frontend đạt, gồm 19 test hồi quy mới trong [client-checkout.test.cjs](../tests/client-checkout.test.cjs).
+- **Môi trường kiểm thử Windows:** Tắt riêng Windows Event Log qua `Logging__EventLog__LogLevel__Default=None` khi chạy test.
+- **Nhánh:** `fix/checkout-purchase-validation`.
+- **Bước kế tiếp:** Nghiệm thu hai luồng trên local; các lỗi 2, 4, 5, 6, 7 trong lần rà soát trước chưa được xử lý ở đợt này.
+
 ## Trạng thái hiện tại (cập nhật: 29/10/2026 — Hoàn thành Tính năng Đo khoảng cách giữa 2 POI trên Admin Dashboard)
 - **Đang làm:** Sẵn sàng cho người dùng nghiệm thu.
 - **Vừa xong:** 

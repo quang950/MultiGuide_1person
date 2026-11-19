@@ -29,6 +29,8 @@ export const TRANSLATIONS = {
       continueBtn: 'Tiếp tục khám phá di tích →',
       connectingBtn: 'Đang kết nối không gian di sản...',
       activatedBtn: '✓ Vé di sản đã kích hoạt',
+      purchaseFailedTitle: 'Không thể mua vé',
+      purchaseFailedMessage: 'Vé chưa được kích hoạt. Vui lòng kiểm tra kết nối và thử lại.',
       securityFooter: 'Thanh toán bảo mật · Không cần tải app'
     },
     map: {
@@ -141,6 +143,8 @@ export const TRANSLATIONS = {
       continueBtn: 'Continue exploring →',
       connectingBtn: 'Connecting to your heritage experience...',
       activatedBtn: '✓ Your heritage pass is activated',
+      purchaseFailedTitle: 'Unable to purchase your pass',
+      purchaseFailedMessage: 'Your pass has not been activated. Please check your connection and try again.',
       securityFooter: 'Secure checkout · No app download needed'
     },
     map: {
@@ -253,6 +257,8 @@ export const TRANSLATIONS = {
       continueBtn: '继续探索古迹 →',
       connectingBtn: '正在连接文化遗产体验...',
       activatedBtn: '✓ 文博通行证已激活',
+      purchaseFailedTitle: '购票失败',
+      purchaseFailedMessage: '通行证尚未激活。请检查网络连接后重试。',
       securityFooter: '安全便捷 · 无需下载任何应用程序'
     },
     map: {
@@ -365,6 +371,8 @@ export const TRANSLATIONS = {
       continueBtn: '史跡の探索を続ける →',
       connectingBtn: '遺産体験に接続しています...',
       activatedBtn: '✓ 遺産パスが有効になりました',
+      purchaseFailedTitle: 'チケットを購入できませんでした',
+      purchaseFailedMessage: 'パスはまだ有効化されていません。接続を確認して、もう一度お試しください。',
       securityFooter: '安心の決済 · アプリダウンロード不要'
     },
     map: {

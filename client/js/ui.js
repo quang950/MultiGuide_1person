@@ -94,29 +94,48 @@ export function initLanguageSwitcher() {
  * Khởi tạo Nút Mua/Kích hoạt vé 1-chạm (FE-2.4)
  * Kết nối RESTful API Backend: POST /areas/van-mieu/passes
  */
+function showPassPurchaseError() {
+  modalService.alert({
+    title: t('arrival.purchaseFailedTitle'),
+    message: t('arrival.purchaseFailedMessage'),
+    confirmText: 'OK',
+    icon: '⚠️'
+  });
+}
+
 export function initPassCheckout() {
   const btnActivate = document.getElementById('btnActivatePass');
   if (!btnActivate) return;
 
-  const btnText = btnActivate.querySelector('.btn-text');
+  const showLabel = key => {
+    const label = btnActivate.querySelector('.btn-text');
+    if (label) label.textContent = t(key);
+  };
 
   // Kiểm tra nếu người dùng đã có vé hợp lệ trong máy (bỏ qua token demo nếu có)
   let currentToken = store.get().accessToken;
-  if (currentToken && currentToken.startsWith('mg_demo_pass_')) {
+  if (currentToken && currentToken.startsWith('mg_')) {
     store.setAccessToken(null);
     currentToken = null;
   }
 
   if (currentToken) {
-    if (btnText) btnText.textContent = 'Tiếp tục khám phá di tích →';
+    showLabel('arrival.continueBtn');
   }
 
   btnActivate.addEventListener('click', async () => {
+    if (btnActivate.disabled) return;
     // 1. Mở khóa AudioContext ngay tại cử chỉ click người dùng (CONSTRAINTS.md)
     unlockAudioContextSilently();
+    const areaCode = store.get().areaCode || 'van-mieu';
+    const cached = store.getAreaAccessToken(areaCode);
+    const token = cached?.token || store.get().accessToken;
+    const passData = cached?.passData || store.get().passData;
+    const passArea = passData?.areaCode || passData?.area_code;
 
     // Nếu đã có token vé thật từ trước, chuyển thẳng sang màn hình chính
-    if (store.get().accessToken && !store.get().accessToken.startsWith('mg_demo_pass_')) {
+    if (token && !token.startsWith('mg_') && (!passArea || passArea === areaCode)) {
+      store.setAreaAccessToken(areaCode, token, passData);
       unlockArea(areaCode);
       transitionToMainApp();
       return;
@@ -125,54 +144,32 @@ export function initPassCheckout() {
     // 2. Hiệu ứng Loading "Calm Technology"
     btnActivate.disabled = true;
     btnActivate.classList.add('is-loading');
-    if (btnText) btnText.textContent = 'Đang kết nối không gian di sản...';
-
-    const areaCode = store.get().areaCode || 'van-mieu';
+    showLabel('arrival.connectingBtn');
 
     try {
       // 3. Gọi RESTful API Backend Render thật
       console.log(`[MultiGuide API] Gửi POST /areas/${areaCode}/passes...`);
       const passData = await apiService.purchasePass(areaCode);
 
-      console.log('[MultiGuide API] Kích hoạt vé thành công từ Backend:', passData);
-
       // Lưu trữ token và thông tin vé
       const token = passData.accessToken || passData.token;
-      store.setAccessToken(token, passData);
+      store.setAreaAccessToken(areaCode, token, passData);
       unlockArea(areaCode);
 
       // Cập nhật trạng thái thành công
-      if (btnText) btnText.textContent = '✓ Vé di sản đã kích hoạt';
+      if (store.get().areaCode !== areaCode) return;
+      showLabel('arrival.activatedBtn');
       btnActivate.style.backgroundColor = '#2E7D32';
 
       // Chuyển cảnh sang màn hình chính
       setTimeout(() => {
-        transitionToMainApp();
+        if (store.get().areaCode === areaCode) transitionToMainApp();
       }, 700);
 
     } catch (error) {
-      console.warn('[MultiGuide API] Lỗi kết nối server (Cold Start/Offline), kích hoạt vé trải nghiệm:', error);
-
-      // Fallback Smart Token để trải nghiệm không bị nghẽn nếu Render đang thức giấc
-      const fallbackToken = 'mg_demo_pass_' + Date.now();
-      const mockPassData = {
-        passId: 'HN-001-DEMO',
-        accessToken: fallbackToken,
-        expiresAt: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
-        areaCode: areaCode,
-        isOfflineDemo: true
-      };
-
-      store.setAccessToken(fallbackToken, mockPassData);
-      unlockArea(areaCode);
-
-      if (btnText) btnText.textContent = '✓ Đã kích hoạt vé tham quan';
-      btnActivate.style.backgroundColor = '#C28E58';
-
-      setTimeout(() => {
-        transitionToMainApp();
-      }, 700);
-
+      console.warn('[MultiGuide API] Không thể mua vé:', error);
+      showLabel('arrival.unlockBtn');
+      showPassPurchaseError();
     } finally {
       btnActivate.classList.remove('is-loading');
       btnActivate.disabled = false;
@@ -1651,6 +1648,7 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
   }
 
   const isUnlocked = isAreaUnlocked(area.code);
+  let isPurchasing = false;
   const badgeEl = document.getElementById('suggestionBadge');
   if (badgeEl) {
     if (isUnlocked) {
@@ -1667,6 +1665,7 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
   // Nút đóng / để sau
   if (btnDismiss) {
     btnDismiss.onclick = () => {
+      if (isPurchasing) return;
       modal.style.display = 'none';
     };
   }
@@ -1681,7 +1680,27 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
       btnAccept.style.background = '#C28E58';
     }
 
-    btnAccept.onclick = () => {
+    btnAccept.onclick = async () => {
+      if (isPurchasing) return;
+      isPurchasing = true;
+      const idleLabel = btnAccept.textContent;
+      btnAccept.disabled = true;
+      btnAccept.textContent = t('arrival.connectingBtn');
+      if (btnDismiss) btnDismiss.disabled = true;
+      try {
+        await apiService.ensureValidTokenForArea(area.code);
+      } catch (error) {
+        console.warn('[MultiGuide API] Không thể mua vé cho khu đã chọn:', error);
+        showPassPurchaseError();
+        return;
+      } finally {
+        isPurchasing = false;
+        btnAccept.disabled = false;
+        btnAccept.textContent = idleLabel;
+        if (btnDismiss) btnDismiss.disabled = false;
+      }
+
+      unlockArea(area.code);
       modal.style.display = 'none';
 
       // Đóng modal chọn khu nếu còn mở
@@ -1692,21 +1711,11 @@ export async function openAreaPurchaseModal(area, onUnlocked = null) {
       const floatBanner = document.getElementById('nearbyAreaFloatBanner');
       if (floatBanner) floatBanner.style.display = 'none';
 
-      // Mở khóa vé khu di tích này nếu chưa có
-      if (!isUnlocked) {
-        unlockArea(area.code);
-      }
-
-      // Chuyển thẳng app sang khu mới ngay lập tức
-      if (typeof window._selectAreaByName === 'function') {
-        window._selectAreaByName(area);
-      }
-
-      // Hiển thị thông báo chuyển đổi khu di tích rõ ràng
-      showSwitchAreaToast(area);
-
       if (typeof onUnlocked === 'function') {
         onUnlocked();
+      } else {
+        if (typeof window._selectAreaByName === 'function') window._selectAreaByName(area);
+        showSwitchAreaToast(area);
       }
     };
   }
