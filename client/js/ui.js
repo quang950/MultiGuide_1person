@@ -392,8 +392,8 @@ export function updatePoiDistanceDisplay(poi) {
     : `Ngoài vùng (${triggerRadius}m)`;
   statusEl.className = `poi-distance-status ${isInside ? 'is-inside' : 'is-outside'}`;
 
-  coordsEl.textContent = `Bạn: (${userLoc.lat.toFixed(5)}, ${userLoc.lng.toFixed(5)}) → POI: (${poi.lat.toFixed(5)}, ${poi.lng.toFixed(5)})`;
-  formulaEl.textContent = `d = √(Δx² + Δy²) = √((${dx.toFixed(1)})² + (${dy.toFixed(1)})²) = ${distance.toFixed(1)} m`;
+ // coordsEl.textContent = `Bạn: (${userLoc.lat.toFixed(5)}, ${userLoc.lng.toFixed(5)}) → POI: (${poi.lat.toFixed(5)}, ${poi.lng.toFixed(5)})`;
+  //formulaEl.textContent = `d = √(Δx² + Δy²) = √((${dx.toFixed(1)})² + (${dy.toFixed(1)})²) = ${distance.toFixed(1)} m`;
 }
 
 /**
