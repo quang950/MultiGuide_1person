@@ -92,7 +92,13 @@ export const apiService = {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.detail || err.title || `Lỗi mua vé (${res.status})`);
     }
-    return await res.json();
+    const pass = await res.json();
+    const token = pass?.accessToken || pass?.token;
+    if (typeof token !== 'string' || !token.trim() || token.startsWith('mg_') ||
+        (pass.areaCode && pass.areaCode !== areaCode)) {
+      throw new Error('Phản hồi kích hoạt vé không hợp lệ. Vui lòng thử lại.');
+    }
+    return pass;
   },
 
   async getCurrentPass() {
@@ -122,30 +128,23 @@ export const apiService = {
   async ensureValidTokenForArea(targetAreaCode) {
     const areaCode = targetAreaCode || store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
     const stored = store.getAreaAccessToken ? store.getAreaAccessToken(areaCode) : null;
-    if (stored && stored.token) {
+    if (typeof stored?.token === 'string' && stored.token && !stored.token.startsWith('mg_')) {
       if (store.get().areaCode === areaCode && store.get().accessToken !== stored.token) {
         store.set({ accessToken: stored.token, passData: stored.passData });
       }
       return stored.token;
     }
 
-    // Nếu chưa có token cho khu này: Chủ động cấp vé mới cho đúng khu đó
-    try {
-      const pass = await this.purchasePass(areaCode);
-      const token = pass.accessToken || pass.token;
-      if (store.setAreaAccessToken) {
-        store.setAreaAccessToken(areaCode, token, pass);
-      } else {
-        store.setAccessToken(token, pass);
-      }
-      return token;
-    } catch (err) {
-      const fallbackToken = `mg_pass_${areaCode}_${Date.now()}`;
-      if (store.setAreaAccessToken) {
-        store.setAreaAccessToken(areaCode, fallbackToken, { code: fallbackToken });
-      }
-      return fallbackToken;
+    // Remove legacy demo tokens; a failed purchase must not create an active pass.
+    if (stored && store.setAreaAccessToken) store.setAreaAccessToken(areaCode, null);
+    const pass = await this.purchasePass(areaCode);
+    const token = pass.accessToken || pass.token;
+    if (store.setAreaAccessToken) {
+      store.setAreaAccessToken(areaCode, token, pass);
+    } else {
+      store.setAccessToken(token, pass);
     }
+    return token;
   },
 
   async getNearbyPois(lat, lng, radius, lang) {
@@ -205,7 +204,7 @@ export const apiService = {
 
   async sendPlayLog(poiId, durationSeconds, completed = false) {
     const areaCode = store.get().areaCode || CONFIG.DEFAULT_AREA_CODE;
-    let token = await this.ensureValidTokenForArea(areaCode);
+    let token = await this.ensureValidTokenForArea(areaCode).catch(() => null);
     if (!token || !poiId || durationSeconds <= 0) return;
     const POI_GUID_MAP = {
       1: 'c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',

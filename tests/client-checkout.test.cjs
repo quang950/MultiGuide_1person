@@ -1,0 +1,232 @@
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+
+const read = name => fs.readFileSync(path.join(__dirname, '../client/js', name), 'utf8')
+  .replace(/^import .*;\r?\n/gm, '').replace(/export (const|function|class|async function)/g, '$1');
+const response = (status, data) => ({status, ok:status >= 200 && status < 300, json:async()=>data});
+const paidPass = (code, token = `paid-${code}`) => ({
+  areaCode:code, accessToken:token, expiresAt:new Date(Date.now() + 3600000).toISOString()
+});
+function memoryStorage() {
+  const values = new Map();
+  return {getItem:key=>values.get(key) ?? null, setItem:(key,value)=>values.set(key,String(value)), removeItem:key=>values.delete(key)};
+}
+function element() {
+  return {textContent:'', disabled:false, style:{},
+    classList:{add(){}, remove(){}},
+    querySelector(){return null;}, querySelectorAll(){return [];},
+    addEventListener(event, callback){this[event] = callback;}};
+}
+function session() {
+  const elements = Object.fromEntries([
+    'btnActivatePass', 'modalAreaSuggestion', 'btnAcceptSuggestionPurchase', 'btnDismissSuggestion'
+  ].map(id=>[id,element()]));
+  let checkoutLabel = element();
+  elements.btnActivatePass.querySelector = () => checkoutLabel;
+  const alerts = [], requests = [], timers = [];
+  let transitions = 0, switches = 0, purchase = async code => response(201,paidPass(code));
+  const context = vm.createContext({
+    CONFIG:{DEFAULT_AREA_CODE:'van-mieu',DEFAULT_LANG:'vi',MAP_CENTER:{lat:21,lng:105},API_BASE_URL:'https://api.test'},
+    localStorage:memoryStorage(), sessionStorage:memoryStorage(),
+    window:{}, navigator:{},
+    document:{getElementById:id=>elements[id] || null, querySelector:()=>null, querySelectorAll:()=>[]},
+    modalService:{alert:options=>{alerts.push(options);return Promise.resolve();}},
+    console:{log(){},warn(){},error(){}},
+    setTimeout:fn=>{timers.push(fn);return timers.length;},clearTimeout(){},
+    crypto:{randomUUID:()=>'test-idempotency-key'},URLSearchParams,
+    fetch:async (url, options={})=>{
+      requests.push({url,options});
+      if (options.method === 'POST' && /\/areas\/[^/]+\/passes$/.test(url)) {
+        return purchase(url.match(/\/areas\/([^/]+)\/passes$/)[1]);
+      }
+      if (url.includes('/pois?')) return response(200,[]);
+      throw new Error('Unexpected request: ' + url);
+    }
+  });
+  const store = vm.runInContext(read('state.js')+'\nstore;',context);
+  const api = vm.runInContext(read('api.js')+'\napiService;',context);
+  vm.runInContext(read('i18n.js'),context);
+  vm.runInContext(read('ui.js'),context);
+  context.onTransition = ()=>transitions++;
+  vm.runInContext('transitionToMainApp = onTransition; showSwitchAreaToast = () => {};',context);
+  context.window._selectAreaByName = area=>{
+    switches++;
+    const cached = store.getAreaAccessToken(area.code);
+    store.set({areaCode:area.code,accessToken:cached?.token,passData:cached?.passData});
+  };
+  return {
+    store, api, elements, alerts, requests, timers, context,
+    transitions:()=>transitions, switches:()=>switches,
+    setPurchase:fn=>{purchase=fn;},
+    purchaseRequests:()=>requests.filter(r=>r.options.method==='POST'),
+    isUnlocked:code=>vm.runInContext(`isAreaUnlocked(${JSON.stringify(code)})`,context),
+    initCheckout:()=>vm.runInContext('initPassCheckout()',context),
+    replaceCheckoutLabel:()=>{checkoutLabel=element();return checkoutLabel;},
+    openModal:async callback=>{
+      context.afterUnlock=callback;
+      return vm.runInContext('openAreaPurchaseModal({code:"museum-b",name:"Museum B",priceUsd:5}, afterUnlock)',context);
+    }
+  };
+}
+
+test('Continue with an existing pass unlocks the selected area without buying again', async () => {
+  const s=session();s.store.setAccessToken('paid-existing',paidPass('van-mieu','paid-existing'));
+  s.initCheckout();
+  await s.elements.btnActivatePass.click();
+  assert.equal(s.transitions(),1);
+  assert.equal(s.isUnlocked('van-mieu'),true);
+  assert.equal(s.purchaseRequests().length,0);
+});
+
+test('A pass for another area cannot skip purchase of the selected area', async () => {
+  const s=session();s.store.setAccessToken('paid-a',paidPass('van-mieu','paid-a'));
+  s.store.set({areaCode:'museum-b'});
+  s.initCheckout();
+  await s.elements.btnActivatePass.click();
+  assert.equal(s.purchaseRequests().length,1);
+  assert.ok(s.purchaseRequests()[0].url.endsWith('/museum-b/passes'));
+  assert.equal(s.store.getAreaAccessToken('museum-b').token,'paid-museum-b');
+});
+
+for (const failure of ['payment','network']) {
+  test(`Failed ${failure} checkout stays locked without creating a demo pass`, async () => {
+    const s=session();
+    s.setPurchase(async()=>{
+      if (failure==='network') throw new Error('Network unavailable');
+      return response(402,{detail:'Payment declined'});
+    });
+    s.initCheckout();await s.elements.btnActivatePass.click();
+    assert.equal(s.isUnlocked('van-mieu'),false);
+    assert.equal(s.store.get().accessToken,null);
+    assert.equal(s.store.getAreaAccessToken('van-mieu'),null);
+    assert.equal(s.transitions(),0);
+    assert.equal(s.timers.length,0);
+    assert.equal(s.alerts.length,1);
+    assert.equal(s.elements.btnActivatePass.disabled,false);
+  });
+}
+
+test('Repeated checkout clicks while payment is pending issue one purchase request', async () => {
+  const s=session();let resolve;
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  s.initCheckout();
+  const pending=s.elements.btnActivatePass.click();
+  await s.elements.btnActivatePass.click();
+  assert.equal(s.purchaseRequests().length,1);
+  assert.equal(s.isUnlocked('van-mieu'),false);
+  resolve(response(201,paidPass('van-mieu')));await pending;
+  assert.equal(s.isUnlocked('van-mieu'),true);
+});
+
+test('Checkout updates the attached label after the area picker replaces it', async () => {
+  const s=session();s.initCheckout();
+  const label=s.replaceCheckoutLabel();
+  await s.elements.btnActivatePass.click();
+  assert.equal(label.textContent,vm.runInContext('t("arrival.activatedBtn")',s.context));
+});
+
+test('An area change during checkout saves the paid pass under its original area', async () => {
+  const s=session();let resolve;
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  s.initCheckout();const pending=s.elements.btnActivatePass.click();
+  s.store.set({areaCode:'museum-b'});
+  resolve(response(201,paidPass('van-mieu')));await pending;
+  assert.equal(s.store.getAreaAccessToken('van-mieu').token,'paid-van-mieu');
+  assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+  assert.equal(s.store.get().accessToken,null);
+  assert.equal(s.transitions(),0);
+  assert.equal(s.timers.length,0);
+});
+
+test('The purchase modal waits for payment, blocks repeated clicks and switches once', async () => {
+  const s=session();let resolve, callbacks=0;
+  s.store.setAccessToken('paid-a',paidPass('van-mieu','paid-a'));
+  s.setPurchase(()=>new Promise(done=>{resolve=done;}));
+  await s.openModal(()=>{callbacks++;s.context.window._selectAreaByName({code:'museum-b'});});
+  const pending=s.elements.btnAcceptSuggestionPurchase.onclick();
+  await s.elements.btnAcceptSuggestionPurchase.onclick();
+  s.elements.btnDismissSuggestion.onclick();
+  assert.equal(s.purchaseRequests().length,1);
+  assert.equal(s.isUnlocked('museum-b'),false);
+  assert.equal(s.switches(),0);
+  assert.equal(s.store.get().areaCode,'van-mieu');
+  assert.equal(s.elements.modalAreaSuggestion.style.display,'flex');
+  assert.equal(s.elements.btnAcceptSuggestionPurchase.disabled,true);
+  resolve(response(201,paidPass('museum-b')));await pending;
+  assert.equal(s.isUnlocked('museum-b'),true);
+  assert.equal(s.store.getAreaAccessToken('museum-b').token,'paid-museum-b');
+  assert.equal(s.switches(),1);
+  assert.equal(callbacks,1);
+  assert.equal(s.elements.modalAreaSuggestion.style.display,'none');
+});
+
+for (const failure of [402,500,'network']) {
+  test(`A modal purchase failure (${failure}) preserves the current pass and enables retry`, async () => {
+    const s=session();s.store.setAccessToken('paid-a',paidPass('van-mieu','paid-a'));
+    s.setPurchase(async()=>{
+      if (failure==='network') throw new Error('Network unavailable');
+      return response(failure,{detail:'Purchase failed'});
+    });
+    await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),false);
+    assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+    assert.equal(s.store.get().accessToken,'paid-a');
+    assert.equal(s.store.get().areaCode,'van-mieu');
+    assert.equal(s.switches(),0);
+    assert.equal(s.elements.modalAreaSuggestion.style.display,'flex');
+    assert.equal(s.elements.btnAcceptSuggestionPurchase.disabled,false);
+    assert.equal(s.elements.btnDismissSuggestion.disabled,false);
+    assert.equal(s.alerts.length,1);
+    s.setPurchase(async()=>response(201,paidPass('museum-b')));
+    await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),true);
+    assert.equal(s.switches(),1);
+  });
+}
+
+test('A previously paid area reuses its token instead of purchasing another pass', async () => {
+  const s=session();s.store.setAreaAccessToken('museum-b','paid-b',paidPass('museum-b','paid-b'));
+  await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+  assert.equal(s.purchaseRequests().length,0);
+  assert.equal(s.switches(),1);
+  assert.equal(s.store.get().accessToken,'paid-b');
+});
+
+test('A legacy fake area token is removed when the real purchase fails', async () => {
+  const s=session();s.store.setAreaAccessToken('museum-b','mg_pass_museum-b_old',{code:'old'});
+  s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+  await assert.rejects(s.api.ensureValidTokenForArea('museum-b'),/Payment declined/);
+  assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+});
+
+test('Successful HTTP responses without a real token or with the wrong area are rejected', async () => {
+  for (const invalid of [null,{}, {accessToken:''}, {accessToken:'mg_demo_pass_old'},paidPass('other-area')]) {
+    const s=session();s.setPurchase(async()=>response(201,invalid));
+    await s.openModal();await s.elements.btnAcceptSuggestionPurchase.onclick();
+    assert.equal(s.isUnlocked('museum-b'),false);
+    assert.equal(s.store.getAreaAccessToken('museum-b'),null);
+    assert.equal(s.switches(),0);
+    assert.equal(s.alerts.length,1);
+  }
+});
+
+test('A failed background play log does not create a fake pass or reject unhandled', async () => {
+  const s=session();s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+  await s.api.sendPlayLog('c1875fb2-84ad-4a5a-936a-173fdbf4f7f3',10);
+  assert.equal(s.store.getAreaAccessToken('van-mieu'),null);
+  assert.equal(s.requests.some(r=>r.url.endsWith('/play-logs')),false);
+});
+
+for (const lang of ['vi','en','zh','ja']) {
+  test(`Purchase failures use the selected ${lang} language`, async () => {
+    const s=session();s.store.setLanguage(lang);
+    s.setPurchase(async()=>response(402,{detail:'Payment declined'}));
+    s.initCheckout();await s.elements.btnActivatePass.click();
+    assert.equal(s.alerts[0].title,vm.runInContext('t("arrival.purchaseFailedTitle")',s.context));
+    assert.equal(s.alerts[0].message,vm.runInContext('t("arrival.purchaseFailedMessage")',s.context));
+    assert.notEqual(s.alerts[0].message,'arrival.purchaseFailedMessage');
+  });
+}
