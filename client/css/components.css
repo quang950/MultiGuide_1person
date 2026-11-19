@@ -1193,6 +1193,52 @@
   text-overflow: ellipsis;
 }
 
+.poi-distance-bar {
+  margin-top: 8px;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(15, 118, 110, 0.06);
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  color: var(--text-ink);
+}
+
+.poi-distance-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.poi-distance-status {
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+
+.poi-distance-status.is-inside {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.poi-distance-status.is-outside {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.poi-distance-coords,
+.poi-distance-formula {
+  margin-top: 3px;
+  font-size: 0.69rem;
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  line-height: 1.35;
+}
+
 /* Nút tròn đen tuyền Play/Pause */
 .btn-player-toggle {
   width: 44px;

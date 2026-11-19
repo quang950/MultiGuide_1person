@@ -33,6 +33,22 @@ class GeoService {
   }
 
   /**
+   * Tính khoảng cách giữa 2 tọa độ GPS bằng công thức Euclid trên mặt phẳng chiếu Equirectangular (mét)
+   * d = sqrt((x2 - x1)^2 + (y2 - y1)^2), với dx, dy đã quy đổi ra mét.
+   */
+  calculateEuclideanDistanceMeters(lat1, lng1, lat2, lng2) {
+    const R = 6371e3; // Bán kính Trái Đất (mét)
+    const toRad = (deg) => (deg * Math.PI) / 180;
+    const meanLatRad = toRad((lat1 + lat2) / 2);
+
+    const dx = toRad(lng2 - lng1) * R * Math.cos(meanLatRad);
+    const dy = toRad(lat2 - lat1) * R;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    return { distance, dx, dy };
+  }
+
+  /**
    * Bắt đầu lắng nghe GPS từ phần cứng thiết bị (FE-4.2)
    */
   startWatching(onPositionUpdate) {

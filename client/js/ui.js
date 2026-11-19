@@ -246,6 +246,12 @@ export function initBottomSheet() {
   const miniHeader = document.getElementById('miniPlayerHeader');
   if (!sheet) return;
 
+  store.subscribe((state) => {
+    if (state.activePoi && sheet.classList.contains('is-visible')) {
+      updatePoiDistanceDisplay(state.activePoi);
+    }
+  });
+
   let hasDragged = false;
   let startY = 0;
   let isDragging = false;
@@ -350,6 +356,44 @@ export function showBottomSheet(poiId) {
   if (poiId && audioEngine) {
     audioEngine.syncPoiContent(poiId);
   }
+  updatePoiDistanceDisplay(store.get().activePoi);
+}
+
+/**
+ * Tính và hiển thị khoảng cách Euclid từ người dùng đến POI đang chọn
+ */
+export function updatePoiDistanceDisplay(poi) {
+  const bar = document.getElementById('poiDistanceBar');
+  const valEl = document.getElementById('poiDistanceValue');
+  const statusEl = document.getElementById('poiDistanceStatus');
+  const coordsEl = document.getElementById('poiDistanceCoords');
+  const formulaEl = document.getElementById('poiDistanceFormula');
+  if (!bar || !valEl || !statusEl || !coordsEl || !formulaEl) return;
+
+  const userLoc = store.get().userLocation;
+  if (!poi || !userLoc || typeof poi.lat !== 'number' || typeof poi.lng !== 'number') {
+    bar.style.display = 'none';
+    return;
+  }
+
+  const { distance, dx, dy } = geoService.calculateEuclideanDistanceMeters(
+    userLoc.lat,
+    userLoc.lng,
+    poi.lat,
+    poi.lng
+  );
+  const triggerRadius = Number(poi.triggerRadiusM || 30);
+  const isInside = distance <= triggerRadius;
+
+  bar.style.display = 'block';
+  valEl.textContent = `📍 Khoảng cách: ${distance.toFixed(1)} m`;
+  statusEl.textContent = isInside
+    ? `Trong vùng (${triggerRadius}m)`
+    : `Ngoài vùng (${triggerRadius}m)`;
+  statusEl.className = `poi-distance-status ${isInside ? 'is-inside' : 'is-outside'}`;
+
+  coordsEl.textContent = `Bạn: (${userLoc.lat.toFixed(5)}, ${userLoc.lng.toFixed(5)}) → POI: (${poi.lat.toFixed(5)}, ${poi.lng.toFixed(5)})`;
+  formulaEl.textContent = `d = √(Δx² + Δy²) = √((${dx.toFixed(1)})² + (${dy.toFixed(1)})²) = ${distance.toFixed(1)} m`;
 }
 
 /**
